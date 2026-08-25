@@ -1,26 +1,249 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ═══ WARDROB — Warm Rose-Cream Luxury Theme ═══ */
+  --bg: #FFFAF5;
+  --bg-warm: #FFF1EB;
+  --bg-card: #FFFFFF;
+  --bg-rose: #FFF5F7;
+  --ink: #1E1E2D;
+  --ink-secondary: #4A4A5A;
+  --text-muted: #8E8E9E;
+  --accent: #D4567A;
+  --accent-hover: #B8405E;
+  --accent-light: rgba(212, 86, 122, 0.08);
+  --border: #F0E6E0;
+  --border-strong: #E0D4CC;
+  --success: #0D9488;
+  --alert: #E5484D;
+
+  --font-serif: var(--font-playfair), 'Playfair Display', 'Georgia', serif;
+  --font-sans: var(--font-dmsans), 'DM Sans', system-ui, -apple-system, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 2px 8px rgba(30, 30, 45, 0.04);
+  --shadow-md: 0 4px 20px rgba(30, 30, 45, 0.06);
+  --shadow-lg: 0 12px 40px rgba(30, 30, 45, 0.08);
+  --shadow-glow: 0 8px 32px rgba(212, 86, 122, 0.12);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: all 0.4s var(--ease-out-expo);
+
+  /* Legacy mappings for pages that still reference them */
+  --bg-primary: #FFFAF5;
+  --bg-secondary: #FFF1EB;
+  --bg-tertiary: #F0E6E0;
+  --text-primary: #1E1E2D;
+  --text-secondary: #4A4A5A;
+  --color-maroon: #1E1E2D;
+  --color-maroon-dark: #0F0F1A;
+  --color-maroon-light: #4A4A5A;
+  --color-maroon-subtle: #FFF1EB;
+  --color-gold: #D4567A;
+  --color-gold-dark: #B8405E;
+  --color-gold-light: #FFF1EB;
+  --border-color: #F0E6E0;
+  --border-color-strong: #E0D4CC;
+  --bg-subtle: #FFF1EB;
+  --accent-gold: #D4567A;
+  --ink-light: #4A4A5A;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* Inputs — Rounded & Modern */
+input, textarea, select {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 14px 18px;
+  background-color: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  outline: none;
+  transition: var(--transition-smooth);
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-light);
+}
+
+/* ═══ ANIMATIONS ═══ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes riseReveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 86, 122, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(212, 86, 122, 0.25); }
+}
+
+.animate-rise { animation: riseReveal 0.5s var(--ease-out-expo) forwards; }
+
+/* ═══ HOVER UTILITIES ═══ */
+.hover-lift {
+  transition: transform 0.5s var(--ease-out-expo), box-shadow 0.5s var(--ease-out-expo);
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hover-gold-underline {
+  position: relative;
+  display: inline-block;
+}
+.hover-gold-underline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s var(--ease-out-expo);
+}
+.hover-gold-underline:hover::after {
+  width: 100%;
+}
+
+/* Image zoom on hover */
+.img-zoom-container {
+  overflow: hidden;
+  position: relative;
+  border-radius: var(--radius-md);
+}
+.img-zoom-container img {
+  transition: transform 0.8s var(--ease-out-expo);
+}
+.img-zoom-container:hover img {
+  transform: scale(1.06);
+}
+
+/* Product card */
+.prod-card {
+  background: var(--bg-card);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.5s var(--ease-out-expo);
+}
+.prod-card:hover {
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Marquee ticker */
+.marquee-track {
+  display: flex;
+  animation: marquee 30s linear infinite;
+  white-space: nowrap;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Selection */
+::selection {
+  background: rgba(212, 86, 122, 0.15);
+  color: var(--ink);
+}
+
+/* ═══ RESPONSIVE — TABLET (≤1024px) ═══ */
+@media (max-width: 1024px) {
+  body { font-size: 14px; }
+  
+  .prod-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ═══ RESPONSIVE — MOBILE (≤768px) ═══ */
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+  
+  h1 { font-size: 28px !important; }
+  h2 { font-size: 24px !important; }
+  
+  input, textarea, select {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  
+  .prod-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .hover-lift:hover {
+    transform: none;
+  }
+  
+  .hover-scale-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
 }

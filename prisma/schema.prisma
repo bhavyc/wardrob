@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  LISTER
+  RENTER
+  HUB_PARTNER
+}
+
+enum ListerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum IDVerificationStatus {
+  NOT_SUBMITTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ListingStatus {
+  AVAILABLE
+  RENTED
+  AT_HUB
+  MAINTENANCE
+  UNLISTED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  AT_HUB_PRE
+  OUT_FOR_DELIVERY
+  IN_USE
+  RETURNED_TO_HUB
+  COMPLETED
+  CANCELLED
+  LOST_NOT_RETURNED
+}
+
+enum InspectionType {
+  LISTER_TO_HUB_INTAKE
+  PRE_DISPATCH
+  POST_RETURN
+}
+
+enum ShipmentLeg {
+  LISTER_TO_HUB
+  HUB_TO_RENTER
+  RENTER_TO_HUB
+  HUB_TO_LISTER
+}
+
+enum ShipmentStatus {
+  PENDING
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  PICKUP_FAILED
+}
+
+enum DamageGrade {
+  A_NO_ISSUE
+  B_MINOR
+  C_MAJOR
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+}
+
+enum PayoutStatus {
+  PENDING
+  COMPLETED
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  phone              String?   @unique
+  passwordHash       String?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil        DateTime?
+  resetToken         String?
+  resetTokenExpires  DateTime?
+  walletBalance      Decimal   @default(0.00) @db.Decimal(10, 2)
+  role               Role      @default(RENTER)
+  idVerified         Boolean   @default(false)
+  idVerificationStatus IDVerificationStatus @default(NOT_SUBMITTED)
+  idType             String?
+  idNumber           String?
+  aadhaarNumber      String?
+  panNumber          String?
+  idPhotoUrl         String?
+  idRejectionReason  String?
+  rating             Decimal?  @db.Decimal(3, 2)
+  penaltyScore       Int       @default(0)
+  cartState          String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  listerProfile  ListerProfile?
+  sessions       Session[]
+  renterBookings Booking[]      @relation("RenterBookings")
+  refunds        Refund[]
+}
+
+model ListerProfile {
+  id                 String       @id @default(uuid())
+  userId             String       @unique
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopName           String?
+  bio                String?
+  aadhaarNumber      String?
+  panNumber          String?
+  bankAccountNo      String?
+  bankIfsc           String?
+  status             ListerStatus @default(PENDING)
+  commissionOverride Decimal?     @db.Decimal(5, 2)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  listings Listing[]
+  payouts  Payout[]
+}
+
+model Listing {
+  id              String        @id @default(uuid())
+  listerProfileId String
+  lister          ListerProfile @relation(fields: [listerProfileId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String
+  category    String
+  size        String
+  condition   String
+
+  rentalPrice     Decimal @db.Decimal(10, 2)
+  securityDeposit Decimal @db.Decimal(10, 2)
+
+  baselineImages String[]
+  status         ListingStatus @default(AVAILABLE)
+  isFeatured     Boolean       @default(false)
+
+  sku            String?       @unique
+  shelfLocation  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+model Booking {
+  id        String  @id @default(uuid())
+  renterId  String
+  renter    User    @relation("RenterBookings", fields: [renterId], references: [id])
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+
+  startDate        DateTime
+  endDate          DateTime
+  actualReturnDate DateTime?
+
+  rentAmount          Decimal @db.Decimal(10, 2)
+  securityDeposit     Decimal @db.Decimal(10, 2)
+  
+  pendingExtensionDate      DateTime?
+  pendingExtensionOrderId   String?
+  pendingExtensionExpiry    DateTime?
+  lateReturnPenalty   Decimal @default(0.00) @db.Decimal(10, 2)
+  totalAmount         Decimal @db.Decimal(10, 2)
+
+  status            BookingStatus @default(PENDING)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
+  returnReminderSentAt DateTime?
+  refundInitiatedAt    DateTime?
+  overdueReminder1SentAt DateTime?
+  overdueReminder3SentAt DateTime?
+  overdueReminder7SentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shipments     Shipment[]
+  cleaningLogs  CleaningLog[]
+  damageReports DamageReport[]
+  payout        Payout?
+  refund        Refund?
+}
+
+model Shipment {
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  leg    ShipmentLeg
+  status ShipmentStatus @default(PENDING)
+
+  courierName           String?
+  trackingNumber        String?
+  distanceZone          String?
+  deliveryFeeCalculated Decimal? @db.Decimal(10, 2)
+
+  dispatchedAt DateTime?
+  deliveredAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CleaningLog {
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  partnerId    String
+  receivedAt   DateTime?
+  dispatchedAt DateTime?
+  status       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DamageReport {
+  id        String  @id @default(uuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  inspectionType          String
+  grade                   DamageGrade
+  deductionAmount         Decimal     @default(0.00) @db.Decimal(10, 2)
+  evidencePhotos          String[]
+  isItemComplete          Boolean     @default(true)
+  missingPartsDescription String?
+  isDisputed              Boolean     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dispute Dispute?
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  rating     Int
+  comment    String?
+  reviewerId String
+  revieweeId String
+  listingId  String?
+  bookingId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Dispute {
+  id             String       @id @default(uuid())
+  damageReportId String       @unique
+  damageReport   DamageReport @relation(fields: [damageReportId], references: [id], onDelete: Cascade)
+
+  status     DisputeStatus @default(OPEN)
+  adminNotes String?
+  raisedBy   String?
+  reason     String?
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payout {
+  id              String        @id @default(uuid())
+  bookingId       String        @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  listerProfileId String
+  lister          ListerProfile @relation(fields: [listerProfileId], references: [id])
+
+  amount         Decimal      @db.Decimal(10, 2)
+  commissionPaid Decimal      @db.Decimal(10, 2)
+  status         PayoutStatus @default(PENDING)
+  batchRef       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DuplicatePhotoHash {
+  id        String   @id @default(uuid())
+  hashValue String
+  contextId String?  // To track which listing or booking this hash belongs to
+  createdAt DateTime @default(now())
+
+  @@unique([hashValue, contextId])
+}
+
+model Coupon {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  discountType  String // e.g. "PERCENTAGE", "FLAT"
+  discountValue Decimal   @db.Decimal(10, 2)
+  minOrderValue Decimal?  @db.Decimal(10, 2)
+  expiresAt     DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+}
+
+model Refund {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId       String       @unique
+  booking         Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount          Decimal      @db.Decimal(10, 2)
+  status          PayoutStatus @default(PENDING)
+  gateway         String?
+  gatewayRefundId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
