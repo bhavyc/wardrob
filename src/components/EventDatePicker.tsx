@@ -54,8 +54,9 @@ export default function EventDatePicker({ pricePer4Days, onDateSelect }: EventDa
     returnDateStr = ret.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
   }
 
-  const extensionCost = extensionDays * (pricePer4Days * 0.25);
-  const totalRentalCost = pricePer4Days + extensionCost;
+  const basePrice = Number(pricePer4Days);
+  const extensionCost = extensionDays * (basePrice * 0.25);
+  const totalRentalCost = basePrice + extensionCost;
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)', border: '1px solid var(--border)', padding: '24px', background: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -111,7 +112,7 @@ export default function EventDatePicker({ pricePer4Days, onDateSelect }: EventDa
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
         <div>
           <h5 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Extend Booking</h5>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>+25% rate/day (₹{(pricePer4Days * 0.25).toFixed(0)}/day)</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>+25% rate/day (₹{(basePrice * 0.25).toFixed(0)}/day)</div>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', border: '1px solid var(--border)', background: 'var(--bg-primary)', padding: '4px' }}>

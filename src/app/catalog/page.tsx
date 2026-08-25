@@ -217,8 +217,8 @@ function CatalogContent() {
           ) : (
             <div className="cat-grid">
               {filteredProducts.map(p => (
-                <Link key={p.id} href={`/product/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="prod-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                <Link key={p.id} href={`/product/${p.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
+                  <div className="prod-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
                     <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative' }}>
                       <img src={p.images[0]} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       
@@ -247,7 +247,7 @@ function CatalogContent() {
                       )}
                     </div>
                     
-                    <div style={{ padding: '20px' }}>
+                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
                       <div style={{
                         fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500,
                         textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px',
@@ -264,7 +264,7 @@ function CatalogContent() {
                       
                       <div style={{
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        borderTop: '1px solid var(--border)', paddingTop: '14px',
+                        borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto'
                       }}>
                         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>4-Day Rental</span>
                         <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '19px', fontWeight: 700, color: 'var(--ink)' }}>₹{p.price.toLocaleString('en-IN')}</strong>

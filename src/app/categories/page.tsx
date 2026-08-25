@@ -93,8 +93,8 @@ export default function CategoriesPage() {
           <div style={{ padding: '100px 0', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>Loading categories...</div>
         ) : (
           <div className="cat-grid">
-            {categories.map((cat, i) => (
-              <Link href={`/catalog?category=${cat.val}`} key={i} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+            {categories.map(cat => (
+              <Link key={cat.val} href={`/catalog?category=${cat.val}`} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
                 <div style={{
                   borderRadius: 'var(--radius-lg)', overflow: 'hidden',
                   aspectRatio: '3/4', background: 'var(--bg-warm)', marginBottom: '16px',
