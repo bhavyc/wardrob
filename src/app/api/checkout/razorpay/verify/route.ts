@@ -4,21 +4,24 @@ import { getAuthUser } from '@/lib/auth';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
+  let razorpay_payment_id: string | undefined;
+
   try {
     const authUser = await getAuthUser(request);
     if (!authUser) {
       return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
+    const body = await request.json();
+    razorpay_payment_id = body.razorpay_payment_id;
     const {
-      razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
       productId,
       eventDate,
       extensionDays = 0,
       couponCode,
-    } = await request.json();
+    } = body;
 
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !productId || !eventDate) {
       return NextResponse.json({ success: false, error: 'Missing required payment or booking details.' }, { status: 400 });

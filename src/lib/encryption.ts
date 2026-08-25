@@ -5,11 +5,13 @@ if (!process.env.ENCRYPTION_KEY) {
 }
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 const ALGORITHM = 'aes-256-gcm';
+// Derived 32-byte key buffer for AES-256
+const KEY_BUFFER = crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
 
 export function encryptString(text: string): string {
   if (!text) return '';
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'utf-8'), iv);
+  const cipher = crypto.createCipheriv(ALGORITHM, KEY_BUFFER, iv);
   
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -30,7 +32,7 @@ export function decryptString(encryptedText: string): string {
     const [ivHex, authTagHex, encryptedDataHex] = parts;
     const decipher = crypto.createDecipheriv(
       ALGORITHM, 
-      Buffer.from(ENCRYPTION_KEY, 'utf-8'), 
+      KEY_BUFFER, 
       Buffer.from(ivHex, 'hex')
     );
     

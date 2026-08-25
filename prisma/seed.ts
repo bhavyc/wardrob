@@ -86,11 +86,9 @@ async function main() {
     throw new Error('Lister profile creation failed');
   }
 
-  // 4. Renter User (Anjali)
-  const renterUser = await prisma.user.upsert({
-    where: { email: 'anjali@wardrob.com' },
-    update: {},
-    create: {
+  // 4. Renter User (Sneha)
+  const renterUser = await prisma.user.create({
+    data: {
       name: 'Sneha Verma',
       email: 'sneha@wardrob.com',
       phone: '8765432109',
