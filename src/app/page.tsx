@@ -635,20 +635,25 @@ export default function Storefront() {
                             <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '14.5px', fontWeight: 600, color: '#1A1A2E', marginBottom: '10px', lineHeight: 1.25, height: '36px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                               {product.title}
                             </h3>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(224, 212, 204, 0.5)', paddingTop: '8px', marginTop: 'auto' }}>
-                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
-                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
-                                  ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
+                            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid rgba(224, 212, 204, 0.55)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
+                                  <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                                    ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
+                                  </span>
+                                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 500 }}>/ 4 days</span>
+                                </div>
+                                <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#0D9488', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                                  Hub Cleaned
                                 </span>
-                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 500 }}>/ 4d</span>
                               </div>
-                              <span style={{
-                                fontSize: '10.5px', fontWeight: 700, color: 'var(--accent)',
-                                background: 'var(--accent-light)', padding: '4px 10px', borderRadius: 'var(--radius-full)',
-                                display: 'inline-flex', alignItems: 'center', gap: '2px'
+                              <div style={{
+                                width: '100%', padding: '7px 0', background: 'var(--ink)', color: '#FFFFFF',
+                                borderRadius: '8px', fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em',
+                                textAlign: 'center', boxShadow: '0 2px 6px rgba(30,30,45,0.08)'
                               }}>
-                                Rent →
-                              </span>
+                                Rent Now →
+                              </div>
                             </div>
                           </div>
                         </div>
