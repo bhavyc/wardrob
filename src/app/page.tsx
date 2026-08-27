@@ -251,7 +251,7 @@ export default function Storefront() {
             border-radius: 16px !important;
             border: 1px solid rgba(224, 212, 204, 0.7) !important;
             background: #FFFFFF !important;
-            box-shadow: 0 4px 16px rgba(30, 30, 45, 0.04) !important;
+            box-shadow: 0 4px 14px rgba(30, 30, 45, 0.04) !important;
           }
           .prod-card-body {
             padding: 12px 10px !important;
@@ -600,9 +600,9 @@ export default function Storefront() {
                       <Link href={`/product/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
                         <div className="prod-card" style={{
                           display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
-                          background: '#FFFFFF', borderRadius: '18px', overflow: 'hidden',
-                          border: '1px solid rgba(224, 212, 204, 0.75)', boxShadow: '0 6px 20px rgba(30,30,45,0.04)',
-                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden',
+                          border: '1px solid rgba(224, 212, 204, 0.7)', boxShadow: '0 4px 14px rgba(30,30,45,0.04)',
+                          transition: 'all 0.3s ease',
                         }}>
                           <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative', overflow: 'hidden' }}>
                             <img
@@ -614,41 +614,38 @@ export default function Storefront() {
                               }}
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
-                            {/* Sleek Dark Glassmorphic Verified Badge */}
+                            {/* Glassmorphic Hub Verified Badge */}
                             <div style={{
-                              position: 'absolute', top: '10px', left: '10px',
-                              background: 'rgba(15, 15, 26, 0.68)', backdropFilter: 'blur(8px)',
-                              padding: '4px 10px', borderRadius: 'var(--radius-full)',
-                              fontSize: '9px', fontWeight: 600, color: '#FFFFFF',
-                              letterSpacing: '0.08em', textTransform: 'uppercase',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.2)',
-                              display: 'flex', alignItems: 'center', gap: '5px',
+                              position: 'absolute', top: '8px', left: '8px',
+                              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
+                              padding: '4px 9px', borderRadius: 'var(--radius-full)',
+                              fontSize: '9px', fontWeight: 700, color: '#0D9488',
+                              letterSpacing: '0.04em', textTransform: 'uppercase',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid rgba(255,255,255,0.95)',
+                              display: 'flex', alignItems: 'center', gap: '4px',
                             }}>
-                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981' }} />
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0D9488' }} />
                               Hub Verified
                             </div>
                           </div>
-                          <div className="prod-card-body" style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '9px', color: '#C5A880', fontWeight: 700, marginBottom: '4px', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div className="prod-card-body" style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '9px', color: '#C5A880', fontWeight: 700, marginBottom: '3px', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {product.category || 'COUTURE ARCHIVE'}
                             </p>
-                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '15px', fontWeight: 600, color: '#1A1A2E', marginBottom: '12px', lineHeight: 1.3 }}>
+                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '14.5px', fontWeight: 600, color: '#1A1A2E', marginBottom: '10px', lineHeight: 1.25, height: '36px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                               {product.title}
                             </h3>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid rgba(224, 212, 204, 0.6)', paddingTop: '10px', marginTop: 'auto' }}>
-                              <div>
-                                <span style={{ fontSize: '9.5px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '1px' }}>
-                                  4-Day Rental
-                                </span>
-                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(224, 212, 204, 0.5)', paddingTop: '8px', marginTop: 'auto' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
+                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
                                   ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
                                 </span>
+                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 500 }}>/ 4d</span>
                               </div>
                               <span style={{
-                                fontSize: '11px', fontWeight: 700, color: '#FFFFFF',
-                                background: 'var(--ink)', padding: '6px 14px', borderRadius: 'var(--radius-full)',
-                                display: 'inline-flex', alignItems: 'center', gap: '3px',
-                                boxShadow: '0 2px 8px rgba(30,30,45,0.12)'
+                                fontSize: '10.5px', fontWeight: 700, color: 'var(--accent)',
+                                background: 'var(--accent-light)', padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                                display: 'inline-flex', alignItems: 'center', gap: '2px'
                               }}>
                                 Rent →
                               </span>
