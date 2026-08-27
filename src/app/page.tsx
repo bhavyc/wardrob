@@ -245,29 +245,52 @@ export default function Storefront() {
           /* Products Mobile (2-column e-commerce cards) */
           .hp-products {
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 10px !important;
+            gap: 12px !important;
           }
           .prod-card {
-            border-radius: 16px !important;
-            border: 1px solid rgba(224, 212, 204, 0.7) !important;
+            border-radius: 14px !important;
+            border: 1px solid rgba(224, 212, 204, 0.6) !important;
             background: #FFFFFF !important;
-            box-shadow: 0 4px 14px rgba(30, 30, 45, 0.04) !important;
+            box-shadow: 0 2px 12px rgba(30, 30, 45, 0.06) !important;
           }
           .prod-card-body {
-            padding: 12px 10px !important;
+            padding: 10px 10px 12px !important;
+          }
+          .prod-cat-row {
+            margin-bottom: 3px !important;
+          }
+          .prod-cat-label {
+            font-size: 9px !important;
+            letter-spacing: 0.1em !important;
+          }
+          .prod-verified-dot {
+            font-size: 8px !important;
           }
           .prod-title {
-            font-size: 13.5px !important;
+            font-size: 12.5px !important;
             line-height: 1.25 !important;
             margin-bottom: 8px !important;
-            height: 34px !important;
+            height: 32px !important;
             display: -webkit-box !important;
             -webkit-line-clamp: 2 !important;
             -webkit-box-orient: vertical !important;
             overflow: hidden !important;
           }
+          .prod-footer {
+            padding-top: 8px !important;
+          }
+          .prod-price-wrap {
+            white-space: nowrap !important;
+          }
           .prod-price {
-            font-size: 16px !important;
+            font-size: 14px !important;
+          }
+          .prod-price-unit {
+            font-size: 9.5px !important;
+          }
+          .prod-rent-btn {
+            font-size: 9.5px !important;
+            padding: 4px 9px !important;
           }
 
           /* Trust & Steps Mobile */
@@ -595,48 +618,69 @@ export default function Storefront() {
                     const displayImg = luxuryProductGallery[idx % luxuryProductGallery.length];
 
                     return (
-                      <Link href={`/product/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
+                      <Link href={`/product/${product.id}`} key={product.id} className="prod-card-link" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0 }}>
                         <div className="prod-card" style={{
-                          display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
-                          background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden',
-                          border: '1px solid rgba(224, 212, 204, 0.7)', boxShadow: '0 4px 16px rgba(30,30,45,0.04)',
-                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          display: 'flex', flexDirection: 'column',
+                          background: '#FFFFFF', borderRadius: '14px', overflow: 'hidden',
+                          border: '1px solid rgba(224, 212, 204, 0.6)',
+                          boxShadow: '0 2px 12px rgba(30,30,45,0.06)',
+                          transition: 'transform 0.25s ease, box-shadow 0.25s ease',
                         }}>
-                          <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative', overflow: 'hidden' }}>
+                          {/* — Image — */}
+                          <div style={{ position: 'relative', overflow: 'hidden' }}>
                             <img
                               src={displayImg}
                               alt={product.title}
                               onError={(e: any) => {
                                 e.currentTarget.onerror = null;
-                                e.currentTarget.src = luxuryProductGallery[idx % luxuryProductGallery.length];
+                                e.currentTarget.src = luxuryProductGallery[(idx + 1) % luxuryProductGallery.length];
                               }}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', display: 'block' }}
                             />
+                            {/* Gradient scrim at bottom of image */}
+                            <div style={{
+                              position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%',
+                              background: 'linear-gradient(to top, rgba(20,10,30,0.55) 0%, transparent 100%)'
+                            }} />
+                            {/* Category pill overlaid bottom-left */}
+                            <span style={{
+                              position: 'absolute', bottom: '9px', left: '9px',
+                              background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)',
+                              border: '1px solid rgba(255,255,255,0.35)',
+                              color: '#FFFFFF', fontSize: '8.5px', fontWeight: 700,
+                              letterSpacing: '0.1em', textTransform: 'uppercase',
+                              padding: '3px 8px', borderRadius: '20px',
+                            }}>
+                              {product.category || 'Couture'}
+                            </span>
                           </div>
-                          <div className="prod-card-body" style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                              <span style={{ fontSize: '9.5px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                                {product.category || 'COUTURE'}
-                              </span>
-                              <span style={{ fontSize: '9px', color: '#0D9488', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#0D9488' }} /> Verified
-                              </span>
-                            </div>
-                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '14.5px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', lineHeight: 1.25, height: '36px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+
+                          {/* — Card Body — */}
+                          <div className="prod-card-body" style={{ padding: '12px 11px 13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <h3 className="prod-title" style={{
+                              fontFamily: 'var(--font-serif)', fontSize: '13.5px', fontWeight: 600,
+                              color: 'var(--ink)', lineHeight: 1.3, margin: 0,
+                              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                            }}>
                               {product.title}
                             </h3>
-                            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(224, 212, 204, 0.6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
-                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                            <div className="prod-footer" style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              paddingTop: '8px', borderTop: '1px solid rgba(224,212,204,0.55)',
+                            }}>
+                              <div className="prod-price-wrap" style={{ display: 'flex', alignItems: 'baseline', gap: '2px', whiteSpace: 'nowrap' }}>
+                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
                                   ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
                                 </span>
-                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 500 }}>/ 4d</span>
+                                <span className="prod-price-unit" style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                  / 4d
+                                </span>
                               </div>
-                              <span style={{
-                                fontSize: '11px', fontWeight: 700, color: '#FFFFFF',
-                                background: 'var(--ink)', padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                                display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0,
-                                boxShadow: '0 2px 6px rgba(30,30,45,0.1)'
+                              <span className="prod-rent-btn" style={{
+                                fontFamily: 'var(--font-sans)', fontSize: '10.5px', fontWeight: 700,
+                                color: 'var(--accent)', background: 'var(--accent-light)',
+                                padding: '5px 11px', borderRadius: '20px',
+                                whiteSpace: 'nowrap', flexShrink: 0, letterSpacing: '0.02em',
                               }}>
                                 Rent →
                               </span>
