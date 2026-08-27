@@ -106,12 +106,9 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
         .pdp-sticky { position: sticky; top: 120px; display: flex; flex-direction: column; }
         .pdp-gallery { display: flex; gap: 24px; }
         .pdp-thumbnails { display: flex; flex-direction: column; gap: 16px; }
-        @media (max-width: 900px) {
-          .pdp-main { grid-template-columns: 1fr; padding: 32px 20px 60px; gap: 40px; }
-          .pdp-sticky { position: static; }
-        }
-        @media (max-width: 480px) {
-          .pdp-main { padding: 20px 14px 48px; gap: 28px; }
+        @media (max-width: 768px) {
+          .pdp-main { padding: 24px 16px 48px; gap: 32px; }
+          .pdp-title { font-size: 26px !important; margin-bottom: 16px !important; }
           .pdp-gallery { gap: 12px; }
           .pdp-thumbnails button { width: 52px !important; }
         }
@@ -121,7 +118,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
       <main className="pdp-main">
         
         {/* ━━━━━━━━ LEFT: GALLERY & PROVENANCE ━━━━━━━━ */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', width: '100%', minWidth: 0 }}>
           
           <div className="pdp-gallery">
             {/* Thumbnails */}
@@ -178,7 +175,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
             )}
           </div>
           
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', lineHeight: 1.1, marginBottom: '24px' }}>
+          <h1 className="pdp-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', lineHeight: 1.1, marginBottom: '24px' }}>
             {product.title}
           </h1>
 

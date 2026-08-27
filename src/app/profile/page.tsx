@@ -172,10 +172,15 @@ export default function CustomerProfile() {
         .prof-sidebar { position: sticky; top: 120px; }
         @media (max-width: 768px) {
           .prof-main {
-            grid-template-columns: 1fr; gap: 32px;
-            padding: 32px 20px 80px;
+            grid-template-columns: 1fr; gap: 28px;
+            padding: 24px 16px 60px;
           }
           .prof-sidebar { position: static; }
+          .prof-title { font-size: 26px !important; margin-bottom: 24px !important; }
+          .prof-booking-card { flex-direction: column !important; }
+          .prof-booking-img { width: 100% !important; height: 220px !important; }
+          .prof-booking-body { padding: 20px 16px !important; }
+          .prof-booking-grid { grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
         }
       `}</style>
       <RenterNavbar />
@@ -198,47 +203,35 @@ export default function CustomerProfile() {
               onClick={() => setActiveTab('rentals')}
               style={{ 
                 textAlign: 'left', background: 'transparent', border: 'none', 
-                fontSize: '11px', fontWeight: activeTab === 'rentals' ? 600 : 400, 
-                letterSpacing: '0.14em', textTransform: 'uppercase', 
-                color: activeTab === 'rentals' ? 'var(--ink)' : 'var(--ink-secondary)', 
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                transition: 'var(--transition-smooth)'
+                fontSize: '11px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase',
+                color: activeTab === 'rentals' ? 'var(--ink)' : 'var(--text-muted)',
+                cursor: 'pointer', display: 'flex', justifyContent: 'space-between'
               }}
             >
-              <span style={{ 
-                width: '6px', height: '6px', borderRadius: '50%', 
-                background: activeTab === 'rentals' ? 'var(--accent)' : 'transparent',
-                transition: 'background 0.3s ease'
-              }} />
-              Active Rentals
+              <span>Rentals Archive</span>
+              {activeTab === 'rentals' && <span>●</span>}
             </button>
+            
             <button 
               onClick={() => setActiveTab('wallet')}
               style={{ 
                 textAlign: 'left', background: 'transparent', border: 'none', 
-                fontSize: '11px', fontWeight: activeTab === 'wallet' ? 600 : 400, 
-                letterSpacing: '0.14em', textTransform: 'uppercase', 
-                color: activeTab === 'wallet' ? 'var(--ink)' : 'var(--ink-secondary)', 
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                transition: 'var(--transition-smooth)'
+                fontSize: '11px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase',
+                color: activeTab === 'wallet' ? 'var(--ink)' : 'var(--text-muted)',
+                cursor: 'pointer', display: 'flex', justifyContent: 'space-between'
               }}
             >
-              <span style={{ 
-                width: '6px', height: '6px', borderRadius: '50%', 
-                background: activeTab === 'wallet' ? 'var(--accent)' : 'transparent',
-                transition: 'background 0.3s ease'
-              }} />
-              Wallet Balance
+              <span>Vault Guarantee Ledger</span>
+              {activeTab === 'wallet' && <span>●</span>}
             </button>
           </div>
         </div>
 
-        {/* RIGHT WORKSPACE */}
-        <div style={{ flex: 1 }}>
-          
-          {activeTab === 'rentals' && (
+        {/* RIGHT CONTENT */}
+        <div style={{ width: '100%', minWidth: 0 }}>
+          {activeTab === 'rentals' ? (
             <div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', marginBottom: '48px' }}>Rentals Archive</h2>
+              <h2 className="prof-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', marginBottom: '48px' }}>Rentals Archive</h2>
               
               {bookings.length === 0 ? (
                 <div style={{ padding: '80px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
@@ -261,13 +254,13 @@ export default function CustomerProfile() {
                     const lister = item?.Lister?.shopName || item?.lister?.shopName || 'Atelier Collection';
                     
                     return (
-                      <div key={b.id} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', display: 'flex' }}>
-                        <div style={{ width: '160px', background: 'var(--bg-warm)', overflow: 'hidden', flexShrink: 0 }}>
+                      <div key={b.id} className="prof-booking-card" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', display: 'flex', overflow: 'hidden' }}>
+                        <div className="prof-booking-img" style={{ width: '160px', background: 'var(--bg-warm)', overflow: 'hidden', flexShrink: 0 }}>
                           <img src={img} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '32px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                        <div className="prof-booking-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '32px', minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
                             <div>
                               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>By {lister}</div>
                               <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', fontWeight: 400, color: 'var(--ink)' }}>{title}</h3>
@@ -275,7 +268,7 @@ export default function CustomerProfile() {
                             <StatusBadge status={b.status} />
                           </div>
                           
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', fontSize: '13px', marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
+                          <div className="prof-booking-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', fontSize: '13px', marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
                             <div>
                               <span style={{ display: 'block', color: 'var(--ink-secondary)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '6px' }}>Registry ID</span>
                               <strong style={{ fontWeight: 500 }}>#{b.id.substring(0,8).toUpperCase()}</strong>

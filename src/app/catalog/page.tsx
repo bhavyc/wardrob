@@ -75,24 +75,25 @@ function CatalogContent() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       <style>{`
-        .cat-header { background: var(--bg-warm); padding: 64px 40px; border-bottom: 1px solid var(--border); }
+        .cat-header { background: var(--bg-warm); padding: 56px 40px; border-bottom: 1px solid var(--border); }
         .cat-main {
           flex: 1; display: flex; gap: 48px; max-width: 1400px; margin: 0 auto;
           width: 100%; padding: 48px 40px; align-items: flex-start;
         }
         .cat-sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 100px; }
-        .cat-mobile-pills { display: none; overflow-x: auto; gap: 8px; padding: 0 20px 16px; -webkit-overflow-scrolling: touch; }
+        .cat-mobile-pills { display: none; overflow-x: auto; gap: 8px; padding: 12px 16px; -webkit-overflow-scrolling: touch; background: var(--bg-warm); border-bottom: 1px solid var(--border); }
         .cat-mobile-pills::-webkit-scrollbar { display: none; }
         .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         @media (max-width: 1024px) {
-          .cat-grid { grid-template-columns: repeat(2, 1fr); }
+          .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
         }
         @media (max-width: 768px) {
-          .cat-header { padding: 40px 20px; }
-          .cat-main { padding: 24px 20px; flex-direction: column; gap: 0; }
+          .cat-header { padding: 32px 16px; }
+          .cat-header h1 { font-size: 28px !important; }
+          .cat-main { padding: 20px 14px; flex-direction: column; gap: 0; }
           .cat-sidebar { display: none !important; }
           .cat-mobile-pills { display: flex !important; }
-          .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+          .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         }
       `}</style>
       <RenterNavbar />
@@ -101,11 +102,11 @@ function CatalogContent() {
       <div className="cat-header">
         <div style={{ maxWidth: '1400px', margin: '0 auto', textAlign: 'center' }}>
           <span style={{
-            display: 'inline-block', fontSize: '12px', fontWeight: 600, color: 'var(--accent)',
-            letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px',
-            background: 'var(--accent-light)', padding: '6px 18px', borderRadius: 'var(--radius-full)',
+            display: 'inline-block', fontSize: '11px', fontWeight: 600, color: 'var(--accent)',
+            letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px',
+            background: 'var(--accent-light)', padding: '4px 14px', borderRadius: 'var(--radius-full)',
           }}>Curated Archives</span>
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 700, color: 'var(--ink)' }}>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '38px', fontWeight: 700, color: 'var(--ink)' }}>
             {searchQuery ? `Search: "${searchQuery}"` : (selectedCategory === 'All' ? 'The Complete Collection' : `${selectedCategory} Collection`)}
           </h1>
         </div>
@@ -118,94 +119,95 @@ function CatalogContent() {
             key={cat}
             onClick={() => {
               setSelectedCategory(cat);
-              router.push(`/catalog?category=${cat}${searchQuery ? `&q=${searchQuery}` : ''}`);
+              setCurrentPage(1);
             }}
             style={{
-              flexShrink: 0, padding: '8px 20px', borderRadius: 'var(--radius-full)',
-              fontSize: '13px', fontWeight: selectedCategory === cat ? 600 : 400,
-              background: selectedCategory === cat ? 'var(--accent-light)' : '#FFF',
-              color: selectedCategory === cat ? 'var(--accent)' : 'var(--ink-secondary)',
-              border: `1px solid ${selectedCategory === cat ? 'var(--accent)' : 'var(--border)'}`,
-              cursor: 'pointer', whiteSpace: 'nowrap',
+              padding: '8px 18px', borderRadius: 'var(--radius-full)', fontSize: '12px', fontWeight: 600,
+              border: selectedCategory === cat ? '1px solid var(--ink)' : '1px solid var(--border)',
+              background: selectedCategory === cat ? 'var(--ink)' : '#FFFFFF',
+              color: selectedCategory === cat ? '#FFFFFF' : 'var(--ink-secondary)',
+              cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
             }}
           >
-            {cat === 'All' ? 'All' : cat}
+            {cat}
           </button>
         ))}
       </div>
 
       <main className="cat-main">
-        
-        {/* ━━━━━━━━ SIDEBAR FILTER ━━━━━━━━ */}
+        {/* ━━━━━━━━ SIDEBAR (DESKTOP) ━━━━━━━━ */}
         <aside className="cat-sidebar">
           <div style={{
-            background: '#FFFFFF', borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border)', padding: '28px 24px',
+            background: '#FFFFFF', padding: '28px 24px', borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
           }}>
-            <h4 style={{
-              fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-              letterSpacing: '0.12em', color: 'var(--ink-secondary)', marginBottom: '20px',
-            }}>
+            <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '20px' }}>
               Categories
-            </h4>
+            </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {categories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => {
                     setSelectedCategory(cat);
-                    router.push(`/catalog?category=${cat}${searchQuery ? `&q=${searchQuery}` : ''}`);
+                    setCurrentPage(1);
                   }}
                   style={{
-                    background: selectedCategory === cat ? 'var(--accent-light)' : 'transparent',
-                    border: 'none', cursor: 'pointer', textAlign: 'left',
-                    fontSize: '14px',
+                    textAlign: 'left', background: selectedCategory === cat ? 'var(--accent-light)' : 'transparent',
+                    border: 'none', padding: '10px 14px', borderRadius: 'var(--radius-md)',
                     color: selectedCategory === cat ? 'var(--accent)' : 'var(--ink-secondary)',
-                    fontWeight: selectedCategory === cat ? 600 : 400,
-                    padding: '10px 14px',
-                    borderRadius: 'var(--radius-md)',
-                    transition: 'all 0.2s ease',
-                    display: 'flex', alignItems: 'center', gap: '10px',
+                    fontWeight: selectedCategory === cat ? 700 : 400, fontSize: '13px',
+                    cursor: 'pointer', transition: 'var(--transition-smooth)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}
                 >
-                  <span style={{ 
-                    width: '7px', height: '7px', borderRadius: '50%', 
-                    background: selectedCategory === cat ? 'var(--accent)' : 'var(--border)',
-                    transition: 'background 0.3s ease',
-                  }} />
-                  {cat === 'All' ? 'All Pieces' : `${cat}s`}
+                  <span>{cat}</span>
+                  {selectedCategory === cat && <span style={{ fontSize: '12px' }}>✓</span>}
                 </button>
               ))}
             </div>
+
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  marginTop: '20px', width: '100%', background: 'none', border: '1px dashed var(--border)',
+                  padding: '8px', borderRadius: 'var(--radius-md)', fontSize: '11px', color: 'var(--accent)',
+                  cursor: 'pointer',
+                }}
+              >
+                Clear Search &quot;{searchQuery}&quot;
+              </button>
+            )}
           </div>
         </aside>
 
         {/* ━━━━━━━━ PRODUCT GRID ━━━━━━━━ */}
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: '32px',
+            marginBottom: '24px',
           }}>
             <span style={{
-              fontSize: '13px', color: 'var(--text-muted)',
-              background: 'var(--bg-warm)', padding: '6px 16px',
-              borderRadius: 'var(--radius-full)',
+              fontSize: '12px', color: 'var(--text-muted)',
+              background: 'var(--bg-warm)', padding: '5px 14px',
+              borderRadius: 'var(--radius-full)', fontWeight: 500,
             }}>
-              {filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'}
+              {filteredProducts.length} {filteredProducts.length === 1 ? 'garment' : 'garments'} available
             </span>
           </div>
 
           {loading ? (
-            <div style={{ padding: '120px 0', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>
+            <div style={{ padding: '80px 0', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>
               Loading collection…
             </div>
           ) : filteredProducts.length === 0 ? (
             <div style={{
-              padding: '100px 40px', textAlign: 'center', borderRadius: 'var(--radius-lg)',
+              padding: '60px 20px', textAlign: 'center', borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF', border: '1px solid var(--border)',
             }}>
-              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 600, marginBottom: '12px', color: 'var(--ink)' }}>No pieces found</h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>Try adjusting your filters or search query.</p>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', fontWeight: 600, marginBottom: '8px', color: 'var(--ink)' }}>No pieces found</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>Try adjusting your filters or search query.</p>
               <button 
                 onClick={() => {
                   setSearchQuery('');
@@ -213,8 +215,8 @@ function CatalogContent() {
                   router.push('/catalog');
                 }}
                 style={{ 
-                  background: 'var(--accent-light)', color: 'var(--accent)', 
-                  border: 'none', padding: '12px 28px', fontSize: '13px', fontWeight: 600,
+                  background: 'var(--ink)', color: '#FFFFFF', 
+                  border: 'none', padding: '10px 24px', fontSize: '12px', fontWeight: 600,
                   borderRadius: 'var(--radius-full)', cursor: 'pointer',
                 }}
               >
@@ -226,71 +228,85 @@ function CatalogContent() {
               <div className="cat-grid">
                 {filteredProducts
                   .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-                  .map(p => (
-                  <Link key={p.id} href={`/product/${p.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
-                    <div className="prod-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
-                      <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative' }}>
-                        <img
-                          src={p.images && p.images.length > 0 && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'}
-                          alt={p.title}
-                          onError={(e: any) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800';
-                          }}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                        
-                        {/* Verified badge */}
-                        <div style={{
-                          position: 'absolute', top: '12px', left: '12px',
-                          background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
-                          padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                          fontSize: '10px', fontWeight: 600, color: 'var(--success)', letterSpacing: '0.04em',
-                        }}>
-                          ● Verified
-                        </div>
+                  .map((p, idx) => {
+                    const fallbackGallery = [
+                      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800',
+                      'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&q=80&w=800',
+                      'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&q=80&w=800',
+                      'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=800',
+                    ];
+                    const rawImg = p.images && p.images.length > 0 && p.images[0] ? p.images[0] : '';
+                    const isShirt = rawImg.includes('photo-1596755094514') || !rawImg;
+                    const displayImg = isShirt ? fallbackGallery[idx % fallbackGallery.length] : rawImg;
 
-                        {p.stock === 0 && (
-                          <div style={{
-                            position: 'absolute', inset: 0, background: 'rgba(255,250,245,0.85)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            borderRadius: 'var(--radius-md)',
-                          }}>
-                            <span style={{
-                              fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
-                              color: 'var(--ink)', border: '1.5px solid var(--ink)', padding: '10px 24px',
-                              borderRadius: 'var(--radius-full)',
-                            }}>Waitlist</span>
+                    return (
+                      <Link key={p.id} href={`/product/${p.id}`} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
+                        <div className="prod-card" style={{
+                          display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
+                          background: '#FFFFFF', borderRadius: '18px', overflow: 'hidden',
+                          border: '1px solid rgba(224, 212, 204, 0.7)', boxShadow: '0 4px 16px rgba(30,30,45,0.04)',
+                        }}>
+                          <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative', overflow: 'hidden' }}>
+                            <img
+                              src={displayImg}
+                              alt={p.title}
+                              onError={(e: any) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = fallbackGallery[idx % fallbackGallery.length];
+                              }}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <div style={{
+                              position: 'absolute', top: '8px', left: '8px',
+                              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
+                              padding: '4px 9px', borderRadius: 'var(--radius-full)',
+                              fontSize: '9px', fontWeight: 700, color: '#0D9488',
+                              letterSpacing: '0.04em', textTransform: 'uppercase',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid rgba(255,255,255,0.95)',
+                              display: 'flex', alignItems: 'center', gap: '4px',
+                            }}>
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0D9488' }} />
+                              Hub Verified
+                            </div>
+                            {p.stock === 0 && (
+                              <div style={{
+                                position: 'absolute', inset: 0, background: 'rgba(255,250,245,0.88)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              }}>
+                                <span style={{
+                                  fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                                  color: 'var(--ink)', border: '1px solid var(--ink)', padding: '6px 16px',
+                                }}>Waitlist</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      
-                      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500,
-                          textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px',
-                        }}>
-                          {p.Lister?.shopName || 'Atelier Collection'}
+                          <div className="prod-card-body" style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '9.5px', color: 'var(--accent)', fontWeight: 700, marginBottom: '4px', letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {p.title.toLowerCase().includes('saree') ? 'SAREE' : (p.title.toLowerCase().includes('lehenga') ? 'BRIDAL LEHENGA' : 'DESIGNER ARCHIVE')}
+                            </p>
+                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '15px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', lineHeight: 1.3 }}>
+                              {p.title}
+                            </h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
+                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                                  ₹{Number(p.price).toLocaleString('en-IN')}
+                                </span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>/ 4d</span>
+                              </div>
+                              <span style={{
+                                fontSize: '11px', fontWeight: 700, color: 'var(--accent)',
+                                background: 'var(--accent-light)', padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                                display: 'inline-flex', alignItems: 'center', gap: '2px'
+                              }}>
+                                Rent →
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        
-                        <h3 style={{ 
-                          fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: 'var(--ink)', 
-                          marginBottom: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        }}>
-                          {p.title}
-                        </h3>
-                        
-                        <div style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto'
-                        }}>
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>4-Day Rental</span>
-                          <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '19px', fontWeight: 700, color: 'var(--ink)' }}>₹{p.price.toLocaleString('en-IN')}</strong>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                      </Link>
+                    );
+                  })}
               </div>
               <Pagination
                 currentPage={currentPage}

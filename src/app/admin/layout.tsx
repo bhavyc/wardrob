@@ -18,6 +18,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
@@ -530,16 +532,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           animation: adminContentIn 0.3s ease-out;
         }
 
+        .adm-mobile-btn { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: #0F172A; }
+        .adm-mobile-backdrop { display: none; }
+
         @media (max-width: 768px) {
-          .adm-sidebar { display: none; }
-          .adm-content { padding: 16px; }
-          .adm-topbar { padding: 0 16px; }
+          .adm-mobile-btn { display: flex !important; }
+          .adm-mobile-backdrop {
+            display: block !important;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 95;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+          }
+          .adm-mobile-backdrop.open { opacity: 1; pointer-events: auto; }
+          .adm-sidebar {
+            display: flex !important;
+            position: fixed !important; left: 0; top: 0; bottom: 0;
+            z-index: 100 !important;
+            width: 260px !important;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+          }
+          .adm-sidebar.mobile-open {
+            transform: translateX(0) !important;
+          }
+          .adm-content { padding: 16px !important; }
+          .adm-topbar { padding: 0 16px !important; }
         }
       `}</style>
 
       <div className="adm-root">
+        {/* Mobile Backdrop */}
+        <div className={`adm-mobile-backdrop ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
+
         {/* Sidebar */}
-        <aside className="adm-sidebar">
+        <aside className={`adm-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           {/* Brand header */}
           <div className="adm-brand">
             {!sidebarCollapsed ? (
@@ -582,6 +607,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`adm-nav-item ${isActive ? 'active' : ''}`}
                   title={sidebarCollapsed ? link.label : undefined}
                 >
@@ -633,10 +659,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Top Header */}
           <header className="adm-topbar">
             <div className="adm-topbar-left">
-              <span className="adm-topbar-title">WARDROB Operations Center</span>
+              <button className="adm-mobile-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle navigation">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="12" x2="21" y2="12" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+              </button>
+              <span className="adm-topbar-title">WARDROB Admin</span>
               <span className="adm-topbar-badge">
                 <span className="adm-topbar-dot" />
-                P2P Rental Live
+                Live
               </span>
             </div>
             <div className="adm-topbar-right">

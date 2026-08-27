@@ -230,7 +230,7 @@ function CheckoutContent() {
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--ink)' }}>
         <RenterNavbar />
         <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-          <div style={{ background: 'var(--bg-card)', padding: '64px', border: '1px solid var(--border)', textAlign: 'center', maxWidth: '540px' }}>
+          <div className="checkout-success-card" style={{ background: 'var(--bg-card)', padding: '64px', border: '1px solid var(--border)', textAlign: 'center', maxWidth: '540px', width: '100%' }}>
             <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '16px' }}>Reservation Confirmed</p>
             <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, marginBottom: '24px', color: 'var(--ink)', lineHeight: 1.1 }}>Archive Secured</h1>
             <p style={{ fontSize: '14px', color: 'var(--ink-secondary)', marginBottom: '48px', lineHeight: 1.7 }}>
@@ -276,17 +276,15 @@ function CheckoutContent() {
         .checkout-addr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .checkout-scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; font-size: 14px; }
         .checkout-order-panel { position: sticky; top: 100px; }
-        @media (max-width: 900px) {
-          .checkout-main { grid-template-columns: 1fr; padding: 32px 20px 60px; gap: 40px; }
-          .checkout-order-panel { position: static; }
+        @media (max-width: 768px) {
+          .checkout-main { padding: 24px 16px 48px; gap: 32px; }
+          .checkout-title { font-size: 28px !important; margin-bottom: 24px !important; }
+          .checkout-success-card { padding: 32px 20px !important; }
+          .checkout-addr-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+          .checkout-scope-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
         }
         @media (max-width: 560px) {
-          .checkout-main { padding: 24px 14px 48px; }
-          .checkout-addr-grid { grid-template-columns: 1fr 1fr; }
-          .checkout-scope-grid { grid-template-columns: 1fr; gap: 12px; }
-        }
-        @media (max-width: 400px) {
-          .checkout-addr-grid { grid-template-columns: 1fr; }
+          .checkout-main { padding: 20px 14px 48px; }
         }
       `}</style>
       <RenterNavbar />
@@ -295,7 +293,7 @@ function CheckoutContent() {
         
         {/* LEFT PANEL */}
         <div>
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', marginBottom: '48px' }}>Rental Registry</h1>
+          <h1 className="checkout-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', marginBottom: '48px' }}>Rental Registry</h1>
           
           <form onSubmit={handlePlaceOrder}>
             {/* Shipping */}
