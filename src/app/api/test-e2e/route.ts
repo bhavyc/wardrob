@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 
 export async function GET() {
   try {
-    let logs = [];
+    const logs: string[] = [];
     const log = (msg: string) => {
       console.log(msg);
       logs.push(msg);
@@ -38,13 +38,13 @@ export async function GET() {
         sku: 'E2E-GWN-' + Date.now(),
       }
     });
-
+   
     // 3. Test Booking & Force Settle Flow
     log('🔄 Testing Force Settle Flow...');
     const now = new Date();
     const pastDate = new Date(now.getTime() - (20 * 24 * 60 * 60 * 1000));
     const endDate = new Date(now.getTime() - (16 * 24 * 60 * 60 * 1000));
-
+  
     const booking1 = await prisma.booking.create({
       data: {
         renterId: renter.id,
@@ -158,8 +158,7 @@ export async function GET() {
           bookingId: booking2.id,
           userId: renter.id,
           amount: 3000,
-          reason: 'Remaining deposit after damage deduction',
-          status: 'PROCESSED'
+          status: 'COMPLETED'
         }
       });
       await tx.booking.update({ where: { id: booking2.id }, data: { status: 'COMPLETED' } });

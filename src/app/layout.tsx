@@ -19,6 +19,12 @@ export const metadata = {
   description: 'India\'s premier peer-to-peer luxury fashion rental platform. Rent designer lehengas, sarees, sherwanis & more for your special occasions.',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {

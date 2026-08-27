@@ -234,7 +234,7 @@ input:focus, textarea:focus, select:focus {
   
   input, textarea, select {
     padding: 12px 14px;
-    font-size: 14px;
+    font-size: 16px; /* Prevent iOS auto-zoom on focus */
   }
   
   .prod-card:active {
@@ -255,4 +255,15 @@ input:focus, textarea:focus, select:focus {
     transform: none;
     box-shadow: none;
   }
+
+  /* Make all buttons/links at least 44px tall for touch targets */
+  button, a {
+    min-height: 36px;
+  }
+}
+
+/* ═══ RESPONSIVE — SMALL MOBILE (≤480px) ═══ */
+@media (max-width: 480px) {
+  h1 { font-size: 28px !important; }
+  h2 { font-size: 22px !important; }
 }

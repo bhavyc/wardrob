@@ -164,16 +164,21 @@ export default function Storefront() {
         .hp-section { padding: 100px 40px; }
         .hp-section-sm { padding: 0 40px 100px; }
         .hp-cta-heading { font-size: 48px !important; }
+        .hp-hero-content { padding: 60px 80px; }
+        .hp-hero-badge-float { display: block; }
+        .hp-hero-badge-top { display: flex; }
+        .hp-stats-bar { display: flex; justify-content: center; gap: 80px; padding: 36px 40px; flex-wrap: wrap; max-width: 1000px; margin: -40px auto 0; }
+        .hp-stats-divider { display: block; width: 1px; background: var(--border); }
 
         @media (max-width: 1024px) {
           .hp-hero { grid-template-columns: 1fr; gap: 48px; }
           .hp-steps { grid-template-columns: repeat(2, 1fr); }
           .hp-categories { grid-template-columns: repeat(2, 1fr); }
           .hp-products { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+          .hp-hero-content { padding: 48px 48px; }
         }
 
         @media (max-width: 768px) {
-          .hp-hero { grid-template-columns: 1fr; gap: 36px; padding: 32px 16px 48px !important; }
           .hp-trust { grid-template-columns: 1fr; gap: 14px; }
           .hp-steps { grid-template-columns: repeat(2, 1fr); gap: 14px; }
           .hp-categories { grid-template-columns: repeat(2, 1fr); gap: 14px; }
@@ -181,21 +186,18 @@ export default function Storefront() {
           .hp-section { padding: 48px 16px; }
           .hp-section-sm { padding: 0 16px 48px; }
           .hp-cta-heading { font-size: 32px !important; }
-          
-          .hp-float-badge { 
-            bottom: -16px !important; 
-            left: 12px !important; 
-            padding: 12px 18px !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
-          }
-          .hp-float-badge h4 { font-size: 14px !important; }
-          .hp-float-badge span { font-size: 16px !important; }
+          .hp-hero-content { padding: 32px 20px 140px; }
+          .hp-hero-badge-float { bottom: 16px !important; right: 12px !important; left: auto !important; max-width: calc(100% - 24px) !important; padding: 16px 20px !important; }
+          .hp-hero-badge-top { display: none !important; }
+          .hp-stats-bar { gap: 24px; padding: 24px 16px; margin: 0 auto; }
+          .hp-stats-divider { display: none !important; }
         }
 
         @media (max-width: 480px) {
           .hp-steps { grid-template-columns: 1fr; }
           .hp-products { grid-template-columns: repeat(2, 1fr); gap: 12px; }
           .hp-hero-image { max-width: 100%; margin: 0 auto; }
+          .hp-categories { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         }
       `}</style>
 
@@ -270,9 +272,8 @@ export default function Storefront() {
             }} />
 
             {/* Content */}
-            <div style={{
+            <div className="hp-hero-content" style={{
               position: 'relative', zIndex: 10,
-              padding: '60px 80px',
               maxWidth: '800px',
               opacity: heroLoaded ? 1 : 0,
               transform: heroLoaded ? 'translateY(0)' : 'translateY(30px)',
@@ -281,7 +282,7 @@ export default function Storefront() {
               <div style={{
                 display: 'inline-flex', alignItems: 'center', gap: '8px',
                 background: 'var(--accent-light)', padding: '6px 16px',
-                borderRadius: 'var(--radius-full)', marginBottom: '32px',
+                borderRadius: 'var(--radius-full)', marginBottom: '24px',
                 backdropFilter: 'blur(12px)', border: '1px solid rgba(212,86,122,0.2)',
               }}>
                 <span style={{ fontSize: '11px' }}>✨</span>
@@ -292,11 +293,11 @@ export default function Storefront() {
 
               <h1 style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: 'clamp(52px, 6vw, 84px)',
+                fontSize: 'clamp(36px, 6vw, 84px)',
                 fontWeight: 700,
                 lineHeight: 1.05,
                 color: 'var(--ink)',
-                marginBottom: '28px',
+                marginBottom: '20px',
                 letterSpacing: '-0.02em',
               }}>
                 Wear <span style={{ fontStyle: 'italic', color: 'var(--accent)', fontWeight: 600 }}>Designer.</span><br />
@@ -304,16 +305,16 @@ export default function Storefront() {
               </h1>
 
               <p style={{
-                fontSize: '18px', color: 'var(--ink-secondary)', lineHeight: 1.7,
-                maxWidth: '540px', marginBottom: '48px', fontWeight: 400,
+                fontSize: 'clamp(14px, 2vw, 18px)', color: 'var(--ink-secondary)', lineHeight: 1.7,
+                maxWidth: '540px', marginBottom: '32px', fontWeight: 400,
               }}>
                 Access master-crafted designer archives from top ateliers across India. Every garment is hub-inspected, 60°C ozone sterilized, and delivered with a complimentary 72-hour event buffer.
               </p>
 
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <Link href="/catalog" style={{
-                  fontSize: '15px', fontWeight: 600, color: '#FFFFFF',
-                  padding: '18px 42px', borderRadius: 'var(--radius-full)',
+                  fontSize: '14px', fontWeight: 600, color: '#FFFFFF',
+                  padding: '14px 32px', borderRadius: 'var(--radius-full)',
                   background: 'linear-gradient(135deg, #D4567A 0%, #B8405E 100%)', textDecoration: 'none',
                   transition: 'all 0.3s ease',
                   boxShadow: '0 8px 24px rgba(212,86,122,0.3)',
@@ -322,8 +323,8 @@ export default function Storefront() {
                   Explore Collection <span style={{ transition: 'transform 0.2s' }}>→</span>
                 </Link>
                 <Link href="/lister/login" style={{
-                  fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
-                  padding: '18px 42px', borderRadius: 'var(--radius-full)',
+                  fontSize: '14px', fontWeight: 600, color: 'var(--ink)',
+                  padding: '14px 32px', borderRadius: 'var(--radius-full)',
                   background: '#FFFFFF', border: '1px solid var(--border-strong)',
                   boxShadow: '0 4px 14px rgba(0,0,0,0.05)', textDecoration: 'none',
                   transition: 'all 0.3s ease', display: 'inline-block',
@@ -333,66 +334,62 @@ export default function Storefront() {
               </div>
             </div>
 
-            {/* Glass Floating Badges on the right */}
-            <div className="hp-float-badge" style={{
+            {/* Glass Floating Badge */}
+            <div className="hp-hero-badge-float" style={{
               position: 'absolute', bottom: '60px', right: '60px',
               background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)',
               borderRadius: '24px', padding: '24px 32px',
               boxShadow: '0 16px 40px rgba(0,0,0,0.08)',
               border: '1px solid rgba(255, 255, 255, 0.9)',
               animation: 'floatBadge 6s ease-in-out infinite',
-              maxWidth: '320px',
+              maxWidth: '280px',
             }}>
               <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: '10px', textTransform: 'uppercase' }}>VERIFIED COUTURE</p>
               <h4 style={{ 
-                fontFamily: 'var(--font-serif)', fontSize: '20px', color: 'var(--ink)', 
-                lineHeight: 1.3, marginBottom: '14px', fontWeight: 600
+                fontFamily: 'var(--font-serif)', fontSize: '18px', color: 'var(--ink)', 
+                lineHeight: 1.3, marginBottom: '12px', fontWeight: 600
               }}>
                 Authentic Banarasi Elegance
               </h4>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Starts at</span>
-                <span style={{ fontFamily: 'var(--font-serif)', fontSize: '26px', fontWeight: 700, color: 'var(--ink)' }}>
-                  ₹2,500
-                </span>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>/ 4 days</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Starts at</span>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>₹5,000</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/ 4 days</span>
               </div>
             </div>
 
             {/* Smaller Top Badge */}
-            <div style={{
+            <div className="hp-hero-badge-top" style={{
               position: 'absolute', top: '40px', right: '40px',
               background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(16px)',
               padding: '12px 24px', borderRadius: 'var(--radius-full)',
               fontSize: '12px', fontWeight: 600, color: 'var(--accent)',
               border: '1px solid rgba(255, 255, 255, 0.9)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-              display: 'flex', alignItems: 'center', gap: '8px',
+              alignItems: 'center', gap: '8px',
             }}>
               <span style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.8))' }}>✨</span> Hub-Inspected & Ozone Cleaned
             </div>
           </div>
 
           {/* Quick Stats Banner Below */}
-          <div style={{
-            display: 'flex', justifyContent: 'center', gap: '80px',
-            padding: '36px 40px', marginTop: '-40px', position: 'relative', zIndex: 20,
+          <div className="hp-stats-bar" style={{
+            position: 'relative', zIndex: 20,
             background: 'var(--bg)', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
             boxShadow: '0 -20px 40px rgba(0,0,0,0.03)',
-            flexWrap: 'wrap', maxWidth: '1000px', margin: '-40px auto 0',
           }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 700, color: 'var(--ink)' }}>4 Days</p>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 700, color: 'var(--ink)' }}>4 Days</p>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Base Rental</p>
             </div>
-            <div style={{ width: '1px', background: 'var(--border)' }} />
+            <div className="hp-stats-divider" />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 700, color: 'var(--ink)' }}>72 Hrs</p>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 700, color: 'var(--ink)' }}>72 Hrs</p>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Free Transit Buffer</p>
             </div>
-            <div style={{ width: '1px', background: 'var(--border)' }} />
+            <div className="hp-stats-divider" />
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 700, color: 'var(--ink)' }}>100%</p>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 700, color: 'var(--ink)' }}>100%</p>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Authenticity Checked</p>
             </div>
           </div>

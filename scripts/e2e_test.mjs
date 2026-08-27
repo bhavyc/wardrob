@@ -3,7 +3,7 @@ const { PrismaClient } = pkg;
 const prisma = new PrismaClient();
 
 async function runTests() {
-  console.log('🧪 Starting E2E Financial Flow Tests...');
+  console.log('Starting E2E Financial Flow Tests...');
 
   try {
     // 1. Setup Test Users

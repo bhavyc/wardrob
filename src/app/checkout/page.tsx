@@ -267,12 +267,31 @@ function CheckoutContent() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <style>{`
+        .checkout-main {
+          flex: 1; max-width: 1440px; margin: 0 auto; width: 100%;
+          padding: 64px 48px 120px; display: grid;
+          grid-template-columns: 1.4fr 1fr; gap: 80px; align-items: flex-start;
+        }
+        .checkout-addr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .checkout-scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; font-size: 14px; }
+        .checkout-order-panel { position: sticky; top: 100px; }
+        @media (max-width: 900px) {
+          .checkout-main { grid-template-columns: 1fr; padding: 32px 20px 60px; gap: 40px; }
+          .checkout-order-panel { position: static; }
+        }
+        @media (max-width: 560px) {
+          .checkout-main { padding: 24px 14px 48px; }
+          .checkout-addr-grid { grid-template-columns: 1fr 1fr; }
+          .checkout-scope-grid { grid-template-columns: 1fr; gap: 12px; }
+        }
+        @media (max-width: 400px) {
+          .checkout-addr-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
       <RenterNavbar />
       
-      <main style={{ 
-        flex: 1, maxWidth: '1440px', margin: '0 auto', width: '100%', 
-        padding: '64px 48px 120px', display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '80px', alignItems: 'flex-start' 
-      }}>
+      <main className="checkout-main">
         
         {/* LEFT PANEL */}
         <div>
@@ -288,7 +307,7 @@ function CheckoutContent() {
                 <input required value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} style={{ width: '100%', padding: '16px', background: 'transparent' }} placeholder="Suite, Flat, or Street Landmark" />
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+              <div className="checkout-addr-grid">
                 <div>
                   <label style={labelStyle}>City</label>
                   <input required value={city} onChange={e => setCity(e.target.value)} style={{ width: '100%', padding: '16px', background: 'transparent' }} placeholder="Delhi" />
@@ -307,7 +326,7 @@ function CheckoutContent() {
             {/* Rental Scope */}
             <div style={{ marginBottom: '64px', borderTop: '1px solid var(--border)', paddingTop: '48px' }}>
               <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: '24px', color: 'var(--text-muted)' }}>Rental Scope</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', fontSize: '14px' }}>
+              <div className="checkout-scope-grid">
                 <div>
                   <span style={{ color: 'var(--ink-secondary)', display: 'block', marginBottom: '8px', fontSize: '12px' }}>Target Event Date</span>
                   <strong style={{ fontWeight: 500, color: 'var(--ink)' }}>{new Date(eventDate).toLocaleDateString('en-IN', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}</strong>

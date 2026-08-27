@@ -97,19 +97,35 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <style>{`
+        .pdp-main {
+          flex: 1; max-width: 1440px; margin: 0 auto; width: 100%;
+          padding: 64px 48px 120px; display: grid;
+          grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: flex-start;
+        }
+        .pdp-sticky { position: sticky; top: 120px; display: flex; flex-direction: column; }
+        .pdp-gallery { display: flex; gap: 24px; }
+        .pdp-thumbnails { display: flex; flex-direction: column; gap: 16px; }
+        @media (max-width: 900px) {
+          .pdp-main { grid-template-columns: 1fr; padding: 32px 20px 60px; gap: 40px; }
+          .pdp-sticky { position: static; }
+        }
+        @media (max-width: 480px) {
+          .pdp-main { padding: 20px 14px 48px; gap: 28px; }
+          .pdp-gallery { gap: 12px; }
+          .pdp-thumbnails button { width: 52px !important; }
+        }
+      `}</style>
       <RenterNavbar />
 
-      <main style={{ 
-        flex: 1, maxWidth: '1440px', margin: '0 auto', width: '100%', 
-        padding: '64px 48px 120px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '80px', alignItems: 'flex-start' 
-      }}>
+      <main className="pdp-main">
         
         {/* ━━━━━━━━ LEFT: GALLERY & PROVENANCE ━━━━━━━━ */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
           
-          <div style={{ display: 'flex', gap: '24px' }}>
+          <div className="pdp-gallery">
             {/* Thumbnails */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="pdp-thumbnails">
               {product.images.map((img, i) => (
                 <button 
                   key={i} 
@@ -151,7 +167,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* ━━━━━━━━ RIGHT: DETAILS & BOOKING ━━━━━━━━ */}
-        <div style={{ position: 'sticky', top: '120px', display: 'flex', flexDirection: 'column' }}>
+        <div className="pdp-sticky">
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <p style={{ ...labelStyle, margin: 0 }}>{listerName}</p>
