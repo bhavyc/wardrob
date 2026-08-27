@@ -452,9 +452,7 @@ export default function CustomerProfile() {
                 </div>
               )}
             </div>
-          )}
-
-          {activeTab === 'wallet' && (
+          ) : (
             <div>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', marginBottom: '48px' }}>Platform Wallet</h2>
               
