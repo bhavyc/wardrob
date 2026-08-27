@@ -169,6 +169,20 @@ export default function Storefront() {
         .hp-hero-badge-top { display: flex; }
         .hp-stats-bar { display: flex; justify-content: center; gap: 80px; padding: 36px 40px; flex-wrap: wrap; max-width: 1000px; margin: -40px auto 0; }
         .hp-stats-divider { display: block; width: 1px; background: var(--border); }
+        .hp-hero-card {
+          position: relative;
+          border-radius: 32px;
+          overflow: hidden;
+          background-color: var(--bg);
+          min-height: 640px;
+          display: flex;
+          align-items: center;
+          box-shadow: 0 24px 60px -10px rgba(212,86,122,0.15);
+        }
+        .hp-hero-bg-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(90deg, #FFFAF5 0%, #FFFAF5 42%, rgba(255,250,245,0.75) 55%, rgba(255,250,245,0) 75%);
+        }
 
         @media (max-width: 1024px) {
           .hp-hero { grid-template-columns: 1fr; gap: 48px; }
@@ -179,25 +193,82 @@ export default function Storefront() {
         }
 
         @media (max-width: 768px) {
-          .hp-trust { grid-template-columns: 1fr; gap: 14px; }
-          .hp-steps { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-          .hp-categories { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-          .hp-products { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-          .hp-section { padding: 48px 16px; }
-          .hp-section-sm { padding: 0 16px 48px; }
-          .hp-cta-heading { font-size: 32px !important; }
-          .hp-hero-content { padding: 32px 20px 140px; }
-          .hp-hero-badge-float { bottom: 16px !important; right: 12px !important; left: auto !important; max-width: calc(100% - 24px) !important; padding: 16px 20px !important; }
-          .hp-hero-badge-top { display: none !important; }
-          .hp-stats-bar { gap: 24px; padding: 24px 16px; margin: 0 auto; }
+          .hp-hero-card {
+            min-height: auto !important;
+            border-radius: 20px !important;
+            padding: 20px 0 !important;
+          }
+          .hp-hero-bg-overlay {
+            background: linear-gradient(180deg, rgba(255,250,245,0.94) 0%, rgba(255,250,245,0.88) 60%, rgba(255,250,245,0.96) 100%) !important;
+          }
+          .hp-hero-content {
+            padding: 24px 20px 24px !important;
+            text-align: center !important;
+          }
+          .hp-hero-content p {
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
+          .hp-hero-content div:last-child {
+            justify-content: center !important;
+          }
+          .hp-hero-badge-float, .hp-hero-badge-top {
+            display: none !important;
+          }
+          .hp-stats-bar {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 6px !important;
+            padding: 16px 8px !important;
+            margin: -24px 12px 0 !important;
+            background: #FFFFFF !important;
+            border-radius: 18px !important;
+            border: 1px solid var(--border) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
+          }
+          .hp-stats-bar p:first-child {
+            font-size: 16px !important;
+          }
+          .hp-stats-bar p:last-child {
+            font-size: 9px !important;
+            letter-spacing: 0.02em !important;
+          }
           .hp-stats-divider { display: none !important; }
+
+          .hp-trust { grid-template-columns: 1fr; gap: 10px; }
+          .hp-steps { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .hp-steps > div { padding: 18px 14px !important; }
+          .hp-steps h3 { font-size: 16px !important; }
+
+          .hp-categories {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .hp-categories .hover-scale-img > div {
+            aspect-ratio: 1 / 1 !important;
+            margin-bottom: 0 !important;
+          }
+
+          .hp-products {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 10px !important;
+          }
+          .prod-card {
+            border-radius: 14px !important;
+          }
+
+          .hp-section { padding: 40px 14px !important; }
+          .hp-section-sm { padding: 0 14px 40px !important; }
+          .hp-cta-heading { font-size: 28px !important; }
         }
 
         @media (max-width: 480px) {
-          .hp-steps { grid-template-columns: 1fr; }
-          .hp-products { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-          .hp-hero-image { max-width: 100%; margin: 0 auto; }
-          .hp-categories { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .hp-hero-card { min-height: auto !important; }
+          .hp-hero-content h1 { font-size: 32px !important; }
+          .hp-categories { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .hp-products { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
         }
       `}</style>
 
@@ -249,16 +320,7 @@ export default function Storefront() {
           position: 'relative',
           maxWidth: '1440px', margin: '20px auto 60px', padding: '0 20px',
         }}>
-          <div style={{
-            position: 'relative',
-            borderRadius: '32px',
-            overflow: 'hidden',
-            backgroundColor: 'var(--bg)',
-            minHeight: '640px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 24px 60px -10px rgba(212,86,122,0.15)',
-          }}>
+          <div className="hp-hero-card">
             {/* Background Image with Cinematic Gradient */}
             <div style={{
               position: 'absolute', inset: 0,
@@ -266,10 +328,7 @@ export default function Storefront() {
               backgroundSize: 'cover',
               backgroundPosition: 'center center',
             }} />
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(90deg, #FFFAF5 0%, #FFFAF5 42%, rgba(255,250,245,0.75) 55%, rgba(255,250,245,0) 75%)',
-            }} />
+            <div className="hp-hero-bg-overlay" />
 
             {/* Content */}
             <div className="hp-hero-content" style={{
