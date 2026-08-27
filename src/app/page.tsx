@@ -231,25 +231,21 @@ export default function Storefront() {
           /* Category Grid Mobile */
           .hp-categories {
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 12px !important;
+            gap: 10px !important;
           }
-          .cat-badge-box {
-            padding: 8px 10px !important;
-            bottom: 8px !important;
-            left: 8px !important;
-            right: 8px !important;
+          .cat-title {
+            font-size: 14px !important;
+            line-height: 1.25 !important;
           }
-          .cat-badge-box span:first-child {
-            font-size: 11px !important;
-          }
-          .cat-badge-box span:last-child {
-            font-size: 10px !important;
+          .cat-tag {
+            font-size: 9px !important;
+            letter-spacing: 0.08em !important;
           }
 
           /* Products Mobile (2-column e-commerce cards) */
           .hp-products {
             grid-template-columns: repeat(2, 1fr) !important;
-            gap: 12px !important;
+            gap: 10px !important;
           }
           .prod-card {
             border-radius: 14px !important;
@@ -262,10 +258,20 @@ export default function Storefront() {
           }
           .prod-title {
             font-size: 13px !important;
+            line-height: 1.25 !important;
             margin-bottom: 8px !important;
+            white-space: normal !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
           }
           .prod-price {
-            font-size: 15px !important;
+            font-size: 15.5px !important;
+          }
+          .prod-rent-badge {
+            font-size: 10px !important;
+            padding: 3px 8px !important;
           }
 
           /* Trust & Steps Mobile */
@@ -500,35 +506,34 @@ export default function Storefront() {
             {categories.slice(0, categories.length > 4 ? 3 : 4).map((cat, i) => (
               <Link href={`/catalog?category=${cat.val}`} key={i} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
                 <div style={{
-                  borderRadius: '20px', overflow: 'hidden',
+                  borderRadius: '18px', overflow: 'hidden',
                   aspectRatio: '3/4', background: '#1E1E2D',
-                  position: 'relative', boxShadow: '0 8px 24px rgba(30, 30, 45, 0.08)',
+                  position: 'relative', boxShadow: '0 4px 16px rgba(30, 30, 45, 0.08)',
                   border: '1px solid var(--border)',
                 }}>
                   <img src={cat.img} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {/* Subtle Top Dark Gradient */}
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '35%', background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%)' }} />
-                  {/* Luxury Editorial Dark Gradient Overlay at Bottom */}
+                  {/* Top Right Arrow Badge */}
+                  <div style={{
+                    position: 'absolute', top: '10px', right: '10px',
+                    width: '26px', height: '26px', borderRadius: '50%',
+                    background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '11px', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.4)',
+                    zIndex: 2,
+                  }}>→</div>
+                  {/* Bottom Gradient Overlay */}
                   <div style={{
                     position: 'absolute', inset: 0,
-                    background: 'linear-gradient(180deg, rgba(30,30,45,0) 40%, rgba(30,30,45,0.7) 75%, rgba(15,15,26,0.92) 100%)',
+                    background: 'linear-gradient(180deg, rgba(30,30,45,0) 35%, rgba(15,15,26,0.85) 85%, rgba(15,15,26,0.96) 100%)',
                     display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-                    padding: '20px 18px', color: '#FFFFFF',
+                    padding: '16px 14px', color: '#FFFFFF',
                   }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#E0D4CC', marginBottom: '4px' }}>
-                      {cat.emoji} COUTURE ARCHIVE
+                    <span className="cat-tag" style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#E0D4CC', marginBottom: '3px' }}>
+                      {cat.emoji} COUTURE
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '19px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.2, margin: 0 }}>
-                        {cat.name}
-                      </h3>
-                      <span style={{
-                        width: '28px', height: '28px', borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '12px', color: '#FFFFFF', flexShrink: 0, marginLeft: '8px'
-                      }}>→</span>
-                    </div>
+                    <h3 className="cat-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.2, margin: 0 }}>
+                      {cat.name}
+                    </h3>
                   </div>
                 </div>
               </Link>
@@ -536,23 +541,23 @@ export default function Storefront() {
             {categories.length > 4 && (
               <Link href="/categories" className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
                 <div style={{
-                  borderRadius: '20px', overflow: 'hidden',
+                  borderRadius: '18px', overflow: 'hidden',
                   aspectRatio: '3/4', background: '#1E1E2D',
-                  position: 'relative', boxShadow: '0 8px 24px rgba(30, 30, 45, 0.08)',
+                  position: 'relative', boxShadow: '0 4px 16px rgba(30, 30, 45, 0.08)',
                   border: '1px solid var(--border)',
                 }}>
                   <img src={categories[3].img} alt="More Categories" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{
                     position: 'absolute', inset: 0,
-                    background: 'rgba(26, 26, 38, 0.82)', backdropFilter: 'blur(6px)',
+                    background: 'rgba(26, 26, 38, 0.85)', backdropFilter: 'blur(6px)',
                     display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    alignItems: 'center', justifyContent: 'center', gap: '6px',
                     color: '#FFFFFF',
                   }}>
-                    <span style={{ fontSize: '26px' }}>✨</span>
-                    <div style={{ textAlign: 'center', padding: '0 12px' }}>
-                      <p style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'var(--font-serif)', marginBottom: '4px' }}>+{categories.length - 3} More</p>
-                      <p style={{ fontSize: '10.5px', color: '#E0D4CC', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>Explore Archives</p>
+                    <span style={{ fontSize: '24px' }}>✨</span>
+                    <div style={{ textAlign: 'center', padding: '0 10px' }}>
+                      <p style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'var(--font-serif)', marginBottom: '2px' }}>+{categories.length - 3} More</p>
+                      <p style={{ fontSize: '10px', color: '#E0D4CC', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700 }}>Explore Archives</p>
                     </div>
                   </div>
                 </div>
@@ -599,9 +604,9 @@ export default function Storefront() {
                       <Link href={`/product/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
                         <div className="prod-card" style={{
                           display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
-                          background: '#FFFFFF', borderRadius: '20px', overflow: 'hidden',
-                          border: '1px solid rgba(224, 212, 204, 0.7)', boxShadow: '0 4px 20px rgba(30,30,45,0.04)',
-                          transition: 'all 0.4s var(--ease-out-expo)',
+                          background: '#FFFFFF', borderRadius: '18px', overflow: 'hidden',
+                          border: '1px solid rgba(224, 212, 204, 0.7)', boxShadow: '0 4px 16px rgba(30,30,45,0.04)',
+                          transition: 'all 0.3s ease',
                         }}>
                           <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative', overflow: 'hidden' }}>
                             <img
@@ -613,41 +618,40 @@ export default function Storefront() {
                               }}
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
-                            {/* Top Dark Gradient */}
-                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '30%', background: 'linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 100%)' }} />
                             {/* Glassmorphic Verified Atelier Badge */}
                             <div style={{
-                              position: 'absolute', top: '12px', left: '12px',
-                              background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
-                              padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                              fontSize: '10px', fontWeight: 700, color: '#0D9488',
-                              letterSpacing: '0.06em', textTransform: 'uppercase',
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.08)', border: '1px solid rgba(255,255,255,0.95)',
-                              display: 'flex', alignItems: 'center', gap: '6px',
+                              position: 'absolute', top: '8px', left: '8px',
+                              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
+                              padding: '4px 9px', borderRadius: 'var(--radius-full)',
+                              fontSize: '9px', fontWeight: 700, color: '#0D9488',
+                              letterSpacing: '0.04em', textTransform: 'uppercase',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid rgba(255,255,255,0.95)',
+                              display: 'flex', alignItems: 'center', gap: '4px',
                             }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0D9488' }} />
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#0D9488' }} />
                               Hub Verified
                             </div>
                           </div>
-                          <div className="prod-card-body" style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div className="prod-card-body" style={{ padding: '16px 14px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '9.5px', color: 'var(--accent)', fontWeight: 700, marginBottom: '4px', letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {product.category || 'DESIGNER ARCHIVE'}
                             </p>
-                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 600, color: 'var(--ink)', marginBottom: '16px', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '15px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', lineHeight: 1.3 }}>
                               {product.title}
                             </h3>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto' }}>
-                              <div>
-                                <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: '2px', fontWeight: 500 }}>4-Day Event Rental</span>
-                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: 'auto' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
+                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
                                   ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
                                 </span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>/ 4d</span>
                               </div>
-                              <span style={{
-                                fontSize: '12.5px', fontWeight: 600, color: 'var(--accent)',
-                                display: 'inline-flex', alignItems: 'center', gap: '4px'
+                              <span className="prod-rent-badge" style={{
+                                fontSize: '11px', fontWeight: 700, color: 'var(--accent)',
+                                background: 'var(--accent-light)', padding: '4px 10px', borderRadius: 'var(--radius-full)',
+                                display: 'inline-flex', alignItems: 'center', gap: '2px'
                               }}>
-                                Reserve →
+                                Rent →
                               </span>
                             </div>
                           </div>

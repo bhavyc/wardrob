@@ -17,15 +17,16 @@ export default function RenterFooter() {
           .ft-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
         }
         @media (max-width: 768px) {
-          .ft-grid { grid-template-columns: 1fr; gap: 32px; padding: 48px 20px 40px; }
-          .ft-bottom { flex-direction: column; gap: 12px; padding: 20px; text-align: center; }
+          .ft-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 24px 16px !important; padding: 32px 16px 24px !important; }
+          .ft-brand-col { grid-column: 1 / -1 !important; margin-bottom: 8px !important; }
+          .ft-bottom { flex-direction: column; gap: 10px; padding: 16px; text-align: center; }
         }
       `}</style>
 
       {/* Upper Footer */}
       <div className="ft-grid">
         {/* Brand Column */}
-        <div>
+        <div className="ft-brand-col">
           <h2 style={{
             fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700,
             color: 'var(--ink)', letterSpacing: '0.12em', textTransform: 'uppercase',
