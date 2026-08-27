@@ -195,6 +195,10 @@ input:focus, textarea:focus, select:focus {
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Marquee ticker */
 .marquee-track {
   display: flex;
@@ -223,14 +227,19 @@ input:focus, textarea:focus, select:focus {
 
 /* ═══ RESPONSIVE — MOBILE (≤768px) ═══ */
 @media (max-width: 768px) {
-  body { font-size: 14px; }
+  body { font-size: 14px; -webkit-overflow-scrolling: touch; }
   
-  h1 { font-size: 28px !important; }
-  h2 { font-size: 24px !important; }
+  h1 { font-size: 32px !important; line-height: 1.15 !important; }
+  h2 { font-size: 26px !important; line-height: 1.2 !important; }
   
   input, textarea, select {
     padding: 12px 14px;
     font-size: 14px;
+  }
+  
+  .prod-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
   }
   
   .prod-card:hover {

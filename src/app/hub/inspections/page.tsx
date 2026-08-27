@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import LiveCameraCapture from '@/components/LiveCameraCapture';
 
+import Pagination from '@/components/Pagination';
+
 type PhotoUpload = {
   id: string;
   localUrl: string;
@@ -18,8 +20,13 @@ export default function HubInspections() {
   const [intake, setIntake] = useState<any[]>([]);
   const [preDispatch, setPreDispatch] = useState<any[]>([]);
   const [postReturn, setPostReturn] = useState<any[]>([]);
+  const [recentInspections, setRecentInspections] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<'QUEUE' | 'HISTORY'>('QUEUE');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   // Modal State
   const [activeBooking, setActiveBooking] = useState<any>(null);
@@ -36,6 +43,8 @@ export default function HubInspections() {
   const [evidencePhotos, setEvidencePhotos] = useState<PhotoUpload[]>([]);
   const [uploading, setUploading] = useState(false); // To track if ANY are currently uploading
 
+  // Search Filter state
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [isMobile, setIsMobile] = useState(true);
 
@@ -57,6 +66,7 @@ export default function HubInspections() {
         setIntake(data.intakeBookings || []);
         setPreDispatch(data.preDispatchBookings || []);
         setPostReturn(data.postReturnBookings || []);
+        setRecentInspections(data.recentInspections || []);
       } else {
         setError(data.error || 'Failed to load bookings');
       }
@@ -204,6 +214,22 @@ export default function HubInspections() {
     }
   };
 
+  // Filter items by search query
+  const filterFn = (item: any) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    const title = (item.listing?.title || item.product?.title || '').toLowerCase();
+    const sku = (item.listing?.sku || '').toLowerCase();
+    const shelf = (item.listing?.shelfLocation || '').toLowerCase();
+    const renter = (item.renter?.name || '').toLowerCase();
+    const bookingId = (item.id || '').toLowerCase();
+    return title.includes(q) || sku.includes(q) || shelf.includes(q) || renter.includes(q) || bookingId.includes(q);
+  };
+
+  const filteredIntake = intake.filter(filterFn);
+  const filteredPreDispatch = preDispatch.filter(filterFn);
+  const filteredPostReturn = postReturn.filter(filterFn);
+
   if (loading) return <div style={{ padding: '60px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>Loading Inspections...</div>;
 
   return (
@@ -211,22 +237,55 @@ export default function HubInspections() {
       <style>{`
         @keyframes pageFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .insp-h1 { font-family: var(--font-inter), sans-serif; font-size: 32px; font-weight: 800; color: #0F172A; margin-bottom: 8px; letter-spacing: -0.02em; animation: pageFadeIn 0.4s ease both; }
-        .insp-sub { font-size: 14px; color: #64748B; font-weight: 500; margin-bottom: 32px; animation: pageFadeIn 0.4s ease 0.1s both; }
+        .insp-sub { font-size: 14px; color: #64748B; font-weight: 500; margin-bottom: 24px; animation: pageFadeIn 0.4s ease 0.1s both; }
+
+        .insp-tabs { display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid #E2E8F0; }
+        .insp-tab { padding: 12px 24px; font-size: 14px; font-weight: 600; color: #64748B; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .insp-tab.active { color: #0F172A; border-bottom-color: #0F172A; }
+
+        .insp-search-bar {
+          display: flex; align-items: center; gap: 12px;
+          background: #FFFFFF; border: 1.5px solid #E2E8F0; border-radius: 12px;
+          padding: 10px 16px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(15,23,42,0.02);
+          animation: pageFadeIn 0.4s ease 0.15s both;
+        }
+        .insp-search-input {
+          border: none; outline: none; width: 100%; font-size: 14px; color: #0F172A; font-weight: 500;
+          background: transparent;
+        }
 
         .insp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; animation: pageFadeIn 0.4s ease 0.2s both; }
         @media (max-width: 900px) { .insp-grid { grid-template-columns: 1fr; } }
 
-        .insp-col { background: #FFFFFF; border-radius: 16px; border: 1px solid rgba(15,23,42,0.08); overflow: hidden; display: flex; flex-direction: column; }
-        .insp-col-head { padding: 16px 20px; border-bottom: 1px solid rgba(15,23,42,0.06); display: flex; align-items: center; justify-content: space-between; }
+        .insp-col { background: #FFFFFF; border-radius: 16px; border: 1px solid rgba(15,23,42,0.08); overflow: hidden; display: flex; flex-direction: column; height: 560px; max-height: calc(100vh - 240px); }
+        .insp-col-head { padding: 16px 20px; border-bottom: 1px solid rgba(15,23,42,0.06); display: flex; align-items: center; justify-content: space-between; background: #FFFFFF; z-index: 2; }
         .insp-col-title { font-size: 13px; font-weight: 700; color: #0F172A; text-transform: uppercase; letter-spacing: 0.05em; }
-        .insp-col-count { background: #F1F5F9; color: #64748B; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+        .insp-col-count { background: #3B82F6; color: #FFFFFF; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 800; }
         
-        .insp-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; background: #F8FAFC; }
-        .insp-card { background: #FFFFFF; border: 1px solid rgba(15,23,42,0.06); border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .insp-card-title { font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .insp-card-meta { font-size: 12px; color: #64748B; margin-bottom: 12px; }
+        .insp-list {
+          padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1;
+          background: #F8FAFC; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #CBD5E1 #F8FAFC;
+        }
+        .insp-list::-webkit-scrollbar { width: 6px; }
+        .insp-list::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+        
+        .insp-card { background: #FFFFFF; border: 1px solid rgba(15,23,42,0.06); border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .insp-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,0.06); }
+        .insp-card-title { font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .insp-card-meta { font-size: 12px; color: #64748B; margin-bottom: 12px; line-height: 1.5; }
+        .insp-card-badge { display: inline-block; background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; margin-bottom: 8px; }
         .insp-btn { width: 100%; padding: 10px; background: #3B82F6; color: #FFF; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
         .insp-btn:hover { background: #2563EB; }
+        
+        .history-table { width: 100%; border-collapse: collapse; background: #FFFFFF; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .history-table th { background: #F8FAFC; text-align: left; padding: 16px; font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; border-bottom: 1px solid #E2E8F0; }
+        .history-table td { padding: 16px; border-bottom: 1px solid #E2E8F0; font-size: 14px; color: #0F172A; }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-table tr:hover td { background: #F8FAFC; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .badge.LISTER_TO_HUB_INTAKE { background: #E0E7FF; color: #3730A3; }
+        .badge.PRE_DISPATCH { background: #FEF3C7; color: #92400E; }
+        .badge.POST_RETURN { background: #DCFCE7; color: #166534; }
         
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
@@ -269,6 +328,34 @@ export default function HubInspections() {
       <h1 className="insp-h1">Inspection Queue</h1>
       <p className="insp-sub">Process items for intake, dispatch sanitization, and return quality grading.</p>
 
+      <div className="insp-tabs">
+        <div className={`insp-tab ${viewMode === 'QUEUE' ? 'active' : ''}`} onClick={() => { setViewMode('QUEUE'); setCurrentPage(1); }}>Pending Queue</div>
+        <div className={`insp-tab ${viewMode === 'HISTORY' ? 'active' : ''}`} onClick={() => { setViewMode('HISTORY'); setCurrentPage(1); }}>Completed Records</div>
+      </div>
+
+      {/* Real-time Search Filter Bar */}
+      <div className="insp-search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          className="insp-search-input" 
+          placeholder="Filter by Dress Title, SKU, Rack Location, or Renter Name..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button 
+            onClick={() => setSearchQuery('')}
+            style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontWeight: 700, fontSize: 14 }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {error && <div style={{ padding: 16, background: '#FEF2F2', color: '#991B1B', borderRadius: 8, marginBottom: 24 }}>{error}</div>}
 
       {!isMobile ? (
@@ -281,18 +368,24 @@ export default function HubInspections() {
         </div>
       ) : (
         <>
-          <div className="insp-grid">
+          {viewMode === 'QUEUE' ? (
+            <div className="insp-grid">
         {/* INTAKE */}
         <div className="insp-col">
           <div className="insp-col-head">
             <span className="insp-col-title">1. Intake</span>
-            <span className="insp-col-count">{intake.length}</span>
+            <span className="insp-col-count">{filteredIntake.length}</span>
           </div>
           <div className="insp-list">
-            {intake.length === 0 && <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>No pending intake</div>}
-            {intake.map(b => (
+            {filteredIntake.length === 0 && (
+              <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>
+                {searchQuery ? 'No matching intake items' : 'No pending intake'}
+              </div>
+            )}
+            {filteredIntake.map(b => (
               <div key={b.id} className="insp-card">
                 <div className="insp-card-title">{b.listing?.title || b.product?.title}</div>
+                {b.listing?.sku && <div className="insp-card-badge">SKU: {b.listing.sku}</div>}
                 <div className="insp-card-meta">Lister ID: {b.listing?.listerProfileId?.slice(-6)}</div>
                 <button className="insp-btn" onClick={() => openModal(b, 'LISTER_TO_HUB_INTAKE')}>Verify Intake</button>
               </div>
@@ -304,14 +397,26 @@ export default function HubInspections() {
         <div className="insp-col">
           <div className="insp-col-head">
             <span className="insp-col-title">2. Pre-Dispatch</span>
-            <span className="insp-col-count">{preDispatch.length}</span>
+            <span className="insp-col-count">{filteredPreDispatch.length}</span>
           </div>
           <div className="insp-list">
-            {preDispatch.length === 0 && <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>No pending dispatch</div>}
-            {preDispatch.map(b => (
+            {filteredPreDispatch.length === 0 && (
+              <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>
+                {searchQuery ? 'No matching dispatch items' : 'No pending dispatch'}
+              </div>
+            )}
+            {filteredPreDispatch.map(b => (
               <div key={b.id} className="insp-card">
                 <div className="insp-card-title">{b.listing?.title || b.product?.title}</div>
-                <div className="insp-card-meta">Renter: {b.renter?.name} <br/> Due: {new Date(b.startDate).toLocaleDateString('en-IN')}</div>
+                {b.listing?.shelfLocation && (
+                  <div className="insp-card-badge" style={{ background: '#EEF2FF', color: '#4F46E5' }}>
+                    📍 {b.listing.shelfLocation}
+                  </div>
+                )}
+                <div className="insp-card-meta">
+                  Renter: {b.renter?.name} <br/>
+                  Due: {new Date(b.startDate).toLocaleDateString('en-IN')}
+                </div>
                 <button className="insp-btn" onClick={() => openModal(b, 'PRE_DISPATCH')}>Sanitize & Verify</button>
               </div>
             ))}
@@ -322,20 +427,76 @@ export default function HubInspections() {
         <div className="insp-col">
           <div className="insp-col-head">
             <span className="insp-col-title">3. Post-Return</span>
-            <span className="insp-col-count">{postReturn.length}</span>
+            <span className="insp-col-count">{filteredPostReturn.length}</span>
           </div>
           <div className="insp-list">
-            {postReturn.length === 0 && <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '20px 0' }}>No pending returns</div>}
-            {postReturn.map(b => (
+            {filteredPostReturn.length === 0 && (
+              <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', padding: '40px 0' }}>
+                {searchQuery ? 'No matching returned items' : 'No pending returns'}
+              </div>
+            )}
+            {filteredPostReturn.map(b => (
               <div key={b.id} className="insp-card">
                 <div className="insp-card-title">{b.listing?.title || b.product?.title}</div>
-                <div className="insp-card-meta">Renter: {b.renter?.name} <br/> Returned: {new Date(b.endDate).toLocaleDateString('en-IN')}</div>
+                {b.listing?.sku && <div className="insp-card-badge">SKU: {b.listing.sku}</div>}
+                <div className="insp-card-meta">
+                  Renter: {b.renter?.name} <br/>
+                  Returned: {new Date(b.endDate).toLocaleDateString('en-IN')}
+                </div>
                 <button className="insp-btn" onClick={() => openModal(b, 'POST_RETURN')}>Receive & Grade</button>
               </div>
             ))}
           </div>
         </div>
-      </div>
+        </div>
+          ) : (
+            <div style={{ background: '#FFFFFF', borderRadius: 16, border: '1px solid rgba(15,23,42,0.08)', padding: 24, overflowX: 'auto' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 16 }}>Recent Completed Inspections</h3>
+              {recentInspections.length === 0 ? (
+                <div style={{ padding: '40px 0', textAlign: 'center', color: '#64748B', fontSize: 13 }}>No recent inspection records found.</div>
+              ) : (
+                <>
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentInspections
+                        .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                        .map((insp: any) => (
+                        <tr key={insp.id}>
+                          <td>{new Date(insp.createdAt).toLocaleDateString()}</td>
+                          <td>
+                            <strong style={{ display: 'block', color: '#0F172A' }}>{insp.booking?.listing?.title}</strong>
+                            <span style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace' }}>Booking: {insp.bookingId?.slice(-6)}</span>
+                          </td>
+                          <td>
+                            <span className={`badge ${insp.inspectionType}`}>{insp.inspectionType.replace(/_/g, ' ')}</span>
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 600, color: insp.grade === 'A_NO_ISSUE' ? '#10B981' : '#EAB308' }}>
+                              {insp.grade.replace(/_/g, ' ')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={recentInspections.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    onPageChange={setCurrentPage}
+                  />
+                </>
+              )}
+            </div>
+          )}
 
       {/* MODAL */}
       {activeBooking && (

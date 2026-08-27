@@ -27,6 +27,9 @@ export default function ListerKycPage() {
   const [bio, setBio] = useState('');
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
+  const [registrationFeePaid, setRegistrationFeePaid] = useState<boolean>(true);
+  const [feeLoading, setFeeLoading] = useState(false);
+
   useEffect(() => {
     async function load() {
       try {
@@ -35,6 +38,7 @@ export default function ListerKycPage() {
           const ListerData = await ListerRes.json();
           if (ListerData.success && ListerData.profile) {
             const p = ListerData.profile;
+            setRegistrationFeePaid(Boolean(p.registrationFeePaid));
             setListerStatus(p.status); 
             setIsVerified(p.isVerified); 
             setShopName(p.shopName);
@@ -58,6 +62,85 @@ export default function ListerKycPage() {
     }
     load();
   }, [router]);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handlePayRegistrationFee = async () => {
+    setFeeLoading(true);
+    setError('');
+    try {
+      const sdkReady = await loadRazorpayScript();
+      if (!sdkReady) {
+        setError('Razorpay SDK failed to load. Please check internet connection.');
+        setFeeLoading(false);
+        return;
+      }
+
+      const res = await fetch('/api/lister/registration-fee/order', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Failed to create registration fee payment order.');
+        setFeeLoading(false);
+        return;
+      }
+
+      const options = {
+        key: data.razorpayOrder.keyId,
+        amount: data.razorpayOrder.amount,
+        currency: data.razorpayOrder.currency,
+        name: 'Wardrob Boutique Platform',
+        description: 'Lister Onboarding Registration Fee (₹500)',
+        order_id: data.razorpayOrder.orderId,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch('/api/lister/registration-fee/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.success) {
+              setRegistrationFeePaid(true);
+            } else {
+              setError(verifyData.error || 'Payment verification failed.');
+            }
+          } catch {
+            setError('Verification network error.');
+          } finally {
+            setFeeLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setFeeLoading(false);
+          },
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch {
+      setError('Registration fee checkout error.');
+      setFeeLoading(false);
+    }
+  };
 
   const handleSubmitKyc = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -534,8 +617,48 @@ export default function ListerKycPage() {
           </div>
         )}
 
-        {/* KYC Form — shown if null or REJECTED */}
-        {(ListerStatus === null || ListerStatus === 'REJECTED') && !success && (
+        {/* Registration Fee Card — shown if fee is not paid yet */}
+        {!registrationFeePaid && (
+          <div className="kyc-form-card" style={{ padding: '36px 32px' }}>
+            {error && (
+              <div className="alert-error" style={{ marginBottom: '20px' }}><span>⚠</span>{error}</div>
+            )}
+            <div>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#ECFDF5', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', marginBottom: '16px' }}>
+                💳
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '24px', fontWeight: 600, color: '#0D1A14', marginBottom: '8px' }}>
+                Lister Onboarding Registration Fee
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748B', lineHeight: 1.6, marginBottom: '24px' }}>
+                To maintain standard quality, trust, and baseline verification across all boutiques, a mandatory one-time registration fee of <strong>₹500 (Non-Refundable)</strong> is required before submitting your KYC details.
+              </p>
+              
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 20px', marginBottom: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
+                  <span style={{ color: '#475569', fontWeight: 500 }}>One-time Platform Fee</span>
+                  <span style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A' }}>₹500.00</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '6px' }}>
+                  * This fee is non-refundable regardless of KYC verification outcome.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePayRegistrationFee}
+                disabled={feeLoading}
+                className="submit-btn"
+                style={{ width: '100%', height: '48px', fontSize: '14px' }}
+              >
+                {feeLoading ? <><div className="mini-spin" />Processing Gateway…</> : 'Pay ₹500 & Proceed to KYC Verification →'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* KYC Form — shown if fee is paid AND (status === null || REJECTED) */}
+        {registrationFeePaid && (ListerStatus === null || ListerStatus === 'REJECTED') && !success && (
           <div className="kyc-form-card">
             {error && (
               <div style={{ padding: '16px 28px 0' }}>

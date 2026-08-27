@@ -14,18 +14,18 @@ export default function Storefront() {
 
   useEffect(() => {
     setHeroLoaded(true);
-    
+
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
-    
+
     fetch('/api/products')
-      .then(r => r.json())
-      .then(d => { if (d.success && d.products) setListings(d.products); })
-      .catch(() => {})
+      .then(r => r.ok && r.headers.get('content-type')?.includes('application/json') ? r.json() : null)
+      .then(d => { if (d?.success && d?.products) setListings(d.products); })
+      .catch(() => { })
       .finally(() => setLoading(false));
-      
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -49,7 +49,7 @@ export default function Storefront() {
       groupedCategories[catName] = {
         name: predefined ? predefined.name : catName,
         val: catName,
-        img: p.images && p.images.length > 0 ? p.images[0] : (predefined ? predefined.img : 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800'),
+        img: predefined ? predefined.img : (p.images && p.images.length > 0 ? p.images[0] : 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800'),
         emoji: predefined ? predefined.emoji : '✨'
       };
     }
@@ -120,28 +120,33 @@ export default function Storefront() {
         }
 
         .category-pill {
-          border: none;
+          border: 1px solid transparent;
           cursor: pointer;
-          padding: 10px 24px;
+          padding: 10px 26px;
           border-radius: 9999px;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           font-family: var(--font-sans);
-          transition: all 0.3s ease;
-          letter-spacing: 0.02em;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          letter-spacing: 0.04em;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
         .category-pill.active {
           background: var(--ink);
           color: #FFF;
+          box-shadow: 0 4px 14px rgba(30,30,45,0.12);
+          transform: translateY(-1px);
         }
         .category-pill:not(.active) {
-          background: transparent;
+          background: #FFFFFF;
           color: var(--ink-secondary);
-          border: 1px solid var(--border);
+          border-color: var(--border);
         }
         .category-pill:not(.active):hover {
           border-color: var(--accent);
           color: var(--accent);
+          background: var(--bg-card);
+          transform: translateY(-1px);
         }
 
         .marquee-track {
@@ -155,7 +160,7 @@ export default function Storefront() {
         .hp-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .hp-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
         .hp-categories { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-        .hp-products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+        .hp-products { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
         .hp-section { padding: 100px 40px; }
         .hp-section-sm { padding: 0 40px 100px; }
         .hp-cta-heading { font-size: 48px !important; }
@@ -164,32 +169,41 @@ export default function Storefront() {
           .hp-hero { grid-template-columns: 1fr; gap: 48px; }
           .hp-steps { grid-template-columns: repeat(2, 1fr); }
           .hp-categories { grid-template-columns: repeat(2, 1fr); }
-          .hp-products { grid-template-columns: repeat(2, 1fr); }
+          .hp-products { grid-template-columns: repeat(3, 1fr); gap: 20px; }
         }
 
         @media (max-width: 768px) {
-          .hp-hero { grid-template-columns: 1fr; gap: 32px; padding: 40px 20px 60px !important; }
-          .hp-trust { grid-template-columns: 1fr; }
-          .hp-steps { grid-template-columns: 1fr; }
-          .hp-categories { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-          .hp-products { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-          .hp-section { padding: 60px 20px; }
-          .hp-section-sm { padding: 0 20px 60px; }
-          .hp-cta-heading { font-size: 28px !important; }
-          .hp-float-badge { display: none; }
-          .hp-hero-image { order: -1; }
+          .hp-hero { grid-template-columns: 1fr; gap: 36px; padding: 32px 16px 48px !important; }
+          .hp-trust { grid-template-columns: 1fr; gap: 14px; }
+          .hp-steps { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+          .hp-categories { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+          .hp-products { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+          .hp-section { padding: 48px 16px; }
+          .hp-section-sm { padding: 0 16px 48px; }
+          .hp-cta-heading { font-size: 32px !important; }
+          
+          .hp-float-badge { 
+            bottom: -16px !important; 
+            left: 12px !important; 
+            padding: 12px 18px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12) !important;
+          }
+          .hp-float-badge h4 { font-size: 14px !important; }
+          .hp-float-badge span { font-size: 16px !important; }
         }
 
         @media (max-width: 480px) {
-          .hp-categories { grid-template-columns: 1fr; }
-          .hp-products { grid-template-columns: 1fr; }
+          .hp-steps { grid-template-columns: 1fr; }
+          .hp-products { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .hp-hero-image { max-width: 100%; margin: 0 auto; }
         }
       `}</style>
 
       {/* ━━━ MARQUEE TICKER ━━━ */}
       <div style={{
-        background: 'linear-gradient(135deg, #1E1E2D 0%, #2A2A3D 100%)',
-        color: '#FFFFFF', overflow: 'hidden', padding: '11px 0',
+        background: 'var(--accent-light)',
+        borderBottom: '1px solid rgba(212,86,122,0.15)',
+        color: 'var(--accent)', overflow: 'hidden', padding: '11px 0',
       }}>
         <div className="marquee-track">
           {[...Array(4)].map((_, rep) => (
@@ -201,12 +215,13 @@ export default function Storefront() {
                 'Hub-Verified Weave Authenticity',
               ].map((text, i) => (
                 <span key={i} style={{
-                  fontSize: '11px', fontWeight: 500, color: 'rgba(255,255,255,0.85)',
-                  display: 'flex', alignItems: 'center', gap: '14px', letterSpacing: '0.06em',
+                  fontSize: '11px', fontWeight: 600, color: 'var(--ink)',
+                  display: 'flex', alignItems: 'center', gap: '14px', letterSpacing: '0.06em', textTransform: 'uppercase'
                 }}>
                   <span style={{
-                    width: '5px', height: '5px', borderRadius: '50%',
+                    width: '6px', height: '6px', borderRadius: '50%',
                     background: 'var(--accent)', flexShrink: 0,
+                    boxShadow: '0 0 8px rgba(212,86,122,0.4)',
                   }} />
                   {text}
                 </span>
@@ -227,97 +242,319 @@ export default function Storefront() {
 
       <main style={{ flex: 1 }}>
 
-        {/* ━━━━━━━━ HERO — SPLIT LAYOUT ━━━━━━━━ */}
-        <section className="hp-hero" style={{
-          maxWidth: '1400px', margin: '0 auto', padding: '80px 40px 100px',
+        {/* ━━━━━━━━ HERO — IMMERSIVE LAYOUT ━━━━━━━━ */}
+        <section style={{
+          position: 'relative',
+          maxWidth: '1440px', margin: '20px auto 60px', padding: '0 20px',
         }}>
-          {/* Left — Text */}
           <div style={{
-            opacity: heroLoaded ? 1 : 0,
-            transform: heroLoaded ? 'translateY(0)' : 'translateY(30px)',
-            transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
+            position: 'relative',
+            borderRadius: '32px',
+            overflow: 'hidden',
+            backgroundColor: 'var(--bg)',
+            minHeight: '640px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 24px 60px -10px rgba(212,86,122,0.15)',
           }}>
+            {/* Background Image with Cinematic Gradient */}
             <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '10px',
-              background: 'var(--accent-light)', padding: '8px 20px',
-              borderRadius: 'var(--radius-full)', marginBottom: '32px',
+              position: 'absolute', inset: 0,
+              backgroundImage: 'url(/images/hero-bg.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(90deg, #FFFAF5 0%, #FFFAF5 42%, rgba(255,250,245,0.75) 55%, rgba(255,250,245,0) 75%)',
+            }} />
+
+            {/* Content */}
+            <div style={{
+              position: 'relative', zIndex: 10,
+              padding: '60px 80px',
+              maxWidth: '800px',
+              opacity: heroLoaded ? 1 : 0,
+              transform: heroLoaded ? 'translateY(0)' : 'translateY(30px)',
+              transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s',
             }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)' }} />
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.06em' }}>
-                India's Premier Rental Platform
-              </span>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'var(--accent-light)', padding: '6px 16px',
+                borderRadius: 'var(--radius-full)', marginBottom: '32px',
+                backdropFilter: 'blur(12px)', border: '1px solid rgba(212,86,122,0.2)',
+              }}>
+                <span style={{ fontSize: '11px' }}>✨</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                  India&apos;s Premier Luxury Rental Platform
+                </span>
+              </div>
+
+              <h1 style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 'clamp(52px, 6vw, 84px)',
+                fontWeight: 700,
+                lineHeight: 1.05,
+                color: 'var(--ink)',
+                marginBottom: '28px',
+                letterSpacing: '-0.02em',
+              }}>
+                Wear <span style={{ fontStyle: 'italic', color: 'var(--accent)', fontWeight: 600 }}>Designer.</span><br />
+                Don&apos;t Buy It.
+              </h1>
+
+              <p style={{
+                fontSize: '18px', color: 'var(--ink-secondary)', lineHeight: 1.7,
+                maxWidth: '540px', marginBottom: '48px', fontWeight: 400,
+              }}>
+                Access master-crafted designer archives from top ateliers across India. Every garment is hub-inspected, 60°C ozone sterilized, and delivered with a complimentary 72-hour event buffer.
+              </p>
+
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link href="/catalog" style={{
+                  fontSize: '15px', fontWeight: 600, color: '#FFFFFF',
+                  padding: '18px 42px', borderRadius: 'var(--radius-full)',
+                  background: 'linear-gradient(135deg, #D4567A 0%, #B8405E 100%)', textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 24px rgba(212,86,122,0.3)',
+                  display: 'inline-flex', alignItems: 'center', gap: '10px',
+                }}>
+                  Explore Collection <span style={{ transition: 'transform 0.2s' }}>→</span>
+                </Link>
+                <Link href="/lister/login" style={{
+                  fontSize: '15px', fontWeight: 600, color: 'var(--ink)',
+                  padding: '18px 42px', borderRadius: 'var(--radius-full)',
+                  background: '#FFFFFF', border: '1px solid var(--border-strong)',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.05)', textDecoration: 'none',
+                  transition: 'all 0.3s ease', display: 'inline-block',
+                }}>
+                  List Your Wardrobe
+                </Link>
+              </div>
             </div>
 
-            <h1 style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(42px, 5vw, 64px)',
-              fontWeight: 700,
-              lineHeight: 1.1,
-              color: 'var(--ink)',
-              marginBottom: '28px',
-              letterSpacing: '-0.01em',
+            {/* Glass Floating Badges on the right */}
+            <div className="hp-float-badge" style={{
+              position: 'absolute', bottom: '60px', right: '60px',
+              background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(20px)',
+              borderRadius: '24px', padding: '24px 32px',
+              boxShadow: '0 16px 40px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.9)',
+              animation: 'floatBadge 6s ease-in-out infinite',
+              maxWidth: '320px',
             }}>
-              Wear Designer.<br />
-              Don&apos;t Buy It.
-            </h1>
+              <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.12em', marginBottom: '10px', textTransform: 'uppercase' }}>VERIFIED COUTURE</p>
+              <h4 style={{ 
+                fontFamily: 'var(--font-serif)', fontSize: '20px', color: 'var(--ink)', 
+                lineHeight: 1.3, marginBottom: '14px', fontWeight: 600
+              }}>
+                Authentic Banarasi Elegance
+              </h4>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Starts at</span>
+                <span style={{ fontFamily: 'var(--font-serif)', fontSize: '26px', fontWeight: 700, color: 'var(--ink)' }}>
+                  ₹2,500
+                </span>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>/ 4 days</span>
+              </div>
+            </div>
 
-            <p style={{
-              fontSize: '17px', color: 'var(--ink-secondary)', lineHeight: 1.8,
-              maxWidth: '480px', marginBottom: '48px',
+            {/* Smaller Top Badge */}
+            <div style={{
+              position: 'absolute', top: '40px', right: '40px',
+              background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(16px)',
+              padding: '12px 24px', borderRadius: 'var(--radius-full)',
+              fontSize: '12px', fontWeight: 600, color: 'var(--accent)',
+              border: '1px solid rgba(255, 255, 255, 0.9)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+              display: 'flex', alignItems: 'center', gap: '8px',
             }}>
-              Access master-crafted designer archives from ateliers across India. Every garment is hub-inspected, ozone sterilized, and delivered with a complimentary event buffer.
-            </p>
-
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <Link href="/catalog" style={{
-                fontSize: '14px', fontWeight: 600, color: '#FFFFFF',
-                padding: '16px 40px', borderRadius: 'var(--radius-full)',
-                background: 'linear-gradient(135deg, #D4567A 0%, #B8405E 100%)',
-                textDecoration: 'none', transition: 'all 0.3s ease',
-                boxShadow: '0 6px 20px rgba(212, 86, 122, 0.3)',
-                display: 'inline-block',
-              }}>
-                Explore Collection
-              </Link>
-              <Link href="/lister/login" style={{
-                fontSize: '14px', fontWeight: 600, color: 'var(--ink)',
-                padding: '16px 40px', borderRadius: 'var(--radius-full)',
-                border: '1.5px solid var(--border-strong)', textDecoration: 'none',
-                transition: 'all 0.3s ease', display: 'inline-block',
-              }}>
-                List Your Wardrobe
-              </Link>
+              <span style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.8))' }}>✨</span> Hub-Inspected & Ozone Cleaned
             </div>
           </div>
 
-          {/* Right — Hero Image */}
-          <div className="hp-hero-image" style={{
-            position: 'relative',
-            opacity: heroLoaded ? 1 : 0,
-            transform: heroLoaded ? 'translateY(0)' : 'translateY(30px)',
-            transition: 'all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s',
+          {/* Quick Stats Banner Below */}
+          <div style={{
+            display: 'flex', justifyContent: 'center', gap: '80px',
+            padding: '36px 40px', marginTop: '-40px', position: 'relative', zIndex: 20,
+            background: 'var(--bg)', borderTopLeftRadius: '32px', borderTopRightRadius: '32px',
+            boxShadow: '0 -20px 40px rgba(0,0,0,0.03)',
+            flexWrap: 'wrap', maxWidth: '1000px', margin: '-40px auto 0',
           }}>
-            <div className="hero-image-mask" style={{ aspectRatio: '4/5', position: 'relative' }}>
-              <img src="https://images.unsplash.com/photo-1583391733958-6115fa016e7d?auto=format&fit=crop&q=80&w=1200" alt="Luxury Indian Couture" />
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 700, color: 'var(--ink)' }}>4 Days</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Base Rental</p>
             </div>
-            
-            {/* Floating badge */}
-            <div className="hp-float-badge" style={{
-              position: 'absolute', bottom: '-24px', left: '-24px',
-              background: '#FFFFFF', borderRadius: 'var(--radius-lg)',
-              padding: '20px 28px', boxShadow: 'var(--shadow-lg)',
-              animation: 'floatBadge 3s ease-in-out infinite',
-            }}>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.06em', marginBottom: '6px' }}>FEATURED</p>
-              <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', color: 'var(--ink)', lineHeight: 1.2, marginBottom: '8px' }}>Banarasi Zari Silk</h4>
-              <span style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', fontWeight: 700, color: 'var(--ink)' }}>₹3,800</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '6px' }}>/ 4 days</span>
+            <div style={{ width: '1px', background: 'var(--border)' }} />
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 700, color: 'var(--ink)' }}>72 Hrs</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Free Transit Buffer</p>
+            </div>
+            <div style={{ width: '1px', background: 'var(--border)' }} />
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 700, color: 'var(--ink)' }}>100%</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '6px' }}>Authenticity Checked</p>
             </div>
           </div>
         </section>
 
+        {/* ━━━━━━━━ EXPLORE CATEGORIES ━━━━━━━━ */}
+        <section className="hp-section-sm" style={{ maxWidth: '1400px', margin: '0 auto', paddingTop: '40px', paddingBottom: '60px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <span style={{
+                display: 'inline-block', fontSize: '11px', fontWeight: 700, color: 'var(--accent)',
+                letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '8px',
+                background: 'var(--accent-light)', padding: '4px 14px', borderRadius: 'var(--radius-full)',
+              }}>Curated Collections</span>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '36px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.1 }}>
+                Explore Categories
+              </h2>
+            </div>
+            <Link href="/categories" style={{
+              fontSize: '13px', fontWeight: 600, color: 'var(--accent)',
+              textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+              letterSpacing: '0.04em',
+            }}>
+              View All Categories →
+            </Link>
+          </div>
+
+          <div className="hp-categories">
+            {categories.slice(0, categories.length > 4 ? 3 : 4).map((cat, i) => (
+              <Link href={`/catalog?category=${cat.val}`} key={i} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{
+                  borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+                  aspectRatio: '3/4', background: 'var(--bg-warm)', marginBottom: '12px',
+                  position: 'relative', boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                }}>
+                  <img src={cat.img} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{
+                    position: 'absolute', bottom: '14px', left: '14px', right: '14px',
+                    background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)',
+                    padding: '10px 14px', borderRadius: 'var(--radius-md)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)', fontFamily: 'var(--font-serif)' }}>
+                      {cat.emoji} {cat.name}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>Explore →</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {categories.length > 4 && (
+              <Link href="/categories" className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+                <div style={{
+                  borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+                  aspectRatio: '3/4', background: 'var(--bg-warm)', marginBottom: '12px',
+                  position: 'relative', boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                }}>
+                  <img src={categories[3].img} alt="More Categories" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(30, 30, 45, 0.75)', backdropFilter: 'blur(6px)',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    color: '#FFFFFF',
+                  }}>
+                    <span style={{ fontSize: '28px' }}>✨</span>
+                    <div style={{ textAlign: 'center', padding: '0 16px' }}>
+                      <p style={{ fontSize: '22px', fontWeight: 700, fontFamily: 'var(--font-serif)', marginBottom: '4px' }}>+{categories.length - 3} More</p>
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600 }}>View All</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+          </div>
+        </section>
+
+        {/* ━━━━━━━━ THE VAULT (PRODUCTS) ━━━━━━━━ */}
+        <section className="hp-section" style={{ background: 'var(--bg-warm)' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px', flexWrap: 'wrap', gap: '20px' }}>
+              <div>
+                <span style={{
+                  display: 'inline-block', fontSize: '12px', fontWeight: 600, color: 'var(--accent)',
+                  letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px',
+                  background: 'var(--accent-light)', padding: '6px 18px', borderRadius: 'var(--radius-full)',
+                }}>New Arrivals</span>
+                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '40px', fontWeight: 700, color: 'var(--ink)' }}>The Vault</h2>
+              </div>
+              <Link href="/catalog" style={{
+                fontSize: '14px', fontWeight: 600, color: '#FFFFFF', background: 'var(--ink)',
+                textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '12px 28px', borderRadius: 'var(--radius-full)',
+                letterSpacing: '0.04em', transition: 'all 0.3s ease',
+                boxShadow: '0 4px 14px rgba(30,30,45,0.1)'
+              }}>
+                View All Products →
+              </Link>
+            </div>
+
+            {loading ? (
+              <div style={{ padding: '100px 0', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>Loading collection...</div>
+            ) : filtered.length === 0 ? (
+              <div style={{ padding: '100px 0', textAlign: 'center', fontSize: '15px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No garments found in this category.</div>
+            ) : (
+              <>
+                <div className="hp-products">
+                  {filtered.slice(0, 8).map(product => (
+                    <Link href={`/product/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
+                      <div className="prod-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                        <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg)', position: 'relative' }}>
+                          <img
+                            src={product.images && product.images.length > 0 && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'}
+                            alt={product.title}
+                            onError={(e: any) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800';
+                            }}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                          <div style={{
+                            position: 'absolute', top: '12px', left: '12px',
+                            background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
+                            padding: '5px 12px', borderRadius: 'var(--radius-full)',
+                            fontSize: '10px', fontWeight: 600, color: 'var(--success)', letterSpacing: '0.04em',
+                          }}>
+                            ● Verified
+                          </div>
+                        </div>
+                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.category}</p>
+                          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: 'var(--ink)', marginBottom: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.title}</h3>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>4-Day Rental</span>
+                            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>₹{product.rentalPrice}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {filtered.length > 8 && (
+                  <div style={{ textAlign: 'center', marginTop: '48px' }}>
+                    <Link href={activeCat === 'All' ? '/catalog' : `/catalog?category=${activeCat}`} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '10px',
+                      background: 'var(--ink)', color: '#FFFFFF',
+                      padding: '14px 36px', borderRadius: 'var(--radius-full)',
+                      fontSize: '14px', fontWeight: 600, letterSpacing: '0.04em',
+                      textDecoration: 'none', transition: 'all 0.3s ease',
+                    }}>
+                      View All {activeCat === 'All' ? 'Products' : activeCat} ({filtered.length}) →
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+                       </div>
+        </section>
+
         {/* ━━━━━━━━ TRUST METRICS ━━━━━━━━ */}
-        <section className="hp-section-sm" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <section className="hp-section-sm" style={{ maxWidth: '1400px', margin: '0 auto', paddingTop: '80px', paddingBottom: '20px' }}>
           <div className="hp-trust">
             {[
               { icon: '🛡️', title: '₹0 Security Hold', desc: 'On eligible trusted profiles' },
@@ -376,153 +613,6 @@ export default function Storefront() {
                 <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: 1.7 }}>{s.desc}</p>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* ━━━━━━━━ CATEGORY GALLERY ━━━━━━━━ */}
-        <section className="hp-section-sm" style={{ maxWidth: '1400px', margin: '0 auto', paddingBottom: '120px' }}>
-          <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-            <span style={{
-              display: 'inline-block', fontSize: '12px', fontWeight: 600, color: 'var(--accent)',
-              letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px',
-              background: 'var(--accent-light)', padding: '6px 18px', borderRadius: 'var(--radius-full)',
-            }}>Explore</span>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15, marginBottom: '16px' }}>
-              Categories
-            </h2>
-            <Link href="/categories" style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              fontSize: '14px', fontWeight: 600, color: 'var(--accent)',
-              textDecoration: 'none', letterSpacing: '0.04em',
-              borderBottom: '1px solid var(--accent)', paddingBottom: '2px',
-              transition: 'opacity 0.2s ease',
-            }}>
-              View All Categories →
-            </Link>
-          </div>
-
-          <div className="hp-categories">
-            {categories.slice(0, categories.length > 4 ? 3 : 4).map((cat, i) => (
-              <Link href={`/catalog?category=${cat.val}`} key={i} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
-                <div style={{
-                  borderRadius: 'var(--radius-lg)', overflow: 'hidden',
-                  aspectRatio: '3/4', background: 'var(--bg-warm)', marginBottom: '16px',
-                  position: 'relative',
-                }}>
-                  <img src={cat.img} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{
-                    position: 'absolute', bottom: '16px', left: '16px',
-                    background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',
-                    padding: '8px 16px', borderRadius: 'var(--radius-full)',
-                    fontSize: '12px', fontWeight: 600, color: 'var(--ink)',
-                  }}>
-                    {cat.emoji} {cat.name}
-                  </div>
-                </div>
-              </Link>
-            ))}
-            {categories.length > 4 && (
-              <Link href="/categories" className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
-                <div style={{
-                  borderRadius: 'var(--radius-lg)', overflow: 'hidden',
-                  aspectRatio: '3/4', background: 'var(--bg-warm)', marginBottom: '16px',
-                  position: 'relative',
-                }}>
-                  <img src={categories[3].img} alt="More Categories" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  
-                  <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(30, 30, 45, 0.65)', backdropFilter: 'blur(6px)',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center', gap: '12px',
-                    color: '#FFFFFF', transition: 'all 0.4s ease',
-                  }}>
-                    <span style={{ fontSize: '32px', marginBottom: '8px' }}>✨</span>
-                    <div style={{ textAlign: 'center', padding: '0 20px' }}>
-                      <p style={{ fontSize: '26px', fontWeight: 700, fontFamily: 'var(--font-serif)', marginBottom: '8px' }}>+{categories.length - 3} More</p>
-                      <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>Explore All</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            )}
-          </div>
-        </section>
-
-        {/* ━━━━━━━━ THE VAULT (PRODUCTS) ━━━━━━━━ */}
-        <section className="hp-section" style={{ background: 'var(--bg-warm)' }}>
-          <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px', flexWrap: 'wrap', gap: '20px' }}>
-              <div>
-                <span style={{
-                  display: 'inline-block', fontSize: '12px', fontWeight: 600, color: 'var(--accent)',
-                  letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px',
-                  background: 'var(--accent-light)', padding: '6px 18px', borderRadius: 'var(--radius-full)',
-                }}>New Arrivals</span>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '40px', fontWeight: 700, color: 'var(--ink)' }}>The Vault</h2>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {['All', ...Array.from(new Set(listings.map(l => l.category).filter(Boolean)))].map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCat(cat)}
-                    className={`category-pill ${activeCat === cat ? 'active' : ''}`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loading ? (
-              <div style={{ padding: '100px 0', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>Loading collection...</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ padding: '100px 0', textAlign: 'center', fontSize: '15px', color: 'var(--text-muted)', fontStyle: 'italic' }}>No garments found in this category.</div>
-            ) : (
-              <>
-                <div className="hp-products">
-                  {filtered.slice(0, 4).map(product => (
-                    <Link href={`/product/${product.id}`} key={product.id} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
-                      <div className="prod-card" style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
-                        <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg)', position: 'relative' }}>
-                          <img src={product.images[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800'} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <div style={{
-                            position: 'absolute', top: '12px', left: '12px',
-                            background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
-                            padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                            fontSize: '10px', fontWeight: 600, color: 'var(--success)', letterSpacing: '0.04em',
-                          }}>
-                            ● Verified
-                          </div>
-                        </div>
-                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.category}</p>
-                          <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: 'var(--ink)', marginBottom: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.title}</h3>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto' }}>
-                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>4-Day Rental</span>
-                            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', fontWeight: 700, color: 'var(--ink)' }}>₹{product.rentalPrice}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {filtered.length > 4 && (
-                  <div style={{ textAlign: 'center', marginTop: '48px' }}>
-                    <Link href={activeCat === 'All' ? '/catalog' : `/catalog?category=${activeCat}`} style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '10px',
-                      background: 'var(--ink)', color: '#FFFFFF',
-                      padding: '14px 36px', borderRadius: 'var(--radius-full)',
-                      fontSize: '14px', fontWeight: 600, letterSpacing: '0.04em',
-                      textDecoration: 'none', transition: 'all 0.3s ease',
-                    }}>
-                      View All {activeCat === 'All' ? 'Products' : activeCat} ({filtered.length}) →
-                    </Link>
-                  </div>
-                )}
-              </>
-            )}
           </div>
         </section>
 

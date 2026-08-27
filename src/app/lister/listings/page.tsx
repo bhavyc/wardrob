@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Pagination from '@/components/Pagination';
 
 type Listing = {
   id: string;
@@ -403,41 +404,12 @@ export default function ListerlistingsPage() {
           })}
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="pagination-bar">
-              <div>
-                Showing <strong>{startIdx}</strong> to <strong>{endIdx}</strong> of <strong>{listings.length}</strong> items
-              </div>
-              <div className="pagination-buttons">
-                <button 
-                  className="pagination-btn" 
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                >
-                  ◀
-                </button>
-                {Array.from({ length: totalPages }).map((_, idx) => {
-                  const pNum = idx + 1;
-                  return (
-                    <button 
-                      key={pNum} 
-                      className={`pagination-btn${currentPage === pNum ? ' active' : ''}`}
-                      onClick={() => setCurrentPage(pNum)}
-                    >
-                      {pNum}
-                    </button>
-                  );
-                })}
-                <button 
-                  className="pagination-btn" 
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                >
-                  ▶
-                </button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalItems={listings.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
     </>

@@ -22,12 +22,14 @@ export async function GET(request: Request) {
             phone: true,
             rating: true,
             idVerified: true,
+            walletBalance: true,
           },
         },
         _count: {
           select: {
             listings: true,
             payouts: true,
+            referralsMade: true,
           },
         },
       },

@@ -133,6 +133,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ),
     },
     {
+      href: '/admin/shipments',
+      label: 'Logistics Overview',
+      sublabel: 'Active & past delivery tracking',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <rect x="1" y="3" width="15" height="13" />
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+          <circle cx="5.5" cy="18.5" r="2.5" />
+          <circle cx="18.5" cy="18.5" r="2.5" />
+        </svg>
+      ),
+    },
+    {
       href: '/admin/payouts',
       label: 'Lister Payouts',
       sublabel: 'Manual settlement & transfers',

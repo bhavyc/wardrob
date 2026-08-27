@@ -37,12 +37,15 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
     const fetchProduct = async () => {
       try {
         const res = await fetch(`/api/products/${id}`);
-        const data = await res.json();
-        if (data.success && data.product) {
-          setProduct(data.product);
-          setActiveImage(data.product.images[0] || '');
-          setSelectedSize(data.product.sizes?.[0] || 'Free Size');
-          setSelectedColor(data.product.colors?.[0] || 'Default');
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && data.product) {
+            setProduct(data.product);
+            const defaultImg = data.product.images && data.product.images.length > 0 ? data.product.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800';
+            setActiveImage(defaultImg);
+            setSelectedSize(data.product.sizes?.[0] || 'Free Size');
+            setSelectedColor(data.product.colors?.[0] || 'Default');
+          }
         }
       } catch (err) {
         console.error('Fetch failed', err);
@@ -127,7 +130,15 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
             
             {/* Main Image */}
             <div className="img-zoom-container" style={{ flex: 1, background: 'var(--bg-warm)', aspectRatio: '3/4', position: 'relative' }}>
-              <img src={activeImage} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img
+                src={activeImage || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'}
+                alt={product.title}
+                onError={(e: any) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800';
+                }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
               {product.stock === 0 && (
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(251,250,248,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink)', border: '1px solid var(--ink)', padding: '12px 32px' }}>Waitlist</span>

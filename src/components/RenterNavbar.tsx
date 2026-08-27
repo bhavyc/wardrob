@@ -17,8 +17,8 @@ export default function RenterNavbar() {
     window.addEventListener('scroll', handleScroll);
 
     fetch('/api/auth/session')
-      .then(r => r.json())
-      .then(d => { if (d.success && d.user) setSession(d.user); })
+      .then(r => r.ok && r.headers.get('content-type')?.includes('application/json') ? r.json() : null)
+      .then(d => { if (d?.success && d?.user) setSession(d.user); })
       .catch(() => {});
 
     return () => window.removeEventListener('scroll', handleScroll);
@@ -117,25 +117,33 @@ export default function RenterNavbar() {
           display: flex; align-items: center; justify-content: space-between;
           transition: padding 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        .rn-mobile-actions { display: none; align-items: center; gap: 8px; }
+        .rn-icon-btn {
+          background: none; border: none; cursor: pointer;
+          width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+          border-radius: 8px; color: var(--ink-secondary); transition: background 0.2s;
+        }
+        .rn-icon-btn:hover { background: var(--accent-light); color: var(--accent); }
         @media (max-width: 768px) {
           .rn-left, .rn-right { display: none !important; }
           .rn-hamburger { display: flex !important; }
+          .rn-mobile-actions { display: flex !important; }
           .rn-mobile-menu { display: block; }
         }
         @media (max-width: 480px) {
-          .rn-mobile-panel { width: 260px; }
+          .rn-mobile-panel { width: 280px; }
         }
       `}</style>
 
       <header style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: isScrolled ? 'rgba(255, 250, 245, 0.92)' : 'transparent',
-        backdropFilter: isScrolled ? 'blur(20px) saturate(180%)' : 'none',
-        borderBottom: isScrolled ? '1px solid rgba(240, 230, 224, 0.6)' : '1px solid transparent',
+        background: isScrolled ? 'rgba(255, 250, 245, 0.94)' : 'rgba(255, 250, 245, 0.85)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        borderBottom: isScrolled ? '1px solid rgba(240, 230, 224, 0.8)' : '1px solid rgba(240, 230, 224, 0.3)',
         transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
       }}>
         <nav className="rn-nav-inner" style={{
-          padding: isScrolled ? '12px max(20px, 4vw)' : '20px max(20px, 4vw)',
+          padding: isScrolled ? '12px max(16px, 4vw)' : '16px max(16px, 4vw)',
         }}>
           {/* Left Links (desktop) */}
           <div className="rn-left">
@@ -146,7 +154,7 @@ export default function RenterNavbar() {
           {/* Center — Brand */}
           <Link href="/" style={{ textAlign: 'center', display: 'block', textDecoration: 'none' }}>
             <span style={{
-              fontFamily: 'var(--font-serif)', fontSize: '26px', fontWeight: 700,
+              fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700,
               color: 'var(--ink)', letterSpacing: '0.16em', textTransform: 'uppercase',
             }}>Wardrob</span>
           </Link>
@@ -159,6 +167,9 @@ export default function RenterNavbar() {
                   onChange={e => setSearchQuery(e.target.value)}
                   style={{ padding: '8px 16px', border: 'none', borderBottom: '2px solid var(--accent)', background: 'transparent', fontSize: '13px', width: '180px', outline: 'none', fontFamily: 'var(--font-sans)', borderRadius: 0 }}
                 />
+                <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', display: 'flex', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
                 <button type="button" onClick={() => setShowSearch(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)', lineHeight: 1 }}>✕</button>
               </form>
             ) : (
@@ -185,12 +196,20 @@ export default function RenterNavbar() {
             )}
           </div>
 
-          {/* Hamburger (mobile only) */}
-          <button className="rn-hamburger" onClick={() => setMobileMenuOpen(true)}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round">
-              <path d="M3 6h18M3 12h18M3 18h18" />
-            </svg>
-          </button>
+          {/* Mobile Actions (Search + Account + Hamburger) */}
+          <div className="rn-mobile-actions">
+            <button className="rn-icon-btn" onClick={() => setMobileMenuOpen(true)} title="Search">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </button>
+            <Link href={session ? "/profile" : "/login"} className="rn-icon-btn" title="Account">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </Link>
+            <button className="rn-hamburger" onClick={() => setMobileMenuOpen(true)}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </button>
+          </div>
         </nav>
       </header>
 

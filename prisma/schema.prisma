@@ -138,11 +138,52 @@ model ListerProfile {
   bankIfsc           String?
   status             ListerStatus @default(PENDING)
   commissionOverride Decimal?     @db.Decimal(5, 2)
+  registrationFeePaid Boolean     @default(false)
+  referralCode       String?      @unique
+  referredByCode     String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
-  listings Listing[]
-  payouts  Payout[]
+  listings             Listing[]
+  payouts              Payout[]
+  registrationPayments RegistrationPayment[]
+  referralsMade        Referral[]            @relation("ReferrerLister")
+  referralReceived     Referral?             @relation("ReferredLister")
+}
+
+enum RegistrationPaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ReferralStatus {
+  PENDING
+  CREDITED
+}
+
+model RegistrationPayment {
+  id                String                    @id @default(uuid())
+  listerProfileId   String
+  listerProfile     ListerProfile             @relation(fields: [listerProfileId], references: [id], onDelete: Cascade)
+  amount            Decimal                   @default(500.00) @db.Decimal(10, 2)
+  razorpayOrderId   String                    @unique
+  razorpayPaymentId String?
+  status            RegistrationPaymentStatus @default(PENDING)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+}
+
+model Referral {
+  id               String         @id @default(uuid())
+  referrerId       String
+  referrer         ListerProfile  @relation("ReferrerLister", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredListerId String         @unique
+  referredLister   ListerProfile  @relation("ReferredLister", fields: [referredListerId], references: [id], onDelete: Cascade)
+  rewardAmount     Decimal        @default(200.00) @db.Decimal(10, 2)
+  status           ReferralStatus @default(PENDING)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model Listing {
@@ -185,6 +226,7 @@ model Booking {
 
   rentAmount          Decimal @db.Decimal(10, 2)
   securityDeposit     Decimal @db.Decimal(10, 2)
+  extensionFee        Decimal @default(0.00) @db.Decimal(10, 2)
   
   pendingExtensionDate      DateTime?
   pendingExtensionOrderId   String?
@@ -299,10 +341,11 @@ model Payout {
   listerProfileId String
   lister          ListerProfile @relation(fields: [listerProfileId], references: [id])
 
-  amount         Decimal      @db.Decimal(10, 2)
-  commissionPaid Decimal      @db.Decimal(10, 2)
-  status         PayoutStatus @default(PENDING)
-  batchRef       String?
+  amount                Decimal      @db.Decimal(10, 2)
+  commissionPaid        Decimal      @db.Decimal(10, 2)
+  status                PayoutStatus @default(PENDING)
+  batchRef              String?
+  walletBalanceIncluded Decimal      @default(0.00) @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

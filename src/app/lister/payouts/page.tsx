@@ -7,6 +7,7 @@ type BookingInfo = {
   startDate: string;
   endDate: string;
   rentAmount: string;
+  extensionFee?: string;
   listing: {
     title: string;
     category: string;
@@ -58,25 +59,46 @@ export default function ListerPayoutsPage() {
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const [referralInfo, setReferralInfo] = useState<{
+    code: string;
+    count: number;
+    walletBalance: number;
+  }>({ code: '', count: 0, walletBalance: 0 });
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
   const fetchPayoutsData = async () => {
     try {
-      const res = await fetch('/api/lister/payouts');
+      const [res, profRes] = await Promise.all([
+        fetch('/api/lister/payouts'),
+        fetch('/api/lister/profile')
+      ]);
+
       const data = await res.json();
       if (res.ok && data.success) {
         setStats({
           totalSettled: data.stats.totalSettled || 0,
           totalPending: data.stats.totalPending || 0,
           totalRevenue: (data.stats.totalSettled || 0) + (data.stats.totalPending || 0),
-          escrowAmount: 0, // Simplified for now
+          escrowAmount: 0,
         });
         if (data.bankDetails) setBankDetails(data.bankDetails);
         setPayouts(data.payouts || []);
       } else {
         setError(data.error || 'Failed to load financial records.');
+      }
+
+      if (profRes.ok) {
+        const pData = await profRes.json();
+        if (pData.success && pData.profile) {
+          setReferralInfo({
+            code: pData.profile.referralCode || 'N/A',
+            count: pData.profile._count?.referralsMade || 0,
+            walletBalance: Number(pData.profile.user?.walletBalance || 0),
+          });
+        }
       }
     } catch {
       setError('Connection error. Please try again.');
@@ -121,6 +143,11 @@ export default function ListerPayoutsPage() {
           font-size: 32px; font-weight: 400; color: #0D1A14; line-height: 1.1; margin-bottom: 4px;
         }
         .wl-subtitle { font-size: 13px; color: #74897C; }
+        
+        .extension-note {
+          background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;
+          font-size: 13px; color: #166534; display: flex; align-items: flex-start; gap: 12px;
+        }
 
         /* Stats Grid Layout */
         .stats-grid {
@@ -274,8 +301,19 @@ export default function ListerPayoutsPage() {
       {/* Header */}
       <div className="wl-header">
         <div>
-          <h1 className="wl-h1">Payouts & Settlements</h1>
-          <p className="wl-subtitle">Monitor gross revenue, active escrows, and direct bank payout logs</p>
+          <h1 className="wl-h1">Bank Settlements</h1>
+          <div className="wl-subtitle">Track your cleared and pending deposits</div>
+        </div>
+      </div>
+
+      <div className="extension-note">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0, marginTop: 2 }}>
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <div>
+          <strong>Important note on Extension Fees:</strong> Whenever a renter pays to extend a booking, the extra extension fee is <strong>split equally (50%)</strong> between you and the Wardrob platform. This split rate is separate from your standard rental commission.
         </div>
       </div>
 
@@ -295,6 +333,32 @@ export default function ListerPayoutsPage() {
         </div>
       ) : (
         <>
+          <div style={{ background: '#FFFFFF', border: '1px solid rgba(44,94,67,0.12)', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                🎁
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#74897C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Lister Referral Code</div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#166534', fontFamily: 'monospace', letterSpacing: '0.08em', marginTop: '2px' }}>
+                  {referralInfo.code}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', color: '#74897C', textTransform: 'uppercase', fontWeight: 600 }}>Successful Referrals</div>
+                <div style={{ fontSize: '16px', fontWeight: 700, color: '#0D1A14', marginTop: '2px' }}>{referralInfo.count} Listers</div>
+              </div>
+              <div style={{ height: '32px', width: '1px', background: 'rgba(44,94,67,0.1)' }} />
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', color: '#74897C', textTransform: 'uppercase', fontWeight: 600 }}>Wallet Credit Balance</div>
+                <div style={{ fontSize: '18px', fontWeight: 700, color: '#2C5E43', marginTop: '2px' }}>₹{referralInfo.walletBalance.toLocaleString('en-IN')}</div>
+              </div>
+            </div>
+          </div>
+
           <div className="stats-grid">
             <div className="payouts-card">
               <div className="w-icon-circle" style={{ background: '#EEF2EF', color: '#2C5E43' }}>💼</div>
@@ -431,8 +495,14 @@ export default function ListerPayoutsPage() {
                             <span style={{ color: 'var(--text-muted)' }}>Gross Rent Earned</span>
                             <span>₹{Number(p.booking.rentAmount).toLocaleString('en-IN')}</span>
                           </div>
+                          {Number(p.booking.extensionFee) > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: 'var(--text-muted)' }}>Extension Fee Added</span>
+                              <span>₹{Number(p.booking.extensionFee).toLocaleString('en-IN')}</span>
+                            </div>
+                          )}
                           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--alert)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Platform Commission (20%)</span>
+                            <span style={{ color: 'var(--text-muted)' }}>Platform Commission (35%)</span>
                             <span>-₹{Number(p.commissionPaid).toLocaleString('en-IN')}</span>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px dashed var(--border)', paddingTop: '8px', marginTop: '4px' }}>

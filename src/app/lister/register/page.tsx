@@ -25,35 +25,7 @@ export default function ListerRegisterPage() {
   // Step 2
   const [shopName, setShopName] = useState('');
   const [bio, setBio] = useState('');
-
-  // Step 3
-  const [aadhaarNumber, setAadhaarNumber] = useState('');
-  const [panNumber, setPanNumber] = useState('');
-  const [bankAccountNo, setBankAccountNo] = useState('');
-  const [bankIfsc, setBankIfsc] = useState('');
-
-  useEffect(() => {
-    setMounted(true);
-
-    // Check if user is already logged in
-    async function checkUser() {
-      try {
-        const res = await fetch('/api/auth/session');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.user) {
-            setIsLoggedIn(true);
-            setCurrentUser(data.user);
-            // Pre-fill Step 1 if user is logged in
-            setName(data.user.name || '');
-            setEmail(data.user.email);
-            setStep(2); // Skip Step 1 if logged in
-          }
-        }
-      } catch {}
-    }
-    checkUser();
-  }, []);
+  const [referralCodeInput, setReferralCodeInput] = useState('');
 
   const handleLogout = async () => {
     setLoading(true);
@@ -84,23 +56,13 @@ export default function ListerRegisterPage() {
         return;
       }
       setStep(2);
-    } else if (step === 2) {
-      if (bio.trim().length < 20) {
-        setError('Please write a slightly longer story (min 20 characters) so customers can appreciate your craft.');
-        return;
-      }
-      setStep(3);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (aadhaarNumber.length < 12) {
-      setError('Aadhaar number must be exactly 12 digits.');
-      return;
-    }
-    if (panNumber.length < 10) {
-      setError('PAN card number must be exactly 10 characters.');
+    if (bio.trim().length < 20) {
+      setError('Please write a slightly longer story (min 20 characters) so customers can appreciate your craft.');
       return;
     }
 
@@ -118,16 +80,13 @@ export default function ListerRegisterPage() {
           password,
           shopName,
           bio,
-          aadhaarNumber,
-          panNumber,
-          bankAccountNo,
-          bankIfsc,
+          referralCode: referralCodeInput,
         }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setSuccess(true);
+        router.push('/lister/kyc');
       } else {
         setError(data.error || 'Registration failed. Please check details and try again.');
       }
@@ -138,7 +97,7 @@ export default function ListerRegisterPage() {
     }
   };
 
-  const stepLabels = ['Personal Details', 'Public Profile', 'KYC & Banking'];
+  const stepLabels = ['Personal Details', 'Public Profile'];
   const totalSteps = stepLabels.length;
   const displayStep = success ? totalSteps : step;
 
@@ -810,7 +769,7 @@ export default function ListerRegisterPage() {
 
                     {error && <div className="reg-error">{error}</div>}
 
-                    <form onSubmit={handleNext}>
+                    <form onSubmit={handleSubmit}>
                       <div className="reg-grid-1">
                         <div className="reg-field">
                           <label className="reg-lbl">Public Display Name</label>
@@ -821,11 +780,24 @@ export default function ListerRegisterPage() {
                         <div className="reg-field">
                           <label className="reg-lbl">Heritage Story & Bio</label>
                           <textarea
-                            className="reg-ta" required rows={5} value={bio}
+                            className="reg-ta" required rows={4} value={bio}
                             onChange={e => setBio(e.target.value)}
                             placeholder="Describe your style, favorite brands, and what makes your wardrobe unique to renters..."
                           />
                           <div className="reg-hint">This appears on your public profile visible to renters</div>
+                        </div>
+                      </div>
+                      <div className="reg-grid-1">
+                        <div className="reg-field">
+                          <label className="reg-lbl">Referral Code (Optional)</label>
+                          <input
+                            className="reg-inp"
+                            type="text"
+                            value={referralCodeInput}
+                            onChange={e => setReferralCodeInput(e.target.value.toUpperCase())}
+                            placeholder="e.g. REF123456"
+                          />
+                          <div className="reg-hint">Have a referral code from an existing Lister? Enter it to link accounts.</div>
                         </div>
                       </div>
                       <div className="reg-btn-row">
@@ -834,98 +806,11 @@ export default function ListerRegisterPage() {
                             Back
                           </button>
                         )}
-                        <button type="submit" className="reg-next-btn" disabled={!shopName || !bio}>
-                          Continue to Verification →
+                        <button type="submit" className="reg-next-btn" disabled={loading || !shopName || !bio}>
+                          {loading ? 'Creating Account…' : 'Create Profile & Proceed →'}
                         </button>
                       </div>
                     </form>
-                  </div>
-                )}
-
-                {/* ── STEP 3: KYC & Bank ── */}
-                {step === 3 && (
-                  <div className="reg-box" key="step3">
-                    <div className="reg-section-head">
-                      <div className="reg-section-icon">🔐</div>
-                      <div>
-                        <h1 className="reg-section-title">Identity & Banking</h1>
-                        <p className="reg-section-sub">Secure verification required for payouts</p>
-                      </div>
-                    </div>
-
-                    {error && <div className="reg-error">{error}</div>}
-
-                    <form onSubmit={handleSubmit}>
-                      <div className="reg-section-tag">Government Identity</div>
-                      <div className="reg-grid-2">
-                        <div className="reg-field">
-                          <label className="reg-lbl">Aadhaar Number</label>
-                          <input
-                            className="reg-inp mono" type="text" required maxLength={12}
-                            value={aadhaarNumber}
-                            onChange={e => setAadhaarNumber(e.target.value.replace(/\D/g, ''))}
-                            placeholder="1234 5678 9012"
-                          />
-                          <div className="reg-hint">12-digit numeric ID</div>
-                        </div>
-                        <div className="reg-field">
-                          <label className="reg-lbl">PAN Card Number</label>
-                          <input
-                            className="reg-inp mono" type="text" required maxLength={10}
-                            value={panNumber}
-                            onChange={e => setPanNumber(e.target.value.toUpperCase())}
-                            placeholder="ABCDE1234F"
-                          />
-                          <div className="reg-hint">10-character alphanumeric</div>
-                        </div>
-                      </div>
-
-                      <div className="reg-section-divider" />
-                      <div className="reg-section-tag">Payout Bank Account</div>
-                      <div className="reg-grid-2">
-                        <div className="reg-field">
-                          <label className="reg-lbl">Account Number</label>
-                          <input
-                            className="reg-inp mono" type="text" required
-                            value={bankAccountNo}
-                            onChange={e => setBankAccountNo(e.target.value.replace(/\D/g, ''))}
-                            placeholder="Enter account number"
-                          />
-                        </div>
-                        <div className="reg-field">
-                          <label className="reg-lbl">IFSC Code</label>
-                          <input
-                            className="reg-inp mono" type="text" required maxLength={11}
-                            value={bankIfsc}
-                            onChange={e => setBankIfsc(e.target.value.toUpperCase())}
-                            placeholder="SBIN0001234"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="reg-btn-row">
-                        <button type="button" className="reg-back-btn" onClick={() => { setStep(2); setError(''); }}>
-                          Back
-                        </button>
-                        <button
-                          type="submit"
-                          className="reg-next-btn"
-                          disabled={loading || !aadhaarNumber || !panNumber || !bankAccountNo || !bankIfsc}
-                        >
-                          {loading
-                            ? <><div className="reg-spinner" /> Submitting…</>
-                            : <>Submit Application →</>
-                          }
-                        </button>
-                      </div>
-                    </form>
-
-                    <div className="reg-security">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <rect x="3" y="11" width="18" height="11" rx="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                      </svg>
-                      256-bit SSL encrypted · Bank-grade data security
-                    </div>
                   </div>
                 )}
               </>

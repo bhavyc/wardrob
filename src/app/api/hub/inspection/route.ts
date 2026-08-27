@@ -235,12 +235,16 @@ export async function POST(request: Request) {
             });
           }
 
-          // Create Payout for Lister (Rent minus Commission + Damages)
+          // Create Payout for Lister (Rent minus Commission + Damages + Extension Fee Split)
           const rentAmount = Number(booking.rentAmount);
-          const commissionRate = booking.listing.lister?.commissionOverride ? Number(booking.listing.lister.commissionOverride) : 0.25;
+          const extensionFee = Number(booking.extensionFee) || 0;
+          const commissionRate = 0.35; // Flat 35% commission (65% Lister / 35% Admin)
+          
           const listerRentShare = rentAmount * (1 - commissionRate);
-          const commission = rentAmount * commissionRate;
-          const finalListerPayout = listerRentShare + totalRequestedDeduction;
+          const listerExtensionShare = extensionFee * 0.50; // 50/50 split for extension fee
+          
+          const commission = (rentAmount * commissionRate) + (extensionFee * 0.50);
+          const finalListerPayout = listerRentShare + listerExtensionShare + totalRequestedDeduction;
 
           await tx.payout.create({
             data: {

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import Pagination from '@/components/Pagination';
+
 interface PayoutItem {
   id: string;
   amount: string;
@@ -19,6 +21,7 @@ interface PayoutItem {
       name: string;
       email: string;
       phone: string | null;
+      walletBalance: string | number;
     };
   };
   booking: {
@@ -54,6 +57,9 @@ export default function AdminPayoutsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const fetchPayouts = async () => {
     setLoading(true);
     try {
@@ -62,6 +68,7 @@ export default function AdminPayoutsPage() {
       const data = await res.json();
       if (data.success) {
         setPayouts(data.payouts);
+        setCurrentPage(1);
       }
     } catch (err) {
       console.error(err);
@@ -169,52 +176,78 @@ export default function AdminPayoutsPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 16,
-          marginBottom: 24,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+          gap: 20,
+          marginBottom: 32,
         }}
       >
-        <div style={{ background: '#FFF', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
-          <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-            Pending Settlement
-          </span>
-          <div style={{ fontSize: 26, fontWeight: 700, color: '#D97706', marginTop: 6 }}>
+        <div style={{ 
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+          padding: 24, 
+          borderRadius: 16, 
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, background: 'radial-gradient(circle, rgba(217,119,6,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: 20 }}>⏳</span>
+            <span style={{ fontSize: 13, color: '#64748B', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              Pending Settlement
+            </span>
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: '#0F172A', letterSpacing: '-1px' }}>
             ₹{pendingTotal.toLocaleString('en-IN')}
           </div>
-          <span style={{ fontSize: 11, color: '#94A3B8' }}>
-            {payouts.filter((p) => p.status === 'PENDING').length} payouts awaiting manual bank transfer
-          </span>
+          <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 8, fontWeight: 500 }}>
+            <strong style={{ color: '#D97706' }}>{payouts.filter((p) => p.status === 'PENDING').length} payouts</strong> awaiting manual transfer
+          </div>
         </div>
 
-        <div style={{ background: '#FFF', padding: 18, borderRadius: 10, border: '1px solid #E2E8F0' }}>
-          <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
-            Completed Payouts
-          </span>
-          <div style={{ fontSize: 26, fontWeight: 700, color: '#059669', marginTop: 6 }}>
+        <div style={{ 
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
+          padding: 24, 
+          borderRadius: 16, 
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, background: 'radial-gradient(circle, rgba(5,150,105,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: 20 }}>✅</span>
+            <span style={{ fontSize: 13, color: '#64748B', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              Completed Payouts
+            </span>
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: '#0F172A', letterSpacing: '-1px' }}>
             ₹{completedTotal.toLocaleString('en-IN')}
           </div>
-          <span style={{ fontSize: 11, color: '#94A3B8' }}>
-            {payouts.filter((p) => p.status === 'COMPLETED').length} settled to listers
-          </span>
+          <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 8, fontWeight: 500 }}>
+            <strong style={{ color: '#059669' }}>{payouts.filter((p) => p.status === 'COMPLETED').length} settled</strong> to listers
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         {(['ALL', 'PENDING', 'COMPLETED'] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             style={{
-              padding: '6px 14px',
-              borderRadius: 20,
-              fontSize: 12,
+              padding: '8px 18px',
+              borderRadius: 24,
+              fontSize: 13,
               fontWeight: 600,
               border: 'none',
               cursor: 'pointer',
-              background: filter === f ? '#0F172A' : '#E2E8F0',
-              color: filter === f ? '#FFF' : '#475569',
-              transition: 'all 0.15s',
+              background: filter === f ? 'linear-gradient(135deg, #0F172A 0%, #334155 100%)' : '#F1F5F9',
+              color: filter === f ? '#FFF' : '#64748B',
+              boxShadow: filter === f ? '0 4px 12px rgba(15, 23, 42, 0.15)' : 'none',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: filter === f ? 'translateY(-1px)' : 'none',
             }}
           >
             {f === 'ALL' ? 'All Payouts' : f === 'PENDING' ? '⏳ Pending Manual Action' : '✅ Completed'}
@@ -226,33 +259,38 @@ export default function AdminPayoutsPage() {
       <div
         style={{
           background: '#FFF',
-          borderRadius: 10,
+          borderRadius: 16,
           border: '1px solid #E2E8F0',
           overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025)',
         }}
       >
         {loading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>Loading payouts...</div>
+          <div style={{ padding: 60, textAlign: 'center', color: '#64748B', fontSize: 14, fontWeight: 500 }}>
+            <div className="mini-spin" style={{ display: 'inline-block', marginRight: 12, border: '3px solid #E2E8F0', borderTopColor: '#0F172A' }} />
+            Loading payouts...
+          </div>
         ) : payouts.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#94A3B8' }}>No payouts found in this view.</div>
+          <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8', fontSize: 15, fontWeight: 500 }}>No payouts found in this view.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
               <thead>
-                <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Lister Details</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Bank Account / IFSC</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Rental Item</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Gross Rent</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Commission</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Net Payable</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Status</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600, textAlign: 'right' }}>Action</th>
+                <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: 11 }}>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Lister Details</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Bank Account / IFSC</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Rental Item</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Gross Rent</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Commission</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Net Payable</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
+                  <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {payouts.map((p) => {
+                {payouts
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((p) => {
                   const isOnHold = p.status === 'PENDING' && p.booking.damageReports?.some(dr => dr.dispute?.status === 'OPEN');
                   return (
                     <tr
@@ -264,82 +302,84 @@ export default function AdminPayoutsPage() {
                         borderLeft: isOnHold ? '4px solid #EF4444' : 'none'
                       }}
                     >
-                    <td style={{ padding: '14px 18px' }}>
-                      <div style={{ fontWeight: 600, color: '#0F172A' }}>
+                    <td style={{ padding: '16px 20px' }}>
+                      <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>
                         {p.lister.user.name}
                       </div>
-                      <div style={{ fontSize: 11, color: '#64748B' }}>
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
                         {p.lister.shopName ? `Shop: ${p.lister.shopName}` : p.lister.user.email}
                       </div>
                       {p.lister.user.phone && (
-                        <div style={{ fontSize: 11, color: '#94A3B8' }}>📞 {p.lister.user.phone}</div>
+                        <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>📞 {p.lister.user.phone}</div>
                       )}
                     </td>
 
-                    <td style={{ padding: '14px 18px' }}>
+                    <td style={{ padding: '16px 20px' }}>
                       {p.lister.bankAccountNo ? (
                         <div>
-                          <div style={{ fontWeight: 600, color: '#0F172A', fontFamily: 'monospace' }}>
+                          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>
                             A/C: {p.lister.bankAccountNo}
                           </div>
-                          <div style={{ fontSize: 11, color: '#64748B', fontFamily: 'monospace' }}>
+                          <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
                             IFSC: {p.lister.bankIfsc}
                           </div>
                           {p.lister.panNumber && (
-                            <div style={{ fontSize: 10, color: '#94A3B8' }}>PAN: {p.lister.panNumber}</div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>PAN: {p.lister.panNumber}</div>
                           )}
                         </div>
                       ) : (
-                        <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>
-                          ⚠️ Bank details not provided
+                        <span style={{ fontSize: 12, color: '#B91C1C', fontWeight: 600, background: '#FEE2E2', padding: '4px 8px', borderRadius: 4 }}>
+                          ⚠️ Bank details missing
                         </span>
                       )}
                     </td>
 
-                    <td style={{ padding: '14px 18px' }}>
-                      <div style={{ fontWeight: 600, color: '#334155' }}>
+                    <td style={{ padding: '16px 20px', maxWidth: 220 }}>
+                      <div style={{ fontWeight: 600, color: '#1E293B', fontSize: 13, lineHeight: 1.4 }}>
                         {p.booking.listing.title}
                       </div>
-                      <div style={{ fontSize: 11, color: '#64748B' }}>
-                        Booking ID: {p.booking.id.slice(0, 8)}...
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>
+                        ID: {p.booking.id.slice(0, 8)}...
                       </div>
                     </td>
 
-                    <td style={{ padding: '14px 18px', color: '#475569' }}>
+                    <td style={{ padding: '16px 20px', color: '#475569', fontWeight: 500, fontSize: 14 }}>
                       ₹{Number(p.booking.rentAmount).toLocaleString('en-IN')}
                     </td>
 
-                    <td style={{ padding: '14px 18px', color: '#EF4444' }}>
+                    <td style={{ padding: '16px 20px', color: '#EF4444', fontWeight: 500, fontSize: 14 }}>
                       -₹{Number(p.commissionPaid).toLocaleString('en-IN')}
                     </td>
 
-                    <td style={{ padding: '14px 18px' }}>
+                    <td style={{ padding: '16px 20px' }}>
                       <span style={{ fontWeight: 700, color: '#059669', fontSize: 15 }}>
                         ₹{Number(p.amount).toLocaleString('en-IN')}
                       </span>
                     </td>
 
-                    <td style={{ padding: '14px 18px' }}>
+                    <td style={{ padding: '16px 20px' }}>
                       {p.status === 'PENDING' ? (
                         <span
                           style={{
-                            background: '#FEF3C7',
-                            color: '#92400E',
-                            padding: '4px 8px',
+                            display: 'inline-block',
+                            background: isOnHold ? '#FEE2E2' : '#FEF3C7',
+                            color: isOnHold ? '#991B1B' : '#92400E',
+                            padding: '4px 10px',
                             borderRadius: 12,
                             fontSize: 11,
                             fontWeight: 700,
                           }}
                         >
-                          ⏳ PENDING
+                          {isOnHold ? 'ON HOLD' : 'PENDING'}
                         </span>
                       ) : (
                         <div>
                           <span
                             style={{
+                              display: 'inline-block',
                               background: '#D1FAE5',
                               color: '#065F46',
-                              padding: '4px 8px',
+                              padding: '4px 10px',
                               borderRadius: 12,
                               fontSize: 11,
                               fontWeight: 700,
@@ -348,7 +388,7 @@ export default function AdminPayoutsPage() {
                             ✅ PAID
                           </span>
                           {p.batchRef && (
-                            <div style={{ fontSize: 10, color: '#64748B', marginTop: 4, fontFamily: 'monospace' }}>
+                            <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>
                               Ref: {p.batchRef}
                             </div>
                           )}
@@ -356,11 +396,11 @@ export default function AdminPayoutsPage() {
                       )}
                     </td>
 
-                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                    <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                       {p.status === 'PENDING' ? (
                         p.booking.damageReports?.some(dr => dr.dispute?.status === 'OPEN') ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#991B1B', background: '#FEE2E2', padding: '4px 8px', borderRadius: 4, letterSpacing: '0.05em' }}>⚠️ LOCKED ON HOLD</span>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: '#991B1B', background: '#FEE2E2', padding: '4px 8px', borderRadius: 4, letterSpacing: '0.05em' }}>⚠️ ON HOLD</span>
                             <span style={{ fontSize: 10, color: '#991B1B', fontWeight: 600 }}>DISPUTE ACTIVE</span>
                           </div>
                         ) : (
@@ -374,11 +414,15 @@ export default function AdminPayoutsPage() {
                               color: '#FFF',
                               border: 'none',
                               borderRadius: 6,
-                              padding: '6px 12px',
+                              padding: '8px 14px',
                               fontSize: 12,
                               fontWeight: 600,
                               cursor: 'pointer',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                              transition: 'background 0.2s',
                             }}
+                            onMouseOver={(e) => e.currentTarget.style.background = '#1E293B'}
+                            onMouseOut={(e) => e.currentTarget.style.background = '#0F172A'}
                           >
                             Mark as Paid
                           </button>
@@ -421,8 +465,26 @@ export default function AdminPayoutsPage() {
             <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 12px' }}>
               Confirm Manual Transfer
             </h3>
-            <p style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5, margin: '0 0 16px' }}>
-              Please ensure you have transferred <strong>₹{Number(activeModal.amount).toLocaleString('en-IN')}</strong> to{' '}
+            <div style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, marginBottom: 16, border: '1px solid #E2E8F0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: '#64748B' }}>
+                <span>Rental Payout:</span>
+                <span style={{ color: '#0F172A', fontWeight: 600 }}>₹{Number(activeModal.amount).toLocaleString('en-IN')}</span>
+              </div>
+              {Number(activeModal.lister.user.walletBalance) > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: '#64748B' }}>
+                  <span>Referral Wallet Balance (Clubbed):</span>
+                  <span style={{ color: '#059669', fontWeight: 600 }}>+ ₹{Number(activeModal.lister.user.walletBalance).toLocaleString('en-IN')}</span>
+                </div>
+              )}
+              <div style={{ borderTop: '1px solid #E2E8F0', margin: '8px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
+                <span>Total Transfer Required:</span>
+                <span>₹{(Number(activeModal.amount) + (activeModal.status === 'PENDING' ? Number(activeModal.lister.user.walletBalance || 0) : 0)).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+            
+            <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5, margin: '0 0 16px' }}>
+              Please ensure you have transferred the <strong>Total Transfer Required</strong> amount to{' '}
               <strong>{activeModal.lister.user.name}</strong> via Bank Transfer or UPI.
             </p>
 

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import RenterNavbar from '@/components/RenterNavbar';
 import RenterFooter from '@/components/RenterFooter';
+import Pagination from '@/components/Pagination';
 
 type Product = {
   id: string;
@@ -27,13 +28,18 @@ function CatalogContent() {
   const [selectedCategory, setSelectedCategory] = useState<string>(catParam);
   const [searchQuery, setSearchQuery] = useState(qParam);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const res = await fetch('/api/products');
-        const data = await res.json();
-        if (data.success && data.products) {
-          setProducts(data.products);
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
+          const data = await res.json();
+          if (data.success && data.products) {
+            setProducts(data.products);
+          }
         }
       } catch (err) {
         console.error('Fetch failed', err);
@@ -47,6 +53,7 @@ function CatalogContent() {
   useEffect(() => {
     setSelectedCategory(catParam);
     setSearchQuery(qParam);
+    setCurrentPage(1);
   }, [catParam, qParam]);
 
   const categories = ['All', 'Saree', 'Lehenga', 'Kurta', 'Shirt', 'Shawl'];
@@ -215,65 +222,84 @@ function CatalogContent() {
               </button>
             </div>
           ) : (
-            <div className="cat-grid">
-              {filteredProducts.map(p => (
-                <Link key={p.id} href={`/product/${p.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
-                  <div className="prod-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
-                    <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative' }}>
-                      <img src={p.images[0]} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      
-                      {/* Verified badge */}
-                      <div style={{
-                        position: 'absolute', top: '12px', left: '12px',
-                        background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
-                        padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                        fontSize: '10px', fontWeight: 600, color: 'var(--success)', letterSpacing: '0.04em',
-                      }}>
-                        ● Verified
-                      </div>
-
-                      {p.stock === 0 && (
+            <>
+              <div className="cat-grid">
+                {filteredProducts
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map(p => (
+                  <Link key={p.id} href={`/product/${p.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
+                    <div className="prod-card" style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
+                      <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative' }}>
+                        <img
+                          src={p.images && p.images.length > 0 && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'}
+                          alt={p.title}
+                          onError={(e: any) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800';
+                          }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        
+                        {/* Verified badge */}
                         <div style={{
-                          position: 'absolute', inset: 0, background: 'rgba(255,250,245,0.85)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          borderRadius: 'var(--radius-md)',
+                          position: 'absolute', top: '12px', left: '12px',
+                          background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
+                          padding: '5px 12px', borderRadius: 'var(--radius-full)',
+                          fontSize: '10px', fontWeight: 600, color: 'var(--success)', letterSpacing: '0.04em',
                         }}>
-                          <span style={{
-                            fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
-                            color: 'var(--ink)', border: '1.5px solid var(--ink)', padding: '10px 24px',
-                            borderRadius: 'var(--radius-full)',
-                          }}>Waitlist</span>
+                          ● Verified
                         </div>
-                      )}
-                    </div>
-                    
-                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500,
-                        textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px',
-                      }}>
-                        {p.Lister?.shopName || 'Atelier Collection'}
+
+                        {p.stock === 0 && (
+                          <div style={{
+                            position: 'absolute', inset: 0, background: 'rgba(255,250,245,0.85)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            borderRadius: 'var(--radius-md)',
+                          }}>
+                            <span style={{
+                              fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+                              color: 'var(--ink)', border: '1.5px solid var(--ink)', padding: '10px 24px',
+                              borderRadius: 'var(--radius-full)',
+                            }}>Waitlist</span>
+                          </div>
+                        )}
                       </div>
                       
-                      <h3 style={{ 
-                        fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: 'var(--ink)', 
-                        marginBottom: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
-                        {p.title}
-                      </h3>
-                      
-                      <div style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto'
-                      }}>
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>4-Day Rental</span>
-                        <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '19px', fontWeight: 700, color: 'var(--ink)' }}>₹{p.price.toLocaleString('en-IN')}</strong>
+                      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500,
+                          textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px',
+                        }}>
+                          {p.Lister?.shopName || 'Atelier Collection'}
+                        </div>
+                        
+                        <h3 style={{ 
+                          fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: 'var(--ink)', 
+                          marginBottom: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                          {p.title}
+                        </h3>
+                        
+                        <div style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          borderTop: '1px solid var(--border)', paddingTop: '14px', marginTop: 'auto'
+                        }}>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>4-Day Rental</span>
+                          <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '19px', fontWeight: 700, color: 'var(--ink)' }}>₹{p.price.toLocaleString('en-IN')}</strong>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredProducts.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+                className="mt-6"
+              />
+            </>
           )}
         </div>
       </main>

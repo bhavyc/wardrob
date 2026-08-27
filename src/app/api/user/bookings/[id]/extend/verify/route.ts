@@ -75,7 +75,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         where: { id: booking.id },
         data: {
           endDate: newEndDate, // Officially locked
-          rentAmount: Number(booking.rentAmount) + totalExtensionFee,
+          extensionFee: Number(lockedBooking.extensionFee) + totalExtensionFee,
+          totalAmount: Number(lockedBooking.totalAmount) + totalExtensionFee,
           razorpayOrderId: razorpay_order_id,
           razorpayPaymentId: razorpay_payment_id,
           pendingExtensionDate: null,

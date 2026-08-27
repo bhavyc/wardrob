@@ -42,13 +42,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     // Force Settlement Math (Same as full shortfall scenario)
     const securityDeposit = Number(booking.securityDeposit);
     const rentAmount = Number(booking.rentAmount);
+    const extensionFee = Number(booking.extensionFee) || 0;
     
-    const commissionRate = booking.listing.lister?.commissionOverride ? Number(booking.listing.lister.commissionOverride) : 0.25;
+    const commissionRate = 0.35; // Flat 35% commission (65% Lister / 35% Admin)
+    
     const listerRentShare = rentAmount * (1 - commissionRate);
-    const commission = rentAmount * commissionRate;
+    const listerExtensionShare = extensionFee * 0.50; // 50/50 split for extension fee
     
-    // Lister receives their share of rent + the entire security deposit (forfeited by Renter)
-    const finalListerPayout = listerRentShare + securityDeposit;
+    const commission = (rentAmount * commissionRate) + (extensionFee * 0.50);
+    
+    // Lister receives their share of rent + extension fee + the entire security deposit (forfeited by Renter)
+    const finalListerPayout = listerRentShare + listerExtensionShare + securityDeposit;
 
     // Run updates atomically
     await prisma.$transaction(async (tx) => {

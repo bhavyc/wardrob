@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import Pagination from '@/components/Pagination';
+
 type Shipment = {
   id: string;
   leg: string;
@@ -59,6 +61,10 @@ export default function ListerBookingsPage() {
   const [ratingBookingId, setRatingBookingId] = useState<string | null>(null);
   const [ratingValue, setRatingValue] = useState(5);
   const [ratingComment, setRatingComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
 
   const [authUserId, setAuthUserId] = useState<string | null>(null);
 
@@ -89,10 +95,6 @@ export default function ListerBookingsPage() {
       alert('An error occurred.');
     }
   };
-
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
 
   const fetchBookings = async () => {
     try {
@@ -511,41 +513,13 @@ export default function ListerBookingsPage() {
           </div>
 
           {/* Pagination bar */}
-          {totalPages > 1 && (
-            <div className="pagination-bar">
-              <div>
-                Showing <strong>{startIdx}</strong> to <strong>{endIdx}</strong> of <strong>{bookings.length}</strong> bookings
-              </div>
-              <div className="pagination-buttons">
-                <button 
-                  className="pagination-btn" 
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                >
-                  ◀
-                </button>
-                {Array.from({ length: totalPages }).map((_, idx) => {
-                  const pNum = idx + 1;
-                  return (
-                    <button 
-                      key={pNum} 
-                      className={`pagination-btn${currentPage === pNum ? ' active' : ''}`}
-                      onClick={() => setCurrentPage(pNum)}
-                    >
-                      {pNum}
-                    </button>
-                  );
-                })}
-                <button 
-                  className="pagination-btn" 
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                >
-                  ▶
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Pagination Controls */}
+          <Pagination
+            currentPage={currentPage}
+            totalItems={bookings.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
         </>
       )}
 

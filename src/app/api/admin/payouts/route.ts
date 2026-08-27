@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       include: {
         lister: {
           include: {
-            user: { select: { id: true, name: true, email: true, phone: true } },
+            user: { select: { id: true, name: true, email: true, phone: true, walletBalance: true } },
           },
         },
         booking: {
@@ -53,17 +53,49 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'payoutId and status are required' }, { status: 400 });
     }
 
-    const updatedPayout = await prisma.payout.update({
-      where: { id: payoutId },
-      data: {
-        status: status as any,
-        batchRef: batchRef || undefined,
-      },
-      include: {
-        lister: {
-          include: { user: { select: { name: true, email: true } } },
+    // Atomic transaction to club wallet balance
+    const updatedPayout = await prisma.$transaction(async (tx) => {
+      const payout = await tx.payout.findUnique({
+        where: { id: payoutId },
+        include: {
+          lister: { include: { user: true } },
+        }
+      });
+
+      if (!payout) throw new Error('Payout not found');
+      
+      let finalAmount: number = Number(payout.amount);
+      let finalBatchRef = batchRef || undefined;
+      
+      // If marking as completed and there is a wallet balance, club it
+      if (status === 'COMPLETED' && payout.status !== 'COMPLETED') {
+        const currentWalletBalance = Number(payout.lister.user.walletBalance);
+        if (currentWalletBalance > 0) {
+          finalAmount = Number(payout.amount) + currentWalletBalance;
+          finalBatchRef = `${batchRef || 'MANUAL'} (Clubbed Wallet ₹${currentWalletBalance})`;
+          
+          // Deduct from wallet balance
+          await tx.user.update({
+            where: { id: payout.lister.user.id },
+            data: { walletBalance: { decrement: currentWalletBalance } }
+          });
+        }
+      }
+
+      return await tx.payout.update({
+        where: { id: payoutId },
+        data: {
+          status: status as any,
+          batchRef: finalBatchRef,
+          amount: finalAmount,
+          walletBalanceIncluded: status === 'COMPLETED' && payout.status !== 'COMPLETED' ? Number(payout.lister.user.walletBalance) : 0
         },
-      },
+        include: {
+          lister: {
+            include: { user: { select: { name: true, email: true, walletBalance: true } } },
+          },
+        },
+      });
     });
 
     return NextResponse.json({
@@ -73,6 +105,6 @@ export async function PATCH(request: Request) {
     });
   } catch (error: any) {
     console.error('Admin Payouts PATCH Error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

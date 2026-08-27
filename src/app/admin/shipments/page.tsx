@@ -28,7 +28,7 @@ type Shipment = {
 
 import Pagination from '@/components/Pagination';
 
-export default function HubShipmentsPage() {
+export default function AdminShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [activeTab, setActiveTab] = useState<'renter' | 'lister'>('renter');
   const [filterMode, setFilterMode] = useState<'ACTIVE' | 'DELIVERED'>('ACTIVE');
@@ -301,68 +301,65 @@ export default function HubShipmentsPage() {
                       </div>
                       
                       <div className="form-grid">
-                        <div className="form-group">
-                          <label className="form-label">Status</label>
-                          <select className="form-input" value={editStatus} onChange={e => setEditStatus(e.target.value)}>
-                            <option value="PENDING">Pending</option>
-                            <option value="PICKED_UP">Picked Up</option>
-                            <option value="IN_TRANSIT">In Transit</option>
-                            <option value="DELIVERED">Delivered</option>
-                            <option value="FAILED">Failed</option>
+                        <div>
+                          <label className="form-lbl">Status</label>
+                          <select className="form-inp" value={editStatus} onChange={e => setEditStatus(e.target.value)}>
+                            <option value="PICKUP_SCHEDULED">PICKUP_SCHEDULED</option>
+                            <option value="IN_TRANSIT">IN_TRANSIT</option>
+                            <option value="DELIVERED">DELIVERED</option>
+                            <option value="CANCELLED">CANCELLED</option>
                           </select>
                         </div>
-                        <div className="form-group">
-                          <label className="form-label">Courier Name</label>
-                          <input type="text" className="form-input" value={editCourier} onChange={e => setEditCourier(e.target.value)} placeholder="e.g. BlueDart" />
+                        <div>
+                          <label className="form-lbl">Courier Partner</label>
+                          <input className="form-inp" type="text" value={editCourier} onChange={e => setEditCourier(e.target.value)} placeholder="e.g. Porter / BlueDart" />
                         </div>
-                        <div className="form-group full">
-                          <label className="form-label">Tracking Number (AWB)</label>
-                          <input type="text" className="form-input mono" value={editTracking} onChange={e => setEditTracking(e.target.value)} placeholder="e.g. BD123456789" />
+                        <div>
+                          <label className="form-lbl">AWB / Tracking Number</label>
+                          <input className="form-inp" type="text" value={editTracking} onChange={e => setEditTracking(e.target.value)} placeholder="e.g. WARD-18239" />
                         </div>
                       </div>
-                      <div className="form-actions">
-                        <button onClick={cancelEdit} className="btn-cancel">Cancel</button>
-                        <button onClick={() => handleUpdate(s.id)} className="btn-save">Save Changes</button>
+
+                      <div className="btn-row">
+                        <button className="btn btn-save" onClick={() => handleUpdate(s.id)}>Save Updates</button>
+                        <button className="btn btn-cancel" onClick={() => setEditingId(null)}>Cancel</button>
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div>
-                        <div className="ship-section-title">Logistics Info</div>
-                        <div className="ship-info-box">
-                          <div className="ship-info-row">
-                            <span className="ship-info-label">Courier</span>
-                            <span className="ship-info-val">{s.courierName || <span style={{ color: '#94A3B8', fontStyle: 'italic', fontWeight: 400 }}>Not Assigned</span>}</span>
-                          </div>
-                          <div className="ship-info-row" style={{ marginTop: '12px' }}>
-                            <span className="ship-info-label">AWB Number</span>
-                            <span className="ship-info-val">
-                              {s.trackingNumber ? <span className="mono">{s.trackingNumber}</span> : <span style={{ color: '#94A3B8', fontStyle: 'italic', fontWeight: 400 }}>N/A</span>}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                    <div>
+                      <div className="ship-section-title">Current Tracking Details</div>
                       
-                      <div className="ship-action-col">
-                        <div style={{ width: '100%', textAlign: 'right' }}>
-                          {s.dispatchedAt && (
-                            <div className="ship-timestamp ts-dispatched">
-                              Dispatched: {new Date(s.dispatchedAt).toLocaleString('en-IN', {dateStyle: 'medium', timeStyle: 'short'})}
-                            </div>
-                          )}
-                          {s.deliveredAt && (
-                            <div className="ship-timestamp ts-delivered">
-                              Delivered: {new Date(s.deliveredAt).toLocaleString('en-IN', {dateStyle: 'medium', timeStyle: 'short'})}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <button onClick={() => startEdit(s)} className="ship-btn">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                          Update Tracking
-                        </button>
+                      <div className="info-box">
+                        <div className="info-label">Courier</div>
+                        <div className="info-val">{s.courierName || 'Unassigned'}</div>
                       </div>
-                    </>
+
+                      <div className="info-box">
+                        <div className="info-label">Tracking Number</div>
+                        <div className="info-val">{s.trackingNumber || 'Pending Generation'}</div>
+                      </div>
+
+                      <div className="info-box">
+                        <div className="info-label">Distance / Fee</div>
+                        <div className="info-val">
+                          {s.distanceZone || 'Standard Zone'} {s.deliveryFeeCalculated ? `(₹${s.deliveryFeeCalculated})` : ''}
+                        </div>
+                      </div>
+
+                      <div className="info-box">
+                        <div className="info-label">Dispatch Time</div>
+                        <div className="info-val">{s.dispatchedAt ? new Date(s.dispatchedAt).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'Not Dispatched'}</div>
+                      </div>
+
+                      <div className="info-box">
+                        <div className="info-label">Delivered Time</div>
+                        <div className="info-val">{s.deliveredAt ? new Date(s.deliveredAt).toLocaleString('en-IN', {dateStyle:'short', timeStyle:'short'}) : 'Not Delivered'}</div>
+                      </div>
+
+                      <button className="btn-edit" onClick={() => startEdit(s)}>
+                        ✎ Update Status & Courier
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

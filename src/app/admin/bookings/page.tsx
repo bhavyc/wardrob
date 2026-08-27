@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import Pagination from '@/components/Pagination';
+
 interface BookingItem {
   id: string;
   startDate: string;
@@ -54,6 +56,9 @@ export default function AdminBookingsPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedBooking, setSelectedBooking] = useState<BookingItem | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const fetchBookings = async () => {
     setLoading(true);
     try {
@@ -62,6 +67,7 @@ export default function AdminBookingsPage() {
       const data = await res.json();
       if (data.success) {
         setBookings(data.bookings);
+        setCurrentPage(1);
       }
     } catch (err) {
       console.error(err);
@@ -185,7 +191,9 @@ export default function AdminBookingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((b) => {
+                {bookings
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((b) => {
                   const badge = getStatusBadge(b.status);
                   return (
                     <tr key={b.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
@@ -260,6 +268,12 @@ export default function AdminBookingsPage() {
                 })}
               </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={bookings.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>
@@ -288,7 +302,7 @@ export default function AdminBookingsPage() {
               maxHeight: '90vh',
               overflowY: 'auto',
             }}
-          >
+          >   
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#0F172A' }}>
                 Booking Details & Financials

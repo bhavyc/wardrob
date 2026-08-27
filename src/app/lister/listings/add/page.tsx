@@ -95,6 +95,10 @@ export default function AddListingPage() {
       setError('Please fill in all required fields.');
       return;
     }
+    if (Number(rentalPrice) < 5000) {
+      setError('Minimum event package rent allowed is ₹5000.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -386,8 +390,8 @@ export default function AddListingPage() {
               <div className="field-grid-2">
                 <div>
                   <label className="field-lbl">Event Package Rent (₹) *</label>
-                  <input className="field-inp" type="number" required min="100" value={rentalPrice} onChange={e => setRentalPrice(e.target.value)} placeholder="e.g. 1500" />
-                  <p style={{ fontSize: '11px', color: '#74897C', marginTop: '6px' }}>Flat 4-day event price. WARDROB takes a 35% commission.</p>
+                  <input className="field-inp" type="number" required min="5000" value={rentalPrice} onChange={e => setRentalPrice(e.target.value)} placeholder="e.g. 5000" />
+                  <p style={{ fontSize: '11px', color: '#74897C', marginTop: '6px' }}>Flat 4-day event price (Minimum ₹5000). WARDROB takes a 35% commission.</p>
                 </div>
                 <div>
                   <label className="field-lbl">Security Deposit (₹) *</label>
@@ -439,7 +443,7 @@ export default function AddListingPage() {
                 <button type="button" className="cancel-btn" onClick={() => router.push('/lister/listings')} disabled={loading}>
                   Cancel
                 </button>
-                <button type="submit" className="save-btn" disabled={loading || uploading || !title || !rentalPrice || imageUrls.length === 0}>
+                <button type="submit" className="save-btn" disabled={loading || uploading || !title || !rentalPrice || Number(rentalPrice) < 5000 || imageUrls.length === 0}>
                   {loading ? 'Submitting...' : 'Submit Listing'}
                 </button>
               </div>

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import Pagination from '@/components/Pagination';
+
 interface DisputeItem {
   id: string;
   status: 'OPEN' | 'RESOLVED';
@@ -43,6 +45,9 @@ export default function AdminDisputesPage() {
   const [revisedDeduction, setRevisedDeduction] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const fetchDisputes = async () => {
     setLoading(true);
@@ -169,7 +174,9 @@ export default function AdminDisputesPage() {
                 </tr>
               </thead>
               <tbody>
-                {disputes.map((d) => (
+                {disputes
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((d) => (
                   <tr key={d.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                     <td style={{ padding: '14px 18px' }}>
                       <div style={{ fontWeight: 600, color: '#0F172A' }}>
@@ -231,23 +238,29 @@ export default function AdminDisputesPage() {
                           setRevisedDeduction(d.damageReport.deductionAmount);
                         }}
                         style={{
-                          background: '#0F172A',
-                          color: '#FFF',
-                          border: 'none',
+                          background: '#F1F5F9',
+                          border: '1px solid #CBD5E1',
                           borderRadius: 6,
-                          padding: '6px 12px',
+                          padding: '6px 10px',
                           fontSize: 12,
                           fontWeight: 600,
+                          color: '#334155',
                           cursor: 'pointer',
                         }}
                       >
-                        Review Evidence
+                        {d.status === 'OPEN' ? 'Review & Adjudicate' : 'View Resolution'}
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={disputes.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>

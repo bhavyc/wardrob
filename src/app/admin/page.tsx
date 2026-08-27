@@ -384,33 +384,45 @@ export default function AdminDashboardPage() {
                           Mark Pickup Failed
                         </button>
                       )}
-                      <button
-                        disabled={!canForceSettle}
-                        title={!canForceSettle ? 'Must be 15+ days overdue' : ''}
-                        onClick={async () => {
-                          if (!confirm(`Are you sure you want to forcefully settle this booking?\nThis will forfeit the renter's deposit, pay the lister, and write off the item.`)) return;
-                          const res = await fetch(`/api/admin/bookings/${b.id}/force-settle`, { method: 'POST' });
-                          const data = await res.json();
-                          if (data.success) {
-                            alert('Force settled successfully.');
-                            fetchDashboardData();
-                          } else {
-                            alert(`Error: ${data.error}`);
-                          }
-                        }}
-                        style={{
-                          background: canForceSettle ? '#E53E3E' : '#FC8181',
-                          color: '#FFF',
-                          border: 'none',
+                      {!canForceSettle ? (
+                        <div style={{
+                          background: '#FED7D7',
+                          color: '#C53030',
                           padding: '6px 12px',
                           borderRadius: 6,
                           fontSize: 12,
                           fontWeight: 600,
-                          cursor: canForceSettle ? 'pointer' : 'not-allowed',
-                        }}
-                      >
-                        Force Settle (Forfeit)
-                      </button>
+                          border: '1px solid #FEB2B2'
+                        }}>
+                          🔒 Unlocks at 15 Days
+                        </div>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Are you sure you want to forcefully settle this booking?\nThis will forfeit the renter's deposit, pay the lister, and write off the item.`)) return;
+                            const res = await fetch(`/api/admin/bookings/${b.id}/force-settle`, { method: 'POST' });
+                            const data = await res.json();
+                            if (data.success) {
+                              alert('Force settled successfully.');
+                              fetchDashboardData();
+                            } else {
+                              alert(`Error: ${data.error}`);
+                            }
+                          }}
+                          style={{
+                            background: '#E53E3E',
+                            color: '#FFF',
+                            border: 'none',
+                            padding: '6px 12px',
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Force Settle (Forfeit)
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

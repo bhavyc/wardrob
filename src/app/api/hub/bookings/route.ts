@@ -65,12 +65,27 @@ export async function GET(request: Request) {
       return false;
     });
 
+    // Fetch recent completed inspections (DamageReports) for History/Record keeping
+    const recentInspections = await prisma.damageReport.findMany({
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        booking: {
+          include: {
+            listing: true,
+            renter: { select: { name: true, phone: true } },
+          }
+        }
+      }
+    });
+
     return NextResponse.json({
       success: true,
       intakeBookings,
       preDispatchBookings,
       postReturnBookings,
       returnsDueToday,
+      recentInspections,
     });
   } catch (error: any) {
     console.error('Hub Bookings API Error:', error);

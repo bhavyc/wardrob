@@ -30,6 +30,13 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    
+    if (Number(rentalPrice) < 5000) {
+      return NextResponse.json(
+        { success: false, error: 'Minimum event package rent allowed is ₹5000.' },
+        { status: 400 }
+      );
+    }
 
     // Retrieve or create lister profile
     let listerProfile = await prisma.listerProfile.findUnique({

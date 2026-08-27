@@ -11,9 +11,9 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     fetch('/api/products')
-      .then(r => r.json())
+      .then(r => r.ok && r.headers.get('content-type')?.includes('application/json') ? r.json() : null)
       .then(d => {
-        if (d.success && d.products) {
+        if (d?.success && d?.products) {
           const predefinedCategories: Record<string, { name: string; img: string; emoji: string }> = {
             'Lehenga': { name: 'Bridal Lehengas', img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800', emoji: '👰' },
             'Saree': { name: 'Banarasi Sarees', img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800', emoji: '🪷' },
@@ -34,7 +34,7 @@ export default function CategoriesPage() {
               groupedCategories[catName] = {
                 name: predefined ? predefined.name : catName,
                 val: catName,
-                img: p.images && p.images.length > 0 ? p.images[0] : (predefined ? predefined.img : 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800'),
+                img: predefined ? predefined.img : (p.images && p.images.length > 0 ? p.images[0] : 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800'),
                 emoji: predefined ? predefined.emoji : '✨'
               };
             }
@@ -100,7 +100,15 @@ export default function CategoriesPage() {
                   aspectRatio: '3/4', background: 'var(--bg-warm)', marginBottom: '16px',
                   position: 'relative',
                 }}>
-                  <img src={cat.img} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img
+                    src={cat.img}
+                    alt={cat.name}
+                    onError={(e: any) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800';
+                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                   <div style={{
                     position: 'absolute', bottom: '16px', left: '16px',
                     background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)',

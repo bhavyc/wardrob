@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import Pagination from '@/components/Pagination';
+
 interface ListerItem {
   id: string;
   shopName: string | null;
@@ -31,6 +33,9 @@ export default function AdminListersPage() {
   const [listers, setListers] = useState<ListerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const fetchListers = async () => {
     setLoading(true);
@@ -145,7 +150,9 @@ export default function AdminListersPage() {
                 </tr>
               </thead>
               <tbody>
-                {listers.map((l) => (
+                {listers
+                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                  .map((l) => (
                   <tr key={l.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                     <td style={{ padding: '14px 18px' }}>
                       <div style={{ fontWeight: 600, color: '#0F172A' }}>{l.user.name}</div>
@@ -246,6 +253,12 @@ export default function AdminListersPage() {
                 ))}
               </tbody>
             </table>
+            <Pagination
+              currentPage={currentPage}
+              totalItems={listers.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>

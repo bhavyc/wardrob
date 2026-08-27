@@ -6,6 +6,7 @@ import Link from 'next/link';
 import RenterNavbar from '@/components/RenterNavbar';
 import RenterFooter from '@/components/RenterFooter';
 import StatusBadge from '@/components/StatusBadge';
+import Pagination from '@/components/Pagination';
 
 type Shipment = { id: string; leg: string; trackingNumber: string | null; courierName: string | null; status: string; };
 type DamageReport = { id: string; inspectionType: string; grade: string; deductionAmount: number; isDisputed: boolean; dispute?: { status: string } | null; };
@@ -26,6 +27,9 @@ export default function CustomerProfile() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'rentals' | 'wallet'>('rentals');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
   
   const [disputeBookingId, setDisputeBookingId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
@@ -397,7 +401,6 @@ export default function CustomerProfile() {
                                     </div>
                                   );
                                 }
-
                                 const isDisputing = disputeBookingId === b.id;
 
                                 return (
@@ -443,6 +446,16 @@ export default function CustomerProfile() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+              {bookings.length > ITEMS_PER_PAGE && (
+                <div style={{ marginTop: '32px' }}>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={bookings.length}
+                    itemsPerPage={ITEMS_PER_PAGE}
+                    onPageChange={setCurrentPage}
+                  />
                 </div>
               )}
             </div>
