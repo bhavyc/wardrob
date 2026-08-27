@@ -241,11 +241,10 @@ function CatalogContent() {
                       <Link key={p.id} href={`/product/${p.id}`} style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
                         <div className="prod-card" style={{
                           display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
-                          background: '#FFFFFF', borderRadius: '16px', overflow: 'hidden',
-                          border: '1px solid rgba(224, 212, 204, 0.7)', boxShadow: '0 4px 16px rgba(30,30,45,0.04)',
-                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          background: 'transparent',
+                          transition: 'opacity 0.3s ease',
                         }}>
-                          <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative', overflow: 'hidden' }}>
+                          <div className="img-zoom-container" style={{ aspectRatio: '3/4', background: 'var(--bg-warm)', position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                             <img
                               src={displayImg}
                               alt={p.title}
@@ -257,7 +256,7 @@ function CatalogContent() {
                             />
                             {p.stock === 0 && (
                               <div style={{
-                                position: 'absolute', inset: 0, background: 'rgba(255,250,245,0.88)',
+                                position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.88)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                               }}>
                                 <span style={{
@@ -267,33 +266,17 @@ function CatalogContent() {
                               </div>
                             )}
                           </div>
-                          <div className="prod-card-body" style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                              <span style={{ fontSize: '9.5px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                                {p.title.toLowerCase().includes('saree') ? 'SAREE' : (p.title.toLowerCase().includes('lehenga') ? 'BRIDAL LEHENGA' : 'COUTURE')}
-                              </span>
-                              <span style={{ fontSize: '9px', color: '#0D9488', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#0D9488' }} /> Verified
-                              </span>
-                            </div>
-                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '14.5px', fontWeight: 600, color: 'var(--ink)', marginBottom: '12px', lineHeight: 1.25, height: '36px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          <div className="prod-card-body" style={{ padding: '12px 4px 4px', display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+                            <h3 className="prod-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: 500, color: 'var(--ink)', marginBottom: '4px', lineHeight: 1.3, textTransform: 'capitalize' }}>
                               {p.title}
                             </h3>
-                            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(224, 212, 204, 0.6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}>
-                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2px', marginTop: 'auto' }}>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', whiteSpace: 'nowrap' }}>
+                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '15px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1 }}>
                                   ₹{Number(p.price).toLocaleString('en-IN')}
                                 </span>
-                                <span style={{ fontSize: '10.5px', color: 'var(--text-muted)', fontWeight: 500 }}>/ 4d</span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/ 4d</span>
                               </div>
-                              <span style={{
-                                fontSize: '11px', fontWeight: 700, color: '#FFFFFF',
-                                background: 'var(--ink)', padding: '5px 12px', borderRadius: 'var(--radius-full)',
-                                display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0,
-                                boxShadow: '0 2px 6px rgba(30,30,45,0.1)'
-                              }}>
-                                Rent →
-                              </span>
                             </div>
                           </div>
                         </div>

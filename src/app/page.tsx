@@ -43,7 +43,7 @@ export default function Storefront() {
   const luxuryProductGallery = [
     'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800', // Banarasi Saree
     'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&q=80&w=800', // Bridal Lehenga
-    'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&q=80&w=800', // Sherwani
+    'https://images.unsplash.com/photo-1585422709289-56fb082101fa?auto=format&fit=crop&q=80&w=800', // Sherwani replacement
     'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=800', // Sharara
     'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800', // Gown
     'https://images.unsplash.com/photo-1536766820879-059fec98ec0a?auto=format&fit=crop&q=80&w=800', // Indo Western
@@ -248,13 +248,13 @@ export default function Storefront() {
             gap: 12px !important;
           }
           .prod-card {
-            border-radius: 14px !important;
-            border: 1px solid rgba(224, 212, 204, 0.6) !important;
-            background: #FFFFFF !important;
-            box-shadow: 0 2px 12px rgba(30, 30, 45, 0.06) !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
           }
           .prod-card-body {
-            padding: 10px 10px 12px !important;
+            padding: 8px 4px 12px !important;
           }
           .prod-cat-row {
             margin-bottom: 3px !important;
@@ -621,13 +621,11 @@ export default function Storefront() {
                       <Link href={`/product/${product.id}`} key={product.id} className="prod-card-link" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0 }}>
                         <div className="prod-card" style={{
                           display: 'flex', flexDirection: 'column',
-                          background: '#FFFFFF', borderRadius: '14px', overflow: 'hidden',
-                          border: '1px solid rgba(224, 212, 204, 0.6)',
-                          boxShadow: '0 2px 12px rgba(30,30,45,0.06)',
-                          transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                          background: 'transparent',
+                          transition: 'opacity 0.25s ease',
                         }}>
                           {/* — Image — */}
-                          <div style={{ position: 'relative', overflow: 'hidden' }}>
+                          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                             <img
                               src={displayImg}
                               alt={product.title}
@@ -637,53 +635,30 @@ export default function Storefront() {
                               }}
                               style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', display: 'block' }}
                             />
-                            {/* Gradient scrim at bottom of image */}
-                            <div style={{
-                              position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%',
-                              background: 'linear-gradient(to top, rgba(20,10,30,0.55) 0%, transparent 100%)'
-                            }} />
-                            {/* Category pill overlaid bottom-left */}
-                            <span style={{
-                              position: 'absolute', bottom: '9px', left: '9px',
-                              background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)',
-                              border: '1px solid rgba(255,255,255,0.35)',
-                              color: '#FFFFFF', fontSize: '8.5px', fontWeight: 700,
-                              letterSpacing: '0.1em', textTransform: 'uppercase',
-                              padding: '3px 8px', borderRadius: '20px',
-                            }}>
-                              {product.category || 'Couture'}
-                            </span>
                           </div>
 
                           {/* — Card Body — */}
-                          <div className="prod-card-body" style={{ padding: '12px 11px 13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div className="prod-card-body" style={{ padding: '12px 4px 4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <h3 className="prod-title" style={{
-                              fontFamily: 'var(--font-serif)', fontSize: '13.5px', fontWeight: 600,
+                              fontFamily: 'var(--font-serif)', fontSize: '14px', fontWeight: 500,
                               color: 'var(--ink)', lineHeight: 1.3, margin: 0,
                               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                              textTransform: 'capitalize',
                             }}>
                               {product.title}
                             </h3>
                             <div className="prod-footer" style={{
                               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                              paddingTop: '8px', borderTop: '1px solid rgba(224,212,204,0.55)',
+                              paddingTop: '2px',
                             }}>
-                              <div className="prod-price-wrap" style={{ display: 'flex', alignItems: 'baseline', gap: '2px', whiteSpace: 'nowrap' }}>
-                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
+                              <div className="prod-price-wrap" style={{ display: 'flex', alignItems: 'baseline', gap: '4px', whiteSpace: 'nowrap' }}>
+                                <span className="prod-price" style={{ fontFamily: 'var(--font-serif)', fontSize: '15px', fontWeight: 600, color: 'var(--ink)' }}>
                                   ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
                                 </span>
-                                <span className="prod-price-unit" style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500 }}>
+                                <span className="prod-price-unit" style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>
                                   / 4d
                                 </span>
                               </div>
-                              <span className="prod-rent-btn" style={{
-                                fontFamily: 'var(--font-sans)', fontSize: '10.5px', fontWeight: 700,
-                                color: 'var(--accent)', background: 'var(--accent-light)',
-                                padding: '5px 11px', borderRadius: '20px',
-                                whiteSpace: 'nowrap', flexShrink: 0, letterSpacing: '0.02em',
-                              }}>
-                                Rent →
-                              </span>
                             </div>
                           </div>
                         </div>
