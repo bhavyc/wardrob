@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 interface ListerInfo {
   name: string;
   shopName: string;
   initials: string;
+  registrationFeePaid: boolean;
+  listerStatus: string;
 }
 
 export default function ListerLayout({ children }: { children: React.ReactNode }) {
@@ -38,10 +41,13 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
         }
         const name = data.user.name || 'Artisan';
         const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+        const profile = data.listerProfile || data.ListerProfile;
         setLister({
           name,
-          shopName: data.ListerProfile?.shopName || 'My Shop',
+          shopName: profile?.shopName || 'My Shop',
           initials,
+          registrationFeePaid: Boolean(profile?.registrationFeePaid),
+          listerStatus: profile?.status || 'PENDING',
         });
       } catch {
         router.replace('/lister/login');
@@ -88,8 +94,8 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
   const navLinks = [
     {
       href: '/lister/listings',
-      label: 'listings',
-      sublabel: 'Catalog & listings',
+      label: 'Listings',
+      sublabel: !Lister?.registrationFeePaid ? '🔒 Fee required' : Lister?.listerStatus !== 'APPROVED' ? '⏳ KYC required' : 'Catalog & listings',
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="2" y="3" width="7" height="7" rx="1.5" />
@@ -101,7 +107,7 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
     },
     {
       href: '/lister/bookings',
-      label: 'bookings',
+      label: 'Bookings',
       sublabel: 'Shipments & tracking',
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -112,7 +118,7 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
     },
     {
       href: '/lister/payouts',
-      label: 'payouts & Payouts',
+      label: 'Payouts',
       sublabel: 'Earnings & settlements',
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -125,7 +131,7 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
     {
       href: '/lister/kyc',
       label: 'KYC Status',
-      sublabel: 'Identity & bank verification',
+      sublabel: !Lister?.registrationFeePaid ? '⚠️ Pay ₹500 Fee' : Lister?.listerStatus === 'APPROVED' ? 'Verified Boutique' : 'Under Review',
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -396,8 +402,7 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
           <div className="sd-sidebar-top">
             {!sidebarCollapsed && (
               <Link href="/" style={{ textDecoration: 'none' }}>
-                <span className="sd-logo-name">WARDROB</span>
-                <span className="sd-logo-sub">Artisan Collective</span>
+                <BrandLogo size="md" color="#FFFFFF" accentColor="#D4567A" align="left" showSubtitle={true} subtitle="ARTISAN COLLECTIVE" />
               </Link>
             )}
             {sidebarCollapsed && (
@@ -477,10 +482,31 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
             </div>
             <div className="sd-topbar-actions">
               {Lister && (
-                <div className="sd-topbar-badge">
-                  <div className="sd-topbar-dot" />
-                  {Lister.shopName}
-                </div>
+                !Lister.registrationFeePaid ? (
+                  <Link href="/lister/kyc" style={{
+                    textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 14px', borderRadius: '100px',
+                    background: '#FEF3C7', border: '1px solid #FCD34D',
+                    fontSize: '11.5px', fontWeight: 700, color: '#92400E',
+                    boxShadow: '0 2px 8px rgba(217,119,6,0.15)',
+                  }}>
+                    <span>💳</span> Pay ₹500 Fee
+                  </Link>
+                ) : Lister.listerStatus !== 'APPROVED' ? (
+                  <Link href="/lister/kyc" style={{
+                    textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '6px 14px', borderRadius: '100px',
+                    background: '#EFF6FF', border: '1px solid #BFDBFE',
+                    fontSize: '11.5px', fontWeight: 700, color: '#1E40AF',
+                  }}>
+                    <span>⏳</span> KYC Pending
+                  </Link>
+                ) : (
+                  <div className="sd-topbar-badge">
+                    <div className="sd-topbar-dot" />
+                    {Lister.shopName}
+                  </div>
+                )
               )}
             </div>
           </header>

@@ -15,14 +15,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Booking ID is required.' }, { status: 400 });
     }
 
-    // We no longer let the Lister arbitrarily change the Booking status.
-    // The Hub will change the status when they receive it.
     const booking = await prisma.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
+      include: {
+        listing: {
+          include: {
+            lister: true,
+          },
+        },
+      },
     });
     
     if (!booking) {
       return NextResponse.json({ success: false, error: 'Booking not found.' }, { status: 404 });
+    }
+
+    // IDOR protection: Verify that this booking belongs to the authenticated Lister
+    if (booking.listing.lister.userId !== authUser.userId && authUser.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden. You do not own this listing booking.' },
+        { status: 403 }
+      );
     }
 
     if (trackingNumber || courierName) {

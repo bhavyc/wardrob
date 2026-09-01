@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 interface HubInfo {
   name: string;
@@ -346,8 +347,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
           <div className="hub-sidebar-top">
             {!sidebarCollapsed && (
               <Link href="/hub" style={{ textDecoration: 'none' }}>
-                <span className="hub-logo-name">WARDROB</span>
-                <span className="hub-logo-sub">Quality Hub</span>
+                <BrandLogo size="md" color="#F8FAFC" accentColor="#94A3B8" align="left" showSubtitle={true} subtitle="QUALITY CONTROL HUB" />
               </Link>
             )}
             {sidebarCollapsed && (

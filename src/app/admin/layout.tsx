@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 interface AdminInfo {
   name: string;
@@ -568,9 +569,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Brand header */}
           <div className="adm-brand">
             {!sidebarCollapsed ? (
-              <Link href="/admin" className="adm-brand-logo">
-                <span>WARDROB</span>
-                <span className="adm-brand-tag">P2P RENTAL</span>
+              <Link href="/admin" style={{ textDecoration: 'none' }}>
+                <BrandLogo size="sm" color="#F8FAFC" accentColor="#C5A880" align="left" showSubtitle={true} subtitle="ADMIN CONTROL CENTER" />
               </Link>
             ) : (
               <Link href="/admin" className="adm-brand-logo" style={{ justifyContent: 'center', width: '100%' }}>

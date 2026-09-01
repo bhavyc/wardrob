@@ -35,14 +35,15 @@ export async function POST(request: Request) {
       }
     });
 
-    // In a real app, send an email here. For now, we return the token in dev mode.
-    // We will print it to console and return it for easy testing without an email service.
-    console.log(`Password reset requested for ${user.email}. Token: ${resetToken}`);
+    // In production, send email/SMS. In development mode only, log to console.
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV ONLY] Password reset token for ${user.email}: ${resetToken}`);
+    }
 
     return NextResponse.json({ 
       success: true, 
-      message: 'If that email exists, a reset link has been sent.',
-      dev_token: resetToken // Exposing for easy testing
+      message: 'If that email exists in our records, a password reset link has been sent.',
+      ...(process.env.NODE_ENV === 'development' ? { dev_token: resetToken } : {})
     });
 
   } catch (error: any) {

@@ -29,6 +29,7 @@ export default function ListerKycPage() {
 
   const [registrationFeePaid, setRegistrationFeePaid] = useState<boolean>(true);
   const [feeLoading, setFeeLoading] = useState(false);
+  const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -118,6 +119,7 @@ export default function ListerKycPage() {
             const verifyData = await verifyRes.json();
             if (verifyRes.ok && verifyData.success) {
               setRegistrationFeePaid(true);
+              setShowPaymentSuccessModal(true);
             } else {
               setError(verifyData.error || 'Payment verification failed.');
             }
@@ -204,6 +206,8 @@ export default function ListerKycPage() {
   };
 
   if (loading) return null;
+
+  const hasSubmittedDocs = Boolean(aadhaarNumber || panNumber || bankAccountNo);
 
   return (
     <>
@@ -466,8 +470,8 @@ export default function ListerKycPage() {
           <p className="kyc-sub">{shopName ? `Identity verification for "${shopName}"` : 'Complete your identity and banking details to start selling'}</p>
         </div>
 
-        {/* Status Banner */}
-        {ListerStatus && STATUS_CONFIG[ListerStatus] && (
+        {/* Status Banner — Only shown if registration fee is paid AND (approved, rejected, or docs actually submitted) */}
+        {registrationFeePaid && ListerStatus && STATUS_CONFIG[ListerStatus] && (ListerStatus !== 'PENDING' || hasSubmittedDocs || success) && (
           <div
             className="status-banner"
             style={{
@@ -657,8 +661,8 @@ export default function ListerKycPage() {
           </div>
         )}
 
-        {/* KYC Form — shown if fee is paid AND (status === null || REJECTED) */}
-        {registrationFeePaid && (ListerStatus === null || ListerStatus === 'REJECTED') && !success && (
+        {/* KYC Form — shown if fee is paid AND (documents not submitted yet OR rejected) AND not recently submitted */}
+        {registrationFeePaid && ((!hasSubmittedDocs && ListerStatus !== 'APPROVED') || ListerStatus === 'REJECTED') && !success && (
           <div className="kyc-form-card">
             {error && (
               <div style={{ padding: '16px 28px 0' }}>
@@ -756,6 +760,52 @@ export default function ListerKycPage() {
               <p style={{ fontSize: 13, color: '#38A169', marginTop: 2 }}>
                 Your documents are under review. We'll notify you within 24–48 hours.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Success Modal */}
+        {showPaymentSuccessModal && (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center',
+            justifyContent: 'center', zIndex: 999, padding: '20px',
+          }}>
+            <div style={{
+              background: '#FFFFFF', borderRadius: '20px', width: '100%',
+              maxWidth: '440px', padding: '32px', textAlign: 'center',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)', border: '1px solid rgba(44,94,67,0.1)',
+            }}>
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '50%',
+                background: '#ECFDF5', border: '2px solid #6EE7B7',
+                color: '#059669', fontSize: '28px', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
+              }}>
+                ✓
+              </div>
+              <h3 style={{
+                fontFamily: 'var(--font-cormorant), serif',
+                fontSize: '26px', fontWeight: 600, color: '#0D1A14', marginBottom: '12px',
+              }}>
+                Payment Successful!
+              </h3>
+              <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.6, marginBottom: '24px' }}>
+                Your ₹500 registration fee has been received. 
+                <br/><br/>
+                <strong>Next Step:</strong> Please submit your KYC details below. You will be able to list items for rent only after your identity is verified and approved by our Admin team.
+              </p>
+              <button
+                style={{
+                  width: '100%', height: '48px', border: 'none', borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #2C5E43, #1E4D33)', color: '#FFFFFF',
+                  fontSize: '13px', fontWeight: 700, letterSpacing: '0.04em', cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(44,94,67,0.25)',
+                }}
+                onClick={() => setShowPaymentSuccessModal(false)}
+              >
+                I Understood, Proceed to KYC
+              </button>
             </div>
           </div>
         )}

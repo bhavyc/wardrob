@@ -31,9 +31,14 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
+    const isOnboarded = Boolean(listerProfile.registrationFeePaid && listerProfile.status === 'APPROVED');
+
     return NextResponse.json({
       success: true,
       listings,
+      isOnboarded,
+      registrationFeePaid: Boolean(listerProfile.registrationFeePaid),
+      listerStatus: listerProfile.status,
     });
   } catch (error: any) {
     console.error('API Lister listings GET Error:', error);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Pagination from '@/components/Pagination';
 
 interface PartnerItem {
   id: string;
@@ -21,6 +22,9 @@ export default function AdminPartnersPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
 
   const fetchPartners = async () => {
     setLoading(true);
@@ -148,7 +152,7 @@ export default function AdminPartnersPage() {
                 </tr>
               </thead>
               <tbody>
-                {partners.map((p) => (
+                {partners.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((p) => (
                   <tr key={p.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                     <td style={{ padding: '14px 18px', fontWeight: 600, color: '#0F172A' }}>
                       🧼 {p.name}
@@ -178,6 +182,14 @@ export default function AdminPartnersPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={partners.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal */}

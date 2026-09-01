@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 function LoginForm() {
   const router = useRouter();
@@ -72,6 +73,39 @@ function LoginForm() {
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.08; }
         }
+        .renter-login-card {
+          width: 100%;
+          max-width: 440px;
+          background: #FFFFFF;
+          border: 1px solid rgba(212,86,122,0.18);
+          border-radius: 16px;
+          padding: 44px 36px;
+          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.04);
+          animation: loginFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+          position: relative;
+          z-index: 10;
+          margin: 0 auto;
+        }
+        .renter-form-input {
+          width: 100%;
+          height: 48px;
+          padding: 0 16px;
+          background: #FFFFFF;
+          border: 1.5px solid rgba(212,86,122,0.25);
+          border-radius: 10px;
+          font-size: 14px;
+          color: var(--ink);
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+          box-sizing: border-box;
+        }
+        .renter-form-input:focus {
+          border-color: #D4567A;
+          box-shadow: 0 0 0 4px rgba(212,86,122,0.1);
+        }
+        @media (max-width: 480px) {
+          .renter-login-card { padding: 40px 24px; }
+        }
       `}</style>
 
       <div style={{
@@ -89,31 +123,13 @@ function LoginForm() {
           animation: 'dotPulse 4s ease-in-out infinite',
         }} />
 
-        <div style={{
-          width: '100%', maxWidth: '420px',
-          background: '#FFFFFF',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '48px 40px',
-          boxShadow: 'var(--shadow-lg)',
-          animation: 'loginFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
-          position: 'relative', zIndex: 10,
-        }}>
+        <div className="renter-login-card">
           {/* Logo */}
           <div style={{
-            textAlign: 'center', marginBottom: '36px',
-            paddingBottom: '24px', borderBottom: '1px solid var(--border)',
+            textAlign: 'center', marginBottom: '28px',
             cursor: 'pointer',
           }} onClick={() => router.push('/')}>
-            <span style={{
-              fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700,
-              letterSpacing: '0.18em', color: 'var(--ink)', display: 'block',
-              marginBottom: '6px',
-            }}>WARDROB</span>
-            <span style={{
-              fontSize: '10px', fontWeight: 500, letterSpacing: '0.2em',
-              color: 'var(--text-muted)', textTransform: 'uppercase',
-            }}>Premium Fashion Rental</span>
+            <BrandLogo size="lg" showSubtitle={true} subtitle="PREMIUM FASHION RENTAL" />
           </div>
 
           <h1 style={{
@@ -152,20 +168,7 @@ function LoginForm() {
                 placeholder="hello@wardrob.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                style={{
-                  width: '100%', height: '48px', padding: '0 16px',
-                  background: '#FFFFFF', border: '1.5px solid var(--border)',
-                  borderRadius: 'var(--radius-md)', fontSize: '14px', color: 'var(--ink)',
-                  outline: 'none', transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = 'var(--accent)';
-                  e.target.style.boxShadow = '0 0 0 4px var(--accent-light)';
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = 'var(--border)';
-                  e.target.style.boxShadow = 'none';
-                }}
+                className="renter-form-input"
               />
             </div>
             
@@ -181,20 +184,7 @@ function LoginForm() {
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                style={{
-                  width: '100%', height: '48px', padding: '0 16px',
-                  background: '#FFFFFF', border: '1.5px solid var(--border)',
-                  borderRadius: 'var(--radius-md)', fontSize: '14px', color: 'var(--ink)',
-                  outline: 'none', transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = 'var(--accent)';
-                  e.target.style.boxShadow = '0 0 0 4px var(--accent-light)';
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = 'var(--border)';
-                  e.target.style.boxShadow = 'none';
-                }}
+                className="renter-form-input"
               />
             </div>
 
@@ -208,15 +198,14 @@ function LoginForm() {
             </div>
 
             <button type="submit" disabled={loading || !email || !password} style={{
-              width: '100%', height: '50px', border: 'none',
-              borderRadius: 'var(--radius-md)',
-              background: loading || !email || !password ? 'var(--border)' : 'linear-gradient(135deg, #D4567A 0%, #B8405E 100%)',
-              color: loading || !email || !password ? 'var(--text-muted)' : '#FFFFFF',
-              fontSize: '14px', fontWeight: 600, letterSpacing: '0.06em',
+              width: '100%', height: '48px', border: 'none',
+              borderRadius: '10px',
+              background: loading || !email || !password ? '#EBEBEB' : '#1E1E2D',
+              color: loading || !email || !password ? '#999999' : '#FFFFFF',
+              fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
               cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              transition: 'all 0.3s ease',
-              boxShadow: loading || !email || !password ? 'none' : '0 4px 16px rgba(212, 86, 122, 0.3)',
+              transition: 'all 0.25s ease',
             }}>
               {loading ? (
                 <>

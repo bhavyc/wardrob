@@ -14,11 +14,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { shopName, bio, aadhaarNumber, panNumber, bankAccountNo, bankIfsc } = await request.json();
+    const { aadhaarNumber, panNumber, bankAccountNo, bankIfsc } = await request.json();
 
-    if (!shopName || !aadhaarNumber || !panNumber || !bankAccountNo || !bankIfsc) {
+    if (!aadhaarNumber || !panNumber || !bankAccountNo || !bankIfsc) {
       return NextResponse.json(
-        { success: false, error: 'All fields including KYC details are required.' },
+        { success: false, error: 'All KYC and bank details are required.' },
         { status: 400 }
       );
     }
@@ -27,20 +27,9 @@ export async function POST(request: Request) {
     const encryptedPan = encryptString(panNumber.trim().toUpperCase());
     const encryptedBank = encryptString(bankAccountNo.trim());
 
-    const updatedProfile = await prisma.listerProfile.upsert({
+    const updatedProfile = await prisma.listerProfile.update({
       where: { userId: authUser.userId },
-      update: {
-        shopName: shopName.trim(),
-        bio: bio ? bio.trim() : null,
-        aadhaarNumber: encryptedAadhaar,
-        panNumber: encryptedPan,
-        bankAccountNo: encryptedBank,
-        bankIfsc: bankIfsc.trim().toUpperCase(),
-      },
-      create: {
-        userId: authUser.userId,
-        shopName: shopName.trim(),
-        bio: bio ? bio.trim() : null,
+      data: {
         aadhaarNumber: encryptedAadhaar,
         panNumber: encryptedPan,
         bankAccountNo: encryptedBank,

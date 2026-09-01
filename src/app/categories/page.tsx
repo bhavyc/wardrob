@@ -63,6 +63,12 @@ export default function CategoriesPage() {
         .hover-scale-img:hover img {
           transform: scale(1.05);
         }
+        .cat-card-inner {
+          border-radius: 18px; overflow: hidden;
+          aspect-ratio: 3/4; background: #1E1E2D;
+          position: relative; box-shadow: 0 4px 16px rgba(30, 30, 45, 0.08);
+          border: 1px solid var(--border);
+        }
         .cat-pg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
         @media (max-width: 1024px) {
           .cat-pg-grid { grid-template-columns: repeat(3, 1fr); }
@@ -71,6 +77,7 @@ export default function CategoriesPage() {
           .cat-pg-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
           .cat-pg-main { padding: 36px 14px !important; }
           .cat-pg-main h1 { font-size: 28px !important; }
+          .cat-card-inner { aspect-ratio: 4/5; }
         }
       `}</style>
 
@@ -95,12 +102,7 @@ export default function CategoriesPage() {
           <div className="cat-pg-grid">
             {categories.map(cat => (
               <Link key={cat.val} href={`/catalog?category=${cat.val}`} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
-                <div style={{
-                  borderRadius: '18px', overflow: 'hidden',
-                  aspectRatio: '3/4', background: '#1E1E2D',
-                  position: 'relative', boxShadow: '0 4px 16px rgba(30, 30, 45, 0.08)',
-                  border: '1px solid var(--border)',
-                }}>
+                <div className="cat-card-inner">
                   <img src={cat.img} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   {/* Top Right Arrow Badge */}
                   <div style={{

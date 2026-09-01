@@ -28,12 +28,29 @@ export default function AddListingPage() {
   const categories = ['Saree', 'Kurti', 'Sharara Set', 'Lehenga', 'Anarkali Suit', 'Dress', 'Kurta', 'Sherwani', 'Others'];
   const conditions = ['New with tags', 'Like New', 'Excellent', 'Good (Lightly Used)'];
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'];
-
   const [isMobile, setIsMobile] = useState(true);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [registrationFeePaid, setRegistrationFeePaid] = useState(true);
+  const [listerStatus, setListerStatus] = useState('APPROVED');
 
   useEffect(() => {
     const mobileCheck = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || process.env.NODE_ENV === 'development';
     setIsMobile(mobileCheck);
+
+    async function verifyEligibility() {
+      try {
+        const res = await fetch('/api/lister/listings');
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setRegistrationFeePaid(Boolean(data.registrationFeePaid));
+          if (data.listerStatus) setListerStatus(data.listerStatus);
+        }
+      } catch {
+      } finally {
+        setCheckingStatus(false);
+      }
+    }
+    verifyEligibility();
   }, []);
 
   const handleCapture = async (blob: Blob, base64: string) => {
@@ -302,7 +319,64 @@ export default function AddListingPage() {
           <h1 className="add-title">Add Rental Listing</h1>
         </div>
 
-        {!isMobile ? (
+        {checkingStatus ? (
+          <div className="form-card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2.5px solid #DDE4DF', borderTopColor: '#2C5E43', animation: 'spin 0.7s linear infinite', margin: '0 auto 16px' }} />
+            <p style={{ fontSize: '13px', color: '#74897C' }}>Checking boutique status...</p>
+          </div>
+        ) : !registrationFeePaid ? (
+          <div className="form-card" style={{ textAlign: 'center', padding: '60px 30px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '28px', color: '#92400E', marginBottom: '12px' }}>
+              Registration Fee Required
+            </h2>
+            <p style={{ fontSize: '14px', color: '#74897C', maxWidth: '440px', margin: '0 auto 28px', lineHeight: 1.6 }}>
+              A mandatory one-time registration fee of <strong>₹500</strong> is required before you can list wardrobe items. Complete payment and verify your identity in KYC settings.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <Link href="/lister/kyc" style={{
+                background: '#D97706', color: '#FFFFFF', padding: '12px 28px', borderRadius: '12px',
+                fontSize: '13px', fontWeight: 700, textDecoration: 'none',
+                boxShadow: '0 4px 16px rgba(217,119,6,0.25)',
+              }}>
+                Pay ₹500 & Complete KYC →
+              </Link>
+              <Link href="/lister/listings" style={{
+                background: '#F0F4F1', color: '#3D5347', padding: '12px 20px', borderRadius: '12px',
+                fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+              }}>
+                Back to listings
+              </Link>
+            </div>
+          </div>
+        ) : listerStatus !== 'APPROVED' ? (
+          <div className="form-card" style={{ textAlign: 'center', padding: '60px 30px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
+            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '28px', color: '#1E40AF', marginBottom: '12px' }}>
+              {listerStatus === 'REJECTED' ? 'KYC Verification Rejected' : 'KYC Verification Pending'}
+            </h2>
+            <p style={{ fontSize: '14px', color: '#74897C', maxWidth: '440px', margin: '0 auto 28px', lineHeight: 1.6 }}>
+              {listerStatus === 'REJECTED'
+                ? 'Your verification documents were rejected. Please re-submit valid government ID in KYC settings.'
+                : 'Your ₹500 registration fee is received. Once our compliance team approves your identity documents, item listing will be activated.'}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <Link href="/lister/kyc" style={{
+                background: '#2563EB', color: '#FFFFFF', padding: '12px 28px', borderRadius: '12px',
+                fontSize: '13px', fontWeight: 700, textDecoration: 'none',
+                boxShadow: '0 4px 16px rgba(37,99,235,0.25)',
+              }}>
+                Check KYC Status →
+              </Link>
+              <Link href="/lister/listings" style={{
+                background: '#F0F4F1', color: '#3D5347', padding: '12px 20px', borderRadius: '12px',
+                fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+              }}>
+                Back to listings
+              </Link>
+            </div>
+          </div>
+        ) : !isMobile ? (
           <div className="form-card" style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
             <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '28px', color: '#163625', marginBottom: '12px' }}>Mobile Device Required</h2>

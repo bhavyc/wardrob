@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 function ListerLoginForm() {
   const router = useRouter();
@@ -423,16 +424,8 @@ function ListerLoginForm() {
       <div className="login-root">
         <div className="form-col">
           {/* Logo Header */}
-          <Link href="/" className="brand-logo-wrap">
-            <div className="brand-logo-ornament">
-              <span className="brand-logo-rule" />
-              <span className="brand-logo-diamond" />
-              <span className="brand-logo-rule" />
-            </div>
-            <span className="brand-name">WARDROB</span>
-            <div className="brand-sub-row">
-              <span className="brand-sub">P2P Rental</span>
-            </div>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+            <BrandLogo size="lg" showSubtitle={true} subtitle="ARTISAN STUDIO" />
           </Link>
 
           <div className="form-box">

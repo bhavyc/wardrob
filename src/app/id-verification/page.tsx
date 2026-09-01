@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function IDVerificationPage() {
   const router = useRouter();
@@ -106,9 +107,12 @@ export default function IDVerificationPage() {
     <div style={{ minHeight: '100vh', background: '#F8FAF8', padding: '60px 20px', fontFamily: 'var(--font-sans)' }}>
       <div style={{ maxWidth: 500, margin: '0 auto', background: '#fff', padding: '40px 32px', borderRadius: 16, boxShadow: '0 8px 24px rgba(44,94,67,0.08)' }}>
         
-        <Link href="/" style={{ fontSize: 13, color: '#74897C', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 24 }}>
-          <span>←</span> Back to Store
-        </Link>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <Link href="/" style={{ fontSize: 13, color: '#74897C', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span>←</span> Back to Store
+          </Link>
+          <BrandLogo size="sm" />
+        </div>
         
         <h1 style={{ fontSize: 24, fontWeight: 700, color: '#163625', margin: '0 0 8px', fontFamily: 'var(--font-cormorant), serif' }}>Trust & Safety Verification</h1>
         

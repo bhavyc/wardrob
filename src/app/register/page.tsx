@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
+import BrandLogo from '@/components/BrandLogo';
+import { Suspense } from 'react';
 function RegisterForm() {
   const router = useRouter();
 
@@ -169,19 +170,10 @@ function RegisterForm() {
 
           {/* Logo */}
           <div style={{
-            textAlign: 'center', marginBottom: '32px',
-            paddingBottom: '24px', borderBottom: '1px solid var(--border)',
+            textAlign: 'center', marginBottom: '28px',
             cursor: 'pointer',
           }} onClick={() => router.push('/')}>
-            <span style={{
-              fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700,
-              letterSpacing: '0.18em', color: 'var(--ink)', display: 'block',
-              marginBottom: '6px',
-            }}>WARDROB</span>
-            <span style={{
-              fontSize: '10px', fontWeight: 500, letterSpacing: '0.2em',
-              color: 'var(--text-muted)', textTransform: 'uppercase',
-            }}>Premium Fashion Rental</span>
+            <BrandLogo size="lg" showSubtitle={true} subtitle="PREMIUM FASHION RENTAL" />
           </div>
 
           {/* Success State */}

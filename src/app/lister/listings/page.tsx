@@ -35,6 +35,9 @@ export default function ListerlistingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isOnboarded, setIsOnboarded] = useState(true);
+  const [registrationFeePaid, setRegistrationFeePaid] = useState(true);
+  const [listerStatus, setListerStatus] = useState('APPROVED');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +49,9 @@ export default function ListerlistingsPage() {
       const data = await res.json();
       if (res.ok && data.success) {
         setlistings(data.listings || []);
+        setIsOnboarded(Boolean(data.isOnboarded));
+        setRegistrationFeePaid(Boolean(data.registrationFeePaid));
+        if (data.listerStatus) setListerStatus(data.listerStatus);
       } else {
         setError(data.error || 'Failed to load listings.');
       }
@@ -272,9 +278,21 @@ export default function ListerlistingsPage() {
           <h1 className="prod-h1">Your Listed Items</h1>
           <p className="prod-subtitle">Manage your wardrobe items available for rent</p>
         </div>
-        <Link href="/lister/listings/add" className="add-btn-link">
-          <span style={{ fontSize: 16 }}>+</span> List New Item
-        </Link>
+        {!loading && (
+          !registrationFeePaid ? (
+            <Link href="/lister/kyc" className="add-btn-link" style={{ background: '#D97706', borderColor: '#D97706', boxShadow: '0 2px 10px rgba(217,119,6,0.2)' }}>
+              <span>💳</span> Pay ₹500 Fee to Unlock Listing
+            </Link>
+          ) : listerStatus !== 'APPROVED' ? (
+            <Link href="/lister/kyc" className="add-btn-link" style={{ background: '#2563EB', borderColor: '#2563EB' }}>
+              <span>⏳</span> KYC Verification Required
+            </Link>
+          ) : (
+            <Link href="/lister/listings/add" className="add-btn-link">
+              <span style={{ fontSize: 16 }}>+</span> List New Item
+            </Link>
+          )
+        )}
       </div>
 
       {/* Stats row */}
@@ -305,20 +323,80 @@ export default function ListerlistingsPage() {
       {/* Alert info */}
       {error && <div className="alert-banner alert-error"><span>⚠</span>{error}</div>}
 
+      {/* Onboarding Notice Banner when fee is not paid */}
+      {!loading && !registrationFeePaid && (
+        <div style={{
+          background: '#FFFBEB', border: '1.5px solid #FCD34D', borderRadius: '16px',
+          padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap',
+          boxShadow: '0 4px 16px rgba(217,119,6,0.08)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '10px', background: '#FEF3C7',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0
+            }}>💳</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#92400E', marginBottom: '2px' }}>
+                One-Time Onboarding Fee Required (₹500)
+              </div>
+              <div style={{ fontSize: '12px', color: '#B45309', lineHeight: 1.4 }}>
+                To maintain standard quality, trust, and verified couture on Wardrob, please complete your ₹500 registration payment and KYC.
+              </div>
+            </div>
+          </div>
+          <Link href="/lister/kyc" style={{
+            background: '#D97706', color: '#FFFFFF', padding: '10px 20px', borderRadius: '10px',
+            fontSize: '12.5px', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(217,119,6,0.25)',
+          }}>
+            Pay ₹500 & Verify KYC →
+          </Link>
+        </div>
+      )}
+
       {/* Product List Table */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
           <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2.5px solid #DDE4DF', borderTopColor: '#2C5E43', animation: 'spin 0.7s linear infinite' }} />
         </div>
       ) : listings.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-emoji">👕</div>
-          <h3 className="empty-title">No items listed yet</h3>
-          <p className="empty-desc">Earn money by renting out your premium wardrobe pieces.</p>
-          <Link href="/lister/listings/add" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content' }}>
-            + List Your First Item
-          </Link>
-        </div>
+        !registrationFeePaid ? (
+          <div className="empty-state" style={{ borderColor: 'rgba(217,119,6,0.35)', background: '#FFFDF9' }}>
+            <div className="empty-emoji">🔒</div>
+            <h3 className="empty-title" style={{ color: '#92400E' }}>Registration Fee Required</h3>
+            <p className="empty-desc" style={{ maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.6 }}>
+              A mandatory one-time registration fee of <strong>₹500</strong> is required before listing wardrobe pieces. Complete payment and submit KYC to unlock your boutique workspace.
+            </p>
+            <Link href="/lister/kyc" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content', background: '#D97706', borderColor: '#D97706' }}>
+              Pay ₹500 & Proceed to KYC →
+            </Link>
+          </div>
+        ) : listerStatus !== 'APPROVED' ? (
+          <div className="empty-state" style={{ borderColor: 'rgba(37,99,235,0.3)', background: '#F8FAFF' }}>
+            <div className="empty-emoji">⏳</div>
+            <h3 className="empty-title" style={{ color: '#1E40AF' }}>
+              {listerStatus === 'REJECTED' ? 'KYC Verification Rejected' : 'KYC Under Review'}
+            </h3>
+            <p className="empty-desc" style={{ maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.6 }}>
+              {listerStatus === 'REJECTED'
+                ? 'Your verification documents were rejected. Please re-submit valid government ID in KYC settings.'
+                : 'Your ₹500 registration fee is confirmed. Once our compliance team approves your identity documents, item listing will be activated.'}
+            </p>
+            <Link href="/lister/kyc" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content', background: '#2563EB', borderColor: '#2563EB' }}>
+              Check KYC Status →
+            </Link>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-emoji">👕</div>
+            <h3 className="empty-title">No items listed yet</h3>
+            <p className="empty-desc">Earn money by renting out your premium wardrobe pieces.</p>
+            <Link href="/lister/listings/add" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content' }}>
+              + List Your First Item
+            </Link>
+          </div>
+        )
       ) : (
         <div className="prod-table-wrap">
           <div className="prod-table-head">

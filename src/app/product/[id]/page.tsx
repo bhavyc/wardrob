@@ -100,17 +100,56 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
       <style>{`
         .pdp-main {
           flex: 1; max-width: 1440px; margin: 0 auto; width: 100%;
-          padding: 64px 48px 120px; display: grid;
-          grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: flex-start;
+          padding: 56px 40px 120px; display: grid;
+          grid-template-columns: 1.2fr 1fr; gap: 64px; align-items: flex-start;
         }
-        .pdp-sticky { position: sticky; top: 120px; display: flex; flex-direction: column; }
-        .pdp-gallery { display: flex; gap: 24px; }
-        .pdp-thumbnails { display: flex; flex-direction: column; gap: 16px; }
+        .pdp-sticky { position: sticky; top: 100px; display: flex; flex-direction: column; }
+        .pdp-gallery { display: flex; gap: 20px; }
+        .pdp-thumbnails { display: flex; flex-direction: column; gap: 12px; }
+        
+        .pdp-mobile-bottom-bar {
+          display: none;
+          position: fixed;
+          bottom: calc(60px + env(safe-area-inset-bottom, 12px));
+          left: 0;
+          right: 0;
+          padding: 12px 16px;
+          background: rgba(255, 250, 245, 0.96);
+          backdrop-filter: blur(20px);
+          border-top: 1px solid rgba(240, 230, 224, 0.9);
+          z-index: 850;
+          box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
         @media (max-width: 768px) {
-          .pdp-main { padding: 24px 16px 48px; gap: 32px; }
-          .pdp-title { font-size: 26px !important; margin-bottom: 16px !important; }
-          .pdp-gallery { gap: 12px; }
-          .pdp-thumbnails button { width: 52px !important; }
+          .pdp-main { padding: 16px 14px 80px; gap: 28px; grid-template-columns: 1fr !important; }
+          .pdp-sticky { position: static; top: auto; }
+          .pdp-title { font-size: 26px !important; margin-bottom: 12px !important; line-height: 1.18 !important; }
+          .pdp-gallery { flex-direction: column-reverse; gap: 12px; }
+          .pdp-thumbnails {
+            flex-direction: row !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 4px;
+            gap: 8px;
+          }
+          .pdp-thumbnails::-webkit-scrollbar { display: none; }
+          .pdp-thumbnails button {
+            width: 60px !important;
+            flex-shrink: 0;
+            border-radius: 12px !important;
+          }
+          .pdp-main-img {
+            border-radius: 20px !important;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(30, 30, 45, 0.08);
+          }
+          .pdp-mobile-bottom-bar {
+            display: flex;
+          }
         }
       `}</style>
       <RenterNavbar />
@@ -118,7 +157,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
       <main className="pdp-main">
         
         {/* ━━━━━━━━ LEFT: GALLERY & PROVENANCE ━━━━━━━━ */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', width: '100%', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '36px', width: '100%', minWidth: 0 }}>
           
           <div className="pdp-gallery">
             {/* Thumbnails */}
@@ -130,9 +169,10 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
                   style={{ 
                     width: '72px', aspectRatio: '3/4', padding: 0, overflow: 'hidden', cursor: 'pointer',
                     background: 'transparent',
-                    border: activeImage === img ? '1px solid var(--ink)' : '1px solid transparent',
+                    borderRadius: '12px',
+                    border: activeImage === img ? '2px solid var(--accent)' : '1px solid var(--border)',
                     transition: 'var(--transition-smooth)',
-                    opacity: activeImage === img ? 1 : 0.6
+                    opacity: activeImage === img ? 1 : 0.65
                   }}
                   className="hover-lift"
                 >
@@ -142,7 +182,7 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
             </div>
             
             {/* Main Image */}
-            <div className="img-zoom-container" style={{ flex: 1, background: 'var(--bg-warm)', aspectRatio: '3/4', position: 'relative' }}>
+            <div className="img-zoom-container pdp-main-img" style={{ flex: 1, background: 'var(--bg-warm)', aspectRatio: '3/4', position: 'relative', borderRadius: '20px' }}>
               <img
                 src={activeImage || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'}
                 alt={product.title}
@@ -153,8 +193,8 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
               {product.stock === 0 && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(251,250,248,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink)', border: '1px solid var(--ink)', padding: '12px 32px' }}>Waitlist</span>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(251,250,248,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink)', border: '1.5px solid var(--ink)', padding: '10px 28px', borderRadius: 'var(--radius-full)' }}>Waitlist</span>
                 </div>
               )}
             </div>
@@ -166,57 +206,66 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
         {/* ━━━━━━━━ RIGHT: DETAILS & BOOKING ━━━━━━━━ */}
         <div className="pdp-sticky">
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <p style={{ ...labelStyle, margin: 0 }}>{listerName}</p>
             {product.lister?.user?.rating && (
-              <span style={{ fontSize: '10px', color: '#F59E0B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
                 ★ {Number(product.lister.user.rating).toFixed(1)}
               </span>
             )}
           </div>
           
-          <h1 className="pdp-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', lineHeight: 1.1, marginBottom: '24px' }}>
+          <h1 className="pdp-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '38px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15, marginBottom: '16px' }}>
             {product.title}
           </h1>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
             <span style={{ 
-              fontSize: '10px', color: 'var(--success)', fontWeight: 600, 
-              background: 'rgba(74, 124, 89, 0.1)', padding: '6px 12px', 
-              letterSpacing: '0.08em', textTransform: 'uppercase' 
+              fontSize: '10px', color: 'var(--success)', fontWeight: 700, 
+              background: 'rgba(13, 148, 136, 0.1)', padding: '5px 12px', 
+              borderRadius: 'var(--radius-full)', letterSpacing: '0.06em', textTransform: 'uppercase' 
             }}>
               ● Ozone Sanitized ({sanitizationDateStr})
             </span>
+            <span style={{
+              fontSize: '10px', color: 'var(--accent)', fontWeight: 700,
+              background: 'var(--accent-light)', padding: '5px 12px',
+              borderRadius: 'var(--radius-full)', letterSpacing: '0.06em', textTransform: 'uppercase'
+            }}>
+              ✨ Verified Couture
+            </span>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', marginBottom: '40px' }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '32px', fontWeight: 400, color: 'var(--ink)', lineHeight: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '28px' }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '34px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1 }}>
               ₹{product.price.toLocaleString('en-IN')}
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', paddingBottom: '4px' }}>
-              / 4-Day Rental
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>
+              / 4-Day Event Rental
             </span>
           </div>
 
-          <div style={{ width: '100%', height: '1px', background: 'var(--border)', marginBottom: '40px' }} />
+          <div style={{ width: '100%', height: '1px', background: 'var(--border)', marginBottom: '28px' }} />
 
           {/* SIZES */}
-          <div style={{ marginBottom: '40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h4 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink)' }}>Select Size</h4>
-              <button style={{ background: 'none', border: 'none', fontSize: '10px', color: 'var(--ink-secondary)', textDecoration: 'underline', cursor: 'pointer' }}>Size Guide</button>
+          <div style={{ marginBottom: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h4 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink)' }}>Select Size</h4>
+              <button style={{ background: 'none', border: 'none', fontSize: '11px', color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}>Size Guide</button>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
               {(product.sizes && product.sizes.length > 0 ? product.sizes : ['Free Size']).map(s => (
                 <button 
                   key={s} 
                   onClick={() => setSelectedSize(s)}
                   style={{ 
-                    padding: '14px 0', fontSize: '11px', fontWeight: 500, letterSpacing: '0.08em', cursor: 'pointer',
-                    background: selectedSize === s ? 'var(--ink)' : 'transparent',
+                    padding: '12px 0', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                    borderRadius: '12px',
+                    background: selectedSize === s ? 'var(--ink)' : '#FFFFFF',
                     color: selectedSize === s ? '#FFFFFF' : 'var(--ink)',
-                    border: selectedSize === s ? '1px solid var(--ink)' : '1px solid var(--border)',
+                    border: selectedSize === s ? '1.5px solid var(--ink)' : '1px solid var(--border)',
+                    boxShadow: selectedSize === s ? '0 4px 12px rgba(30,30,45,0.12)' : 'none',
                     transition: 'var(--transition-smooth)'
                   }}
                 >
@@ -227,8 +276,8 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
           </div>
 
           {/* EVENT DATE CALENDAR */}
-          <div style={{ marginBottom: '40px' }}>
-            <h4 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink)', marginBottom: '16px' }}>Event Date</h4>
+          <div style={{ marginBottom: '32px' }}>
+            <h4 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink)', marginBottom: '12px' }}>Event Date</h4>
             <EventDatePicker 
               pricePer4Days={product.price}
               onDateSelect={(dateStr, extDays) => {
@@ -243,24 +292,26 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
             onClick={handleCheckout}
             disabled={product.stock === 0 || !bookingDate}
             style={{ 
-              width: '100%', padding: '20px', 
-              background: (product.stock === 0 || !bookingDate) ? 'var(--border)' : 'var(--ink)', 
+              width: '100%', padding: '16px 24px', 
+              background: (product.stock === 0 || !bookingDate) ? 'var(--border)' : 'linear-gradient(135deg, #D4567A 0%, #B8405E 100%)', 
               color: (product.stock === 0 || !bookingDate) ? 'var(--text-muted)' : '#FFFFFF', 
-              fontSize: '11px', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', border: 'none', 
+              fontSize: '13px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', border: 'none', 
+              borderRadius: 'var(--radius-full)',
+              boxShadow: !(product.stock === 0 || !bookingDate) ? '0 8px 24px rgba(212,86,122,0.3)' : 'none',
               cursor: (product.stock === 0 || !bookingDate) ? 'not-allowed' : 'pointer',
               transition: 'var(--transition-smooth)',
             }}
             className={!(product.stock === 0 || !bookingDate) ? "hover-lift" : ""}
           >
-            {product.stock === 0 ? 'Waitlist' : (!bookingDate ? 'Select Event Date' : 'Reserve Garment')}
+            {product.stock === 0 ? 'Waitlist' : (!bookingDate ? 'Select Event Date Above' : 'Reserve Garment →')}
           </button>
 
           {/* DETAILS */}
-          <div style={{ marginTop: '64px' }}>
-            <h4 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--ink)', marginBottom: '16px' }}>
+          <div style={{ marginTop: '48px', padding: '24px', background: '#FFFFFF', borderRadius: '18px', border: '1px solid var(--border)' }}>
+            <h4 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--ink)', marginBottom: '10px' }}>
               Archive Notes
             </h4>
-            <p style={{ fontSize: '14px', lineHeight: 1.8, color: 'var(--ink-secondary)' }}>
+            <p style={{ fontSize: '13.5px', lineHeight: 1.7, color: 'var(--ink-secondary)', margin: 0 }}>
               {product.description}
             </p>
           </div>
@@ -268,7 +319,31 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
         </div>
       </main>
 
+      {/* Mobile Sticky Booking Bar */}
+      <div className="pdp-mobile-bottom-bar">
+        <div>
+          <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>4-Day Rental</span>
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 700, color: 'var(--ink)' }}>
+            ₹{product.price.toLocaleString('en-IN')}
+          </span>
+        </div>
+        <button
+          onClick={handleCheckout}
+          disabled={product.stock === 0 || !bookingDate}
+          style={{
+            flex: 1, padding: '12px 18px',
+            background: (product.stock === 0 || !bookingDate) ? 'var(--ink)' : 'linear-gradient(135deg, #D4567A 0%, #B8405E 100%)',
+            color: '#FFFFFF', fontSize: '12px', fontWeight: 700,
+            borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(212,86,122,0.25)'
+          }}
+        >
+          {product.stock === 0 ? 'Waitlist' : (!bookingDate ? 'Pick Date & Reserve' : 'Reserve Now →')}
+        </button>
+      </div>
+
       <RenterFooter />
     </div>
   );
 }
+

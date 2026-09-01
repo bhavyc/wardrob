@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function RenterFooter() {
   return (
@@ -6,7 +7,7 @@ export default function RenterFooter() {
       <style>{`
         .ft-grid {
           max-width: 1400px; margin: 0 auto; padding: 72px 40px 56px;
-          display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 48px;
+          display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: 48px;
         }
         .ft-bottom {
           border-top: 1px solid var(--border); padding: 20px 40px;
@@ -14,12 +15,15 @@ export default function RenterFooter() {
           display: flex; justify-content: space-between; align-items: center;
         }
         @media (max-width: 1024px) {
-          .ft-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
+          .ft-grid { grid-template-columns: repeat(3, 1fr); gap: 40px; }
+          .ft-brand-col { grid-column: 1 / -1; margin-bottom: 24px; text-align: center; }
+          .ft-brand-col p { margin: 0 auto !important; }
         }
         @media (max-width: 768px) {
-          .ft-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 24px 16px !important; padding: 32px 16px 24px !important; }
-          .ft-brand-col { grid-column: 1 / -1 !important; margin-bottom: 8px !important; }
-          .ft-bottom { flex-direction: column; gap: 10px; padding: 16px; text-align: center; }
+          .ft-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 32px 16px !important; padding: 40px 20px 24px !important; }
+          .ft-brand-col { grid-column: 1 / -1 !important; margin-bottom: 16px !important; text-align: center; }
+          .ft-brand-col p { margin: 0 auto 16px !important; }
+          .ft-bottom { flex-direction: column; gap: 12px; padding: 24px 20px 36px !important; text-align: center; }
         }
       `}</style>
 
@@ -27,30 +31,15 @@ export default function RenterFooter() {
       <div className="ft-grid">
         {/* Brand Column */}
         <div className="ft-brand-col">
-          <h2 style={{
-            fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700,
-            color: 'var(--ink)', letterSpacing: '0.12em', textTransform: 'uppercase',
-            marginBottom: '16px',
-          }}>Wardrob</h2>
+          <div style={{ marginBottom: '16px' }}>
+            <BrandLogo size="md" align="left" />
+          </div>
           <p style={{
             fontSize: '14px', lineHeight: 1.8, color: 'var(--text-muted)',
             maxWidth: '300px', marginBottom: '24px',
           }}>
             India&apos;s premier peer-to-peer luxury fashion rental. Connecting heritage artisans with modern celebration.
           </p>
-          {/* Social Row */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            {['Instagram', 'Twitter', 'Pinterest'].map(social => (
-              <a key={social} href="#" style={{
-                fontSize: '12px', fontWeight: 500, color: 'var(--ink-secondary)',
-                padding: '8px 16px', borderRadius: 'var(--radius-full)',
-                border: '1px solid var(--border)', transition: 'all 0.3s ease',
-                textDecoration: 'none',
-              }}>
-                {social}
-              </a>
-            ))}
-          </div>
         </div>
 
         {/* Link Columns */}
@@ -77,8 +66,16 @@ export default function RenterFooter() {
             title: 'For Partners',
             links: [
               { label: 'Lend Garments', href: '/lister/login' },
-              { label: 'Hub Operator Program', href: '#' },
-              { label: 'Corporate Enquiries', href: '#' },
+              { label: 'Hub Operator', href: '#' },
+              { label: 'Corporate', href: '#' },
+            ]
+          },
+          {
+            title: 'Company',
+            links: [
+              { label: 'About Us', href: '#' },
+              { label: 'Careers', href: '#' },
+              { label: 'Contact', href: '#' },
             ]
           }
         ].map((col, i) => (

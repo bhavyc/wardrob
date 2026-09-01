@@ -29,9 +29,14 @@ export async function POST(request: Request) {
 
     // 1. Verify Razorpay Payment Signature
     const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummysecret12345';
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!secret && process.env.NODE_ENV === 'production') {
+      console.error('FATAL: RAZORPAY_KEY_SECRET environment variable is missing.');
+      return NextResponse.json({ success: false, error: 'Payment gateway configuration error.' }, { status: 500 });
+    }
+    const activeSecret = secret || 'mock_secret';
     const generated_signature = crypto
-      .createHmac('sha256', secret)
+      .createHmac('sha256', activeSecret)
       .update(text)
       .digest('hex');
 

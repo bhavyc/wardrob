@@ -16,10 +16,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing Razorpay signature details.' }, { status: 400 });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'VtB5uZJ9bLh8oqEZhNlFE5GF';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret && process.env.NODE_ENV === 'production') {
+      console.error('FATAL: RAZORPAY_KEY_SECRET is missing in production.');
+      return NextResponse.json({ success: false, error: 'Payment gateway configuration error.' }, { status: 500 });
+    }
+    const activeKeySecret = keySecret || 'mock_secret';
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac('sha256', keySecret)
+      .createHmac('sha256', activeKeySecret)
       .update(body.toString())
       .digest('hex');
 

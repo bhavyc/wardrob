@@ -38,18 +38,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Retrieve or create lister profile
+    // Retrieve lister profile
     let listerProfile = await prisma.listerProfile.findUnique({
       where: { userId: authUser.userId },
     });
 
     if (!listerProfile) {
-      listerProfile = await prisma.listerProfile.create({
-        data: {
-          userId: authUser.userId,
-          status: 'APPROVED',
-        },
-      });
+      return NextResponse.json(
+        { success: false, error: 'Lister profile not found. Please complete registration.' },
+        { status: 403 }
+      );
+    }
+
+    if (!listerProfile.registrationFeePaid || listerProfile.status !== 'APPROVED') {
+      return NextResponse.json(
+        { success: false, error: 'KYC must be APPROVED and registration fee must be PAID to list items.' },
+        { status: 403 }
+      );
     }
 
     const listing = await prisma.listing.create({

@@ -227,10 +227,19 @@ input:focus, textarea:focus, select:focus {
 
 /* ═══ RESPONSIVE — MOBILE (≤768px) ═══ */
 @media (max-width: 768px) {
-  body { font-size: 14px; -webkit-overflow-scrolling: touch; }
+  html, body {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-overflow-scrolling: touch;
+    font-size: 14px;
+  }
+  
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 16px));
+  }
   
   h1 { font-size: 32px !important; line-height: 1.15 !important; }
-  h2 { font-size: 26px !important; line-height: 1.2 !important; }
+  h2 { font-size: 24px !important; line-height: 1.2 !important; }
+  h3 { font-size: 18px !important; line-height: 1.25 !important; }
   
   input, textarea, select {
     padding: 12px 14px;
@@ -238,8 +247,8 @@ input:focus, textarea:focus, select:focus {
   }
   
   .prod-card:active {
-    transform: scale(0.98);
-    transition: transform 0.1s ease;
+    transform: scale(0.985);
+    transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
   .prod-card:hover {
@@ -256,9 +265,27 @@ input:focus, textarea:focus, select:focus {
     box-shadow: none;
   }
 
-  /* Make all buttons/links at least 44px tall for touch targets */
+  /* Safe touch target padding */
   button, a {
-    min-height: 36px;
+    touch-action: manipulation;
+  }
+
+  /* Horizontal scroll snap container */
+  .mobile-snap-x {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-left: 16px;
+    padding-right: 16px;
+    gap: 12px;
+  }
+  .mobile-snap-x::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-snap-x > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
   }
 }
 

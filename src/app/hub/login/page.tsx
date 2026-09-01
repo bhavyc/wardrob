@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function HubLogin() {
   const router = useRouter();
@@ -163,9 +164,9 @@ export default function HubLogin() {
       <div className="hub-login-page">
         <div className="hub-login-left">
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <h1 style={{ fontSize: 48, fontWeight: 800, color: '#FFFFFF', marginBottom: 16, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-              Wardrob<br/>Quality Hub.
-            </h1>
+            <div style={{ marginBottom: 24 }}>
+              <BrandLogo size="lg" color="#FFFFFF" accentColor="#94A3B8" align="left" showSubtitle={true} subtitle="QUALITY CONTROL HUB" />
+            </div>
             <p style={{ fontSize: 16, color: '#94A3B8', lineHeight: 1.6, maxWidth: 400 }}>
               The central nerve center for luxury logistics. Inspect, sanitize, and dispatch premium garments with absolute confidence.
             </p>
@@ -174,6 +175,9 @@ export default function HubLogin() {
 
         <div className="hub-login-right">
           <div className="hub-login-card">
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+              <BrandLogo size="md" showSubtitle={true} subtitle="QUALITY HUB CONSOLE" />
+            </div>
             <h2 className="hub-h1">Hub Authentication</h2>
             <p className="hub-sub">Sign in to the partner operations console.</p>
             

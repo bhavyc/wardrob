@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function ListerRegisterPage() {
   const router = useRouter();
@@ -616,16 +617,8 @@ export default function ListerRegisterPage() {
       <div className="reg-root">
         <div className="reg-card">
           {/* Logo Header */}
-          <Link href="/" className="brand-logo-wrap">
-            <div className="brand-logo-ornament">
-              <span className="brand-logo-rule" />
-              <span className="brand-logo-diamond" />
-              <span className="brand-logo-rule" />
-            </div>
-            <span className="brand-name">WARDROB</span>
-            <div className="brand-sub-row">
-              <span className="brand-sub">P2P Rental</span>
-            </div>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+            <BrandLogo size="lg" showSubtitle={true} subtitle="ARTISAN COLLECTIVE ONBOARDING" />
           </Link>
 
           {/* Top bar */}

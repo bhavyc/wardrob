@@ -437,6 +437,14 @@ export default function AdminPayoutsPage() {
             </table>
           </div>
         )}
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          totalItems={payouts.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal for Mark as Paid */}
