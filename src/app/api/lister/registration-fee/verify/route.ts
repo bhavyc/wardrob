@@ -17,18 +17,21 @@ export async function POST(request: Request) {
     }
 
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret && process.env.NODE_ENV === 'production') {
-      console.error('FATAL: RAZORPAY_KEY_SECRET is missing in production.');
+    if (!keySecret) {
+      console.error('FATAL: RAZORPAY_KEY_SECRET is missing.');
       return NextResponse.json({ success: false, error: 'Payment gateway configuration error.' }, { status: 500 });
     }
-    const activeKeySecret = keySecret || 'mock_secret';
+
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
-      .createHmac('sha256', activeKeySecret)
+      .createHmac('sha256', keySecret)
       .update(body.toString())
       .digest('hex');
 
-    if (expectedSignature !== razorpay_signature) {
+    const signatureBuffer = Buffer.from(razorpay_signature, 'utf8');
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+
+    if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       return NextResponse.json({ success: false, error: 'Payment verification failed. Invalid signature.' }, { status: 400 });
     }
 
@@ -56,6 +59,11 @@ export async function POST(request: Request) {
 
     if (!paymentRecord) {
       return NextResponse.json({ success: false, error: 'Registration payment record not found.' }, { status: 404 });
+    }
+
+    // SECURITY CHECK: Verify that the payment order belongs to the authenticated lister
+    if (paymentRecord.listerProfileId !== listerProfile.id) {
+      return NextResponse.json({ success: false, error: 'Unauthorized. Payment order does not belong to your account.' }, { status: 403 });
     }
 
     // IDEMPOTENCY GUARD 2: If payment status already COMPLETED

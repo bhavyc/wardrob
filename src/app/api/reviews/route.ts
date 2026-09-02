@@ -11,8 +11,9 @@ export async function POST(request: Request) {
 
     const { bookingId, rating, comment } = await request.json();
 
-    if (!bookingId || !rating) {
-      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    const numericRating = Number(rating);
+    if (!bookingId || isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+      return NextResponse.json({ success: false, error: 'Rating must be an integer between 1 and 5.' }, { status: 400 });
     }
 
     const booking = await prisma.booking.findUnique({

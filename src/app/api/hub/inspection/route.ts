@@ -177,10 +177,13 @@ export async function POST(request: Request) {
 
       if (refundAmount > 0 && booking.razorpayPaymentId) {
         try {
+          if (!process.env.RAZORPAY_KEY_SECRET) {
+            throw new Error('RAZORPAY_KEY_SECRET is not configured');
+          }
           const Razorpay = require('razorpay');
           const razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key',
-            key_secret: process.env.RAZORPAY_KEY_SECRET || 'mock_secret',
+            key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
           });
           
           const rzpResult = await razorpay.payments.refund(booking.razorpayPaymentId, {
