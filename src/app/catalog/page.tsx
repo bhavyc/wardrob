@@ -429,7 +429,9 @@ function CatalogContent() {
                       'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&q=80&w=800',
                       'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=800',
                     ];
-                    const displayImg = fallbackGallery[idx % fallbackGallery.length];
+                    const listerImg = (p.images && p.images.length > 0 && p.images[0]) ||
+                                      (p.baselineImages && p.baselineImages.length > 0 && p.baselineImages[0]);
+                    const displayImg = listerImg || fallbackGallery[idx % fallbackGallery.length];
 
                     return (
                       <Link key={p.id} href={`/product/${p.id}`} className="premium-card" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%', animationDelay: `${(idx % 12) * 0.05}s` }}>

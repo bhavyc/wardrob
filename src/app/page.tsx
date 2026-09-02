@@ -186,7 +186,10 @@ export default function Storefront() {
           box-shadow: 0 20px 44px -8px rgba(212, 86, 122, 0.18);
           border-color: rgba(212, 86, 122, 0.3);
         }
+
+        
         /* ═══ LUXURY PRODUCT CARDS (THE VAULT) ═══ */
+
         .prod-card {
           background: #FFFFFF;
           border: 1px solid rgba(226, 214, 206, 0.65);
@@ -964,7 +967,9 @@ export default function Storefront() {
               <>
                 <div className="hp-products">
                   {filtered.slice(0, 4).map((product, idx) => {
-                    const displayImg = luxuryProductGallery[idx % luxuryProductGallery.length];
+                    const listerImg = (product.images && product.images.length > 0 && product.images[0]) ||
+                                      (product.baselineImages && product.baselineImages.length > 0 && product.baselineImages[0]);
+                    const displayImg = listerImg || luxuryProductGallery[idx % luxuryProductGallery.length];
                     const liked = likedIds.has(product.id);
 
                     return (
