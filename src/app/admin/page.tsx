@@ -27,12 +27,21 @@ export default function AdminDashboardPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/admin/stats');
-      const data = await res.json();
-      if (data.success) {
-        setStats(data.stats);
-        setRecentBookings(data.recentBookings || []);
-        setRecentPayouts(data.recentPayouts || []);
-        setChronicOverdue(data.chronicOverdueBookings || []);
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setStats(data.stats);
+          setRecentBookings(data.recentBookings || []);
+          setRecentPayouts(data.recentPayouts || []);
+          setChronicOverdue(data.chronicOverdueBookings || []);
+        } else {
+          console.error('Failed to load stats:', data.error);
+        }
+      } else {
+        const text = await res.text();
+        console.error('Expected JSON but got HTML/text. This usually means a redirect to login occurred.', text.substring(0, 100));
+        // Optionally redirect to login here if it's an unauthorized page redirect
       }
     } catch (err) {
       console.error(err);

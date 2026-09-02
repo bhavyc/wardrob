@@ -22,7 +22,13 @@ export async function GET(request: Request) {
       include: {
         listing: {
           include: {
-            lister: true
+            lister: {
+              select: {
+                id: true,
+                shopName: true,
+                bio: true,
+              }
+            }
           }
         },
         shipments: true,

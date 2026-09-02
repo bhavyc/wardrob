@@ -186,12 +186,34 @@ export default function Storefront() {
           box-shadow: 0 20px 44px -8px rgba(212, 86, 122, 0.18);
           border-color: rgba(212, 86, 122, 0.3);
         }
+        /* ═══ LUXURY PRODUCT CARDS (THE VAULT) ═══ */
+        .prod-card {
+          background: #FFFFFF;
+          border: 1px solid rgba(226, 214, 206, 0.65);
+          border-radius: 22px;
+          overflow: hidden;
+          box-shadow: 0 8px 24px rgba(30, 30, 45, 0.04);
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.3s ease;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        .prod-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 20px 44px -8px rgba(212, 86, 122, 0.16);
+          border-color: rgba(212, 86, 122, 0.3);
+        }
         .prod-img-wrap {
           position: relative;
           overflow: hidden;
           background: #F4EBE3;
+          aspect-ratio: 4/5;
         }
         .prod-img-wrap img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
           transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .prod-card:hover .prod-img-wrap img {
@@ -203,15 +225,15 @@ export default function Storefront() {
           left: 12px;
           display: inline-flex;
           align-items: center;
-          gap: 5px;
+          gap: 4px;
           background: rgba(255, 255, 255, 0.92);
           backdrop-filter: blur(12px);
           color: var(--accent);
-          font-size: 10px;
+          font-size: 9.5px;
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          padding: 5px 12px;
+          padding: 4px 10px;
           border-radius: var(--radius-full);
           border: 1px solid rgba(255, 255, 255, 0.95);
           box-shadow: 0 4px 12px rgba(0,0,0,0.06);
@@ -221,8 +243,8 @@ export default function Storefront() {
           position: absolute;
           top: 12px;
           right: 12px;
-          width: 34px;
-          height: 34px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           background: rgba(255, 255, 255, 0.92);
           backdrop-filter: blur(12px);
@@ -259,7 +281,7 @@ export default function Storefront() {
           bottom: 12px;
         }
         .prod-card-body {
-          padding: 16px 18px 18px;
+          padding: 14px 16px 16px;
           display: flex;
           flex-direction: column;
           flex: 1;
@@ -269,24 +291,24 @@ export default function Storefront() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
         }
         .prod-cat-label {
-          font-size: 10px;
+          font-size: 9.5px;
           font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
           color: var(--accent);
         }
         .prod-sub-tag {
-          font-size: 9.5px;
+          font-size: 9px;
           font-weight: 600;
           color: var(--text-muted);
-          letter-spacing: 0.04em;
+          letter-spacing: 0.02em;
         }
         .prod-title {
           font-family: var(--font-serif);
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 600;
           color: var(--ink);
           line-height: 1.35;
@@ -295,48 +317,50 @@ export default function Storefront() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          min-height: 42px;
+          min-height: 40px;
         }
         .prod-footer {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-top: 12px;
+          padding-top: 10px;
           border-top: 1px solid rgba(240, 230, 224, 0.85);
           margin-top: auto;
         }
         .prod-price-col {
           display: flex;
-          flex-direction: column;
-        }
-        .prod-price-lbl {
-          font-size: 9px;
-          font-weight: 600;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          margin-bottom: 1px;
-        }
-        .prod-price-wrap {
-          display: flex;
           align-items: baseline;
           gap: 3px;
-          white-space: nowrap;
         }
         .prod-price {
           font-family: var(--font-serif);
-          font-size: 19px;
+          font-size: 18px;
           font-weight: 700;
           color: var(--ink);
           letter-spacing: -0.01em;
         }
         .prod-price-unit {
-          font-size: 11px;
+          font-size: 10.5px;
           color: var(--text-muted);
           font-weight: 500;
         }
         .prod-rent-btn {
-          color: #FFF;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: var(--ink);
+          color: #FFFFFF;
+          padding: 6px 14px;
+          border-radius: var(--radius-full);
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+          transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .prod-card:hover .prod-rent-btn {
+          background: var(--accent);
+          transform: translateX(2px);
         }
 
         /* ═══ DESKTOP & BASE GRID ═══ */
@@ -508,30 +532,35 @@ export default function Storefront() {
             letter-spacing: 0.08em !important;
           }
 
-          /* Products Mobile -> Slider */
+          /* Products Mobile -> Luxury Lookbook Slider */
           .hp-products {
             display: flex !important;
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             scroll-snap-type: x mandatory !important;
-            gap: 12px !important;
-            padding-bottom: 24px !important;
+            gap: 14px !important;
+            padding-bottom: 20px !important;
+            padding-left: 2px !important;
             -webkit-overflow-scrolling: touch;
           }
           .hp-products::-webkit-scrollbar {
             display: none;
           }
           .hp-products > a {
-            flex: 0 0 75% !important;
+            flex: 0 0 68% !important;
             scroll-snap-align: start !important;
           }
           .prod-card {
             border-radius: 18px !important;
-            box-shadow: 0 4px 16px rgba(30,30,45,0.04) !important;
-            border: 1px solid rgba(240, 230, 224, 0.85) !important;
+            box-shadow: 0 6px 22px rgba(30,30,45,0.06) !important;
+            border: 1px solid rgba(226, 214, 206, 0.75) !important;
+            background: #FFFFFF !important;
           }
           .prod-card:hover {
             transform: none !important;
+          }
+          .prod-img-wrap {
+            aspect-ratio: 3/4 !important;
           }
           .prod-quick-cta {
             display: none !important;
@@ -549,46 +578,46 @@ export default function Storefront() {
             left: 8px !important;
           }
           .prod-card-body {
-            padding: 12px 10px 12px !important;
+            padding: 12px 12px 14px !important;
           }
           .prod-cat-row {
-            margin-bottom: 2px !important;
+            margin-bottom: 3px !important;
           }
           .prod-cat-label {
             font-size: 8.5px !important;
             letter-spacing: 0.08em !important;
           }
           .prod-sub-tag {
-            font-size: 7.5px !important;
+            font-size: 8px !important;
           }
           .prod-title {
             font-family: var(--font-serif) !important;
-            font-size: 13px !important;
-            line-height: 1.3 !important;
-            margin: 0 0 6px 0 !important;
-            min-height: 34px !important;
+            font-size: 13.5px !important;
+            line-height: 1.28 !important;
+            margin: 0 0 8px 0 !important;
+            min-height: 35px !important;
             font-weight: 600 !important;
           }
           .prod-footer {
             padding-top: 8px !important;
-          }
-          .prod-price-lbl {
-            font-size: 7.5px !important;
-          }
-          .prod-price-wrap {
-            white-space: nowrap !important;
+            border-top: 1px solid rgba(240, 230, 224, 0.75) !important;
           }
           .prod-price {
-            font-size: 15px !important;
+            font-size: 16px !important;
             font-weight: 700 !important;
           }
           .prod-price-unit {
-            font-size: 9.5px !important;
+            font-size: 10px !important;
           }
           .prod-rent-btn {
-            font-size: 9.5px !important;
+            font-size: 10px !important;
             padding: 5px 12px !important;
-            font-weight: 700 !important;
+            font-weight: 600 !important;
+            background: var(--ink) !important;
+            color: #FFFFFF !important;
+            border-radius: 999px !important;
+            display: inline-flex !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
           }
 
           /* Trust & Steps Mobile */
@@ -960,7 +989,7 @@ export default function Storefront() {
                                 e.currentTarget.onerror = null;
                                 e.currentTarget.src = luxuryProductGallery[(idx + 1) % luxuryProductGallery.length];
                               }}
-                              style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block' }}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                             />
                             <span className="prod-quick-cta">Quick Reserve →</span>
                           </div>
@@ -978,15 +1007,12 @@ export default function Storefront() {
                             </div>
                             <div className="prod-footer">
                               <div className="prod-price-col">
-                                <span className="prod-price-lbl">Rental Rate</span>
-                                <div className="prod-price-wrap">
-                                  <span className="prod-price">
-                                    ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
-                                  </span>
-                                  <span className="prod-price-unit">
-                                    / 4d
-                                  </span>
-                                </div>
+                                <span className="prod-price">
+                                  ₹{Number(product.rentalPrice).toLocaleString('en-IN')}
+                                </span>
+                                <span className="prod-price-unit">
+                                  / 4d
+                                </span>
                               </div>
                               <span className="prod-rent-btn">Reserve →</span>
                             </div>

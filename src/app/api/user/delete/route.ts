@@ -13,6 +13,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Prevent deletion if user has active rentals/bookings
+    const activeBookings = await prisma.booking.count({
+      where: {
+        renterId: authUser.userId,
+        status: { in: ['CONFIRMED', 'AT_HUB_PRE', 'OUT_FOR_DELIVERY', 'IN_USE', 'RETURNED_TO_HUB'] }
+      }
+    });
+
+    if (activeBookings > 0) {
+      return NextResponse.json(
+        { success: false, error: 'Cannot delete account with active or ongoing rentals. Please complete or return your active orders first.' },
+        { status: 400 }
+      );
+    }
+
     // Delete the user from the database
     await prisma.user.delete({
       where: { id: authUser.userId },

@@ -2,8 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 
+import { getClientIp } from '@/lib/rate-limit';
+
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
     const { email } = await request.json();
 
     if (!email) {
@@ -11,6 +14,30 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Distributed Rate Limit: max 3 attempts per 10 minutes per IP
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const recentAttempts = await prisma.duplicatePhotoHash.count({
+      where: {
+        contextId: 'RATE_LIMIT_FORGOT_PW',
+        hashValue: { startsWith: ip },
+        createdAt: { gte: tenMinutesAgo }
+      }
+    });
+
+    if (recentAttempts >= 3) {
+      return NextResponse.json(
+        { success: false, error: 'Too many password reset requests. Please try again in 10 minutes.' },
+        { status: 429 }
+      );
+    }
+
+    await prisma.duplicatePhotoHash.create({
+      data: {
+        contextId: 'RATE_LIMIT_FORGOT_PW',
+        hashValue: `${ip}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      }
+    });
 
     const user = await prisma.user.findFirst({
       where: {

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'KYC information updated successfully.',
-      profile: updatedProfile,
+      status: updatedProfile.status,
     });
   } catch (error: any) {
     console.error('API Lister KYC POST Error:', error);

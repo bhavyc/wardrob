@@ -35,15 +35,22 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     }
 
     // Verify Razorpay Signature
-    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const secret = process.env.RAZORPAY_KEY_SECRET || 'dummysecret12345';
+    const secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!secret) {
+      console.error('FATAL: RAZORPAY_KEY_SECRET environment variable is missing.');
+      return NextResponse.json({ success: false, error: 'Payment gateway configuration error.' }, { status: 500 });
+    }
     
+    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
     const generated_signature = crypto
       .createHmac('sha256', secret)
       .update(text)
       .digest('hex');
 
-    if (generated_signature !== razorpay_signature) {
+    const signatureBuffer = Buffer.from(razorpay_signature, 'utf8');
+    const expectedBuffer = Buffer.from(generated_signature, 'utf8');
+
+    if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
       return NextResponse.json({ success: false, error: 'Payment signature verification failed.' }, { status: 400 });
     }
 
