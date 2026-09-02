@@ -198,6 +198,74 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
               )}
             </div>
           </div>
+
+          {/* ━━━ ATELIER WHITE-GLOVE EXPERIENCE ━━━ */}
+          <div style={{
+            marginTop: '24px',
+            background: '#FFFFFF',
+            borderRadius: '20px',
+            border: '1px solid rgba(226, 214, 206, 0.75)',
+            padding: '22px 20px',
+            boxShadow: '0 8px 24px rgba(30,30,45,0.04)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid rgba(240, 230, 224, 0.8)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '14px' }}>💎</span>
+                <span style={{ fontSize: '11.5px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)' }}>
+                  The Wardrob Standard
+                </span>
+              </div>
+              <span style={{ fontSize: '9.5px', color: 'var(--accent)', fontWeight: 700, background: 'var(--accent-light)', padding: '3px 10px', borderRadius: '999px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                White-Glove Service
+              </span>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '12px',
+            }}>
+              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                  <span style={{ fontSize: '12px' }}>🛡️</span>
+                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>₹0 Accidental Shield</span>
+                </div>
+                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                  Minor spills, snags & loose embroidery are covered with zero repair fees.
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                  <span style={{ fontSize: '12px' }}>🧼</span>
+                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>60°C Ozone Sanitized</span>
+                </div>
+                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                  Hospital-grade sterilization, eco-dry cleaned, and vacuum sealed.
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                  <span style={{ fontSize: '12px' }}>📦</span>
+                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>Hard-Shell Wardrobe Box</span>
+                </div>
+                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                  Dispatched in a custom preservation trunk with hanger & prepaid return kit.
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                  <span style={{ fontSize: '12px' }}>⏳</span>
+                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>72-Hr Early Buffer</span>
+                </div>
+                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                  Arrives 2 days before your event for effortless trials & jewellery styling.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ━━━━━━━━ RIGHT: DETAILS & BOOKING ━━━━━━━━ */}
