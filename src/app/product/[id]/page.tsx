@@ -4,7 +4,6 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import RenterNavbar from '@/components/RenterNavbar';
 import RenterFooter from '@/components/RenterFooter';
-import ProvenanceTimeline from '@/components/ProvenanceTimeline';
 import EventDatePicker from '@/components/EventDatePicker';
 
 type Product = {
@@ -199,8 +198,6 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
               )}
             </div>
           </div>
-
-          <ProvenanceTimeline />
         </div>
 
         {/* ━━━━━━━━ RIGHT: DETAILS & BOOKING ━━━━━━━━ */}
