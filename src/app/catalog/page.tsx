@@ -15,6 +15,7 @@ type Product = {
   rentalPrice?: number;
   stock: number;
   images: string[];
+  baselineImages?: string[];
   category?: string;
   Lister: { shopName: string; };
 };
