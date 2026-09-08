@@ -118,6 +118,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: 'Grade (A/B/C) is required for post-return inspection' }, { status: 400 });
       }
 
+      // 1. Guard against duplicate post-return inspection
+      const existingPostReturn = await prisma.damageReport.findFirst({
+        where: { bookingId, inspectionType: 'POST_RETURN' }
+      });
+      if (existingPostReturn) {
+        return NextResponse.json({ success: false, error: 'Return inspection has already been recorded for this booking.' }, { status: 400 });
+      }
+
       // Calculate Late Days and Late Fee
       const actualReturnDate = new Date();
       const expectedEndDate = new Date(booking.endDate);
@@ -227,26 +235,48 @@ export async function POST(request: Request) {
             }
           });
 
-          // If shortfall > 1000, flag for manual review
-          if (excessDeduction > 1000) {
+          // Dispute triggers:
+          // 1. Existing rule: High deposit shortfall (excess beyond deposit > ₹1,000)
+          const isShortfallFlag = excessDeduction > 1000;
+          // 2. New rule: Large deduction relative to deposit (deductionAmount + lateFee >= 50% of securityDeposit)
+          const isHighDeductionRatio = maxDeduction > 0 && totalRequestedDeduction >= (maxDeduction * 0.5);
+
+          if (isShortfallFlag || isHighDeductionRatio) {
+            const percentClaimed = maxDeduction > 0 ? Math.round((totalRequestedDeduction / maxDeduction) * 100) : 0;
+            const adminNotes = isShortfallFlag
+              ? `Auto-flagged for manual review due to high deposit shortfall (₹${excessDeduction}). Check collusion risk.`
+              : `Auto-flagged for review — large deduction relative to deposit (${percentClaimed}% of deposit claimed)`;
+
             await tx.dispute.create({
               data: {
                 damageReportId: report.id,
                 status: 'OPEN',
-                adminNotes: `Auto-flagged for manual review due to high deposit shortfall (₹${excessDeduction}). Check collusion risk.`
+                adminNotes
               }
+            });
+
+            await tx.damageReport.update({
+              where: { id: report.id },
+              data: { isDisputed: true }
             });
           }
 
           // Create Payout for Lister (Rent minus Commission + Damages + Extension Fee Split)
           const rentAmount = Number(booking.rentAmount);
           const extensionFee = Number(booking.extensionFee) || 0;
-          const commissionRate = 0.35; // Flat 35% commission (65% Lister / 35% Admin)
+          const MIN_COMMISSION_FLOOR = 2000;
+          const COMMISSION_RATE = 0.35;
           
-          const listerRentShare = rentAmount * (1 - commissionRate);
-          const listerExtensionShare = extensionFee * 0.50; // 50/50 split for extension fee
+          // 1. Base rent commission: minimum ₹2000 floor or 35%, whichever is higher
+          const adminRentCommission = Math.max(MIN_COMMISSION_FLOOR, Math.round(rentAmount * COMMISSION_RATE));
+          const listerRentShare = Math.max(0, rentAmount - adminRentCommission);
           
-          const commission = (rentAmount * commissionRate) + (extensionFee * 0.50);
+          // 2. Extension fee split remains 50/50 without floor
+          const listerExtensionShare = Math.round(extensionFee * 0.50);
+          const adminExtensionCommission = Math.round(extensionFee * 0.50);
+          
+          // 3. Final Admin Commission & Lister Payout (Damages/Deductions go 100% to Lister)
+          const commission = adminRentCommission + adminExtensionCommission;
           const finalListerPayout = listerRentShare + listerExtensionShare + totalRequestedDeduction;
 
           await tx.payout.create({
@@ -272,17 +302,38 @@ export async function POST(request: Request) {
 
           // Reconcile refund state in DB post-gateway call ATOMICALLY
           if (refundAmount > 0) {
-            if (!refundSuccess) {
-              // Auto-generate dispute for admin to manually process failed refund
-              await tx.dispute.create({
-                data: {
-                  damageReportId: report.id,
-                  status: 'OPEN',
-                  adminNotes: `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
-                }
+            if (!refundSuccess && booking.razorpayPaymentId) {
+              // Auto-generate dispute for admin to manually process failed refund (or append note if already disputed)
+              const existingDispute = await tx.dispute.findUnique({
+                where: { damageReportId: report.id }
               });
 
+              if (existingDispute) {
+                await tx.dispute.update({
+                  where: { id: existingDispute.id },
+                  data: {
+                    adminNotes: existingDispute.adminNotes
+                      ? `${existingDispute.adminNotes} | CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
+                      : `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
+                  }
+                });
+              } else {
+                await tx.dispute.create({
+                  data: {
+                    damageReportId: report.id,
+                    status: 'OPEN',
+                    adminNotes: `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
+                  }
+                });
+              }
+
               // Fallback to wallet balance if Razorpay refund fails
+              await tx.user.update({
+                where: { id: booking.renterId },
+                data: { walletBalance: { increment: refundAmount } }
+              });
+            } else if (!booking.razorpayPaymentId) {
+              // Non-gateway fallback: deposit credited to wallet
               await tx.user.update({
                 where: { id: booking.renterId },
                 data: { walletBalance: { increment: refundAmount } }

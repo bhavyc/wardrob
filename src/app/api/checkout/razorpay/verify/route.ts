@@ -18,12 +18,9 @@ export async function POST(request: Request) {
       razorpay_order_id,
       razorpay_signature,
       productId,
-      eventDate,
-      extensionDays = 0,
-      couponCode,
     } = body;
 
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !productId || !eventDate) {
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !productId) {
       return NextResponse.json({ success: false, error: 'Missing required payment or booking details.' }, { status: 400 });
     }
 
@@ -47,68 +44,68 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Payment signature verification failed. Possible fraud.' }, { status: 400 });
     }
 
-    // 2. Fetch Listing and calculate prices
-    const listing = await prisma.listing.findUnique({ where: { id: productId } });
-    if (!listing || (listing.status !== 'AVAILABLE' && listing.status !== 'AT_HUB')) {
-      return NextResponse.json({ success: false, error: 'Listing not found or not available.' }, { status: 404 });
+    // 2. Fetch the pending reservation created in /api/checkout/razorpay/order
+    const existingBooking = await prisma.booking.findFirst({
+      where: { razorpayOrderId: razorpay_order_id },
+      include: { listing: true },
+    });
+
+    if (!existingBooking) {
+      return NextResponse.json({ success: false, error: 'Booking reservation not found for this transaction.' }, { status: 404 });
     }
 
-    const evDate = new Date(eventDate);
-    if (isNaN(evDate.getTime())) {
-      return NextResponse.json({ success: false, error: 'Invalid event date.' }, { status: 400 });
+    // 3. Prevent Payment Substitution Fraud
+    if (existingBooking.renterId !== authUser.userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Payment does not belong to your account.' }, { status: 403 });
     }
 
-    const start = new Date(evDate);
-    start.setDate(start.getDate() - 2);
+    if (existingBooking.listingId !== productId) {
+      return NextResponse.json({ success: false, error: 'Security Exception: Listing mismatch for order verification.' }, { status: 400 });
+    }
 
-    const end = new Date(evDate);
-    end.setDate(end.getDate() + 2 + extensionDays);
-    
-    const deliveryDate = new Date(evDate);
-    deliveryDate.setDate(deliveryDate.getDate() - 2);
+    // 4. Idempotency Check: if booking is already confirmed, return success
+    if (existingBooking.status === 'CONFIRMED' || existingBooking.status === 'AT_HUB_PRE' || existingBooking.status === 'OUT_FOR_DELIVERY' || existingBooking.status === 'IN_USE') {
+      return NextResponse.json({
+        success: true,
+        message: 'Rental booking already confirmed.',
+        order: existingBooking,
+      });
+    }
 
-    let baseRent = Number(listing.rentalPrice);
-    let extensionRent = (baseRent / 4) * extensionDays;
-    let finalAmount = baseRent + extensionRent + Number(listing.securityDeposit);
+    if (existingBooking.status !== 'PENDING') {
+      return NextResponse.json({ success: false, error: 'Booking is no longer pending confirmation.' }, { status: 400 });
+    }
 
-    let appliedDiscount = 0;
-    if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-      if (coupon && coupon.isActive && (!coupon.expiresAt || new Date(coupon.expiresAt) > new Date())) {
-        if (coupon.minOrderValue && baseRent < Number(coupon.minOrderValue)) {
-          // min order not met, ignore
-        } else {
-          const discountVal = Number(coupon.discountValue);
-          if (coupon.discountType === 'PERCENTAGE') {
-            appliedDiscount = (baseRent * discountVal) / 100;
-          } else if (coupon.discountType === 'FLAT') {
-            appliedDiscount = discountVal;
-          }
-          finalAmount = finalAmount - appliedDiscount;
-        }
+    // 5. Replay Attack / Double Spending Guard
+    const paymentAlreadyUsed = await prisma.booking.findFirst({
+      where: {
+        razorpayPaymentId: razorpay_payment_id,
+        id: { not: existingBooking.id }
       }
-    }
-    
-    const returnPickupDate = new Date(evDate);
-    returnPickupDate.setDate(returnPickupDate.getDate() + 2 + extensionDays);
+    });
 
-    // 3. Atomically check conflicts and create Booking (with retry for serialization failures)
+    if (paymentAlreadyUsed) {
+      return NextResponse.json({ success: false, error: 'This payment transaction has already been credited to another reservation.' }, { status: 400 });
+    }
+
+    // 6. Atomically confirm Booking inside serializable transaction
     let booking = null;
     let retries = 3;
 
     while (retries > 0) {
       try {
         booking = await prisma.$transaction(async (tx) => {
-          // Double-check conflict INSIDE transaction
+          // Double check conflicting bookings
           const conflictingBooking = await tx.booking.findFirst({
             where: {
-              listingId: listing.id,
+              listingId: existingBooking.listingId,
+              id: { not: existingBooking.id },
               status: { in: ['CONFIRMED', 'AT_HUB_PRE', 'OUT_FOR_DELIVERY', 'IN_USE'] },
               OR: [
-                { startDate: { lte: returnPickupDate }, endDate: { gte: deliveryDate } },
+                { startDate: { lte: existingBooking.endDate }, endDate: { gte: existingBooking.startDate } },
                 {
-                  startDate: { lte: returnPickupDate },
-                  pendingExtensionDate: { gte: deliveryDate },
+                  startDate: { lte: existingBooking.endDate },
+                  pendingExtensionDate: { gte: existingBooking.startDate },
                   pendingExtensionExpiry: { gt: new Date() }
                 }
               ]
@@ -119,53 +116,48 @@ export async function POST(request: Request) {
             throw new Error('CONFLICT');
           }
 
-          const newBooking = await tx.booking.create({
+          // Confirm the booking
+          const confirmedBooking = await tx.booking.update({
+            where: { id: existingBooking.id },
             data: {
-              renterId: authUser.userId,
-              listingId: productId,
-              startDate: deliveryDate,
-              endDate: returnPickupDate,
-              rentAmount: baseRent + extensionRent,
-              securityDeposit: Number(listing.securityDeposit),
-              totalAmount: finalAmount,
               status: 'CONFIRMED',
-              razorpayOrderId: razorpay_order_id,
               razorpayPaymentId: razorpay_payment_id,
             }
           });
 
-          // ONLY create LISTER_TO_HUB shipment if item is NOT already AT_HUB
-          if (listing.status !== 'AT_HUB') {
+          // ONLY create LISTER_TO_HUB shipment if item is NOT already AT_HUB and no shipment exists
+          const existingShipment = await tx.shipment.findFirst({
+            where: { bookingId: confirmedBooking.id, leg: 'LISTER_TO_HUB' }
+          });
+
+          if (!existingShipment && existingBooking.listing.status !== 'AT_HUB') {
             await tx.shipment.create({
               data: {
-                bookingId: newBooking.id,
+                bookingId: confirmedBooking.id,
                 leg: 'LISTER_TO_HUB',
                 status: 'PENDING',
               }
             });
           }
 
-          // 4. Temporarily mark listing as RENTED (or leave it as AT_HUB?)
-          if (listing.status !== 'AT_HUB') {
+          if (existingBooking.listing.status !== 'AT_HUB') {
             await tx.listing.update({
-              where: { id: productId },
+              where: { id: existingBooking.listingId },
               data: { status: 'RENTED' }
             });
           }
 
-          return newBooking;
+          return confirmedBooking;
         }, {
           isolationLevel: 'Serializable',
           maxWait: 5000,
           timeout: 10000,
         });
 
-        // Exit loop on success
         break;
       } catch (err: any) {
         if (err.code === 'P2034' && retries > 1) {
           retries--;
-          // Wait 200ms before retrying
           await new Promise(res => setTimeout(res, 200));
           continue;
         }
@@ -182,16 +174,15 @@ export async function POST(request: Request) {
     console.error('API Razorpay Verify Error:', error);
 
     // --- AUTO-REFUND LOGIC ---
-    // If the booking transaction failed, but the user paid on Razorpay, we must refund them.
-    if (razorpay_payment_id) {
+    // If the booking transaction failed, but the user paid on Razorpay, auto-refund
+    if (razorpay_payment_id && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
       try {
         const Razorpay = require('razorpay');
         const razorpay = new Razorpay({
-          key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_mock_key',
-          key_secret: process.env.RAZORPAY_KEY_SECRET || 'mock_secret',
+          key_id: process.env.RAZORPAY_KEY_ID,
+          key_secret: process.env.RAZORPAY_KEY_SECRET,
         });
 
-        // Fetch payment to ensure it hasn't already been refunded (e.g. from a duplicate client request)
         const payment = await razorpay.payments.fetch(razorpay_payment_id);
         if (payment && payment.status === 'captured' && payment.amount_refunded === 0) {
           console.log(`Auto-refunding orphaned payment ${razorpay_payment_id}`);

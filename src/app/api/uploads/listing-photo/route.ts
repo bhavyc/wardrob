@@ -15,12 +15,20 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    // We expect listingId or a similar context identifier to scope duplicates
-    const listingId = formData.get('listingId') as string || `lister_${authUser.userId}`;
+    const rawListingId = formData.get('listingId') as string;
+    const listingId = rawListingId ? `lister_${authUser.userId}_${rawListingId.replace(/[^a-zA-Z0-9_-]/g, '')}` : `lister_${authUser.userId}`;
 
     if (!file) {
       return NextResponse.json(
         { success: false, error: 'No file uploaded.' },
+        { status: 400 }
+      );
+    }
+
+    const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File size exceeds the 8MB limit.' },
         { status: 400 }
       );
     }
@@ -36,7 +44,11 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const result = await processAndUploadImage(buffer, listingId);
+    const host = request.headers.get('host') || '127.0.0.1:3000';
+    const proto = request.headers.get('x-forwarded-proto') || 'http';
+    const requestBaseUrl = `${proto}://${host}`;
+
+    const result = await processAndUploadImage(buffer, listingId, requestBaseUrl);
 
     if (!result.success) {
       return NextResponse.json(

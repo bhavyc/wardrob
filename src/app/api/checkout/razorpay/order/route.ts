@@ -4,15 +4,19 @@ import { getAuthUser } from '@/lib/auth';
 import Razorpay from 'razorpay';
 import { getClientIp } from '@/lib/rate-limit';
 
+function getRazorpayInstance() {
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_uG62rYyFzD36XW',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummysecret12345',
-});
+  if (!keyId || !keySecret) {
+    throw new Error('FATAL: Razorpay API credentials are not configured.');
+  }
+
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+}
 
 export async function POST(request: Request) {
   try {
-    const ip = getClientIp(request);
     const authUser = await getAuthUser(request);
     
     if (!authUser) {
@@ -20,7 +24,6 @@ export async function POST(request: Request) {
     }
 
     // Database-backed Distributed Rate Limiter
-    // We use DuplicatePhotoHash as a makeshift log table to avoid schema migrations
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
     const recentRequests = await prisma.duplicatePhotoHash.count({
       where: {
@@ -97,10 +100,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Item is already booked for these dates.' }, { status: 409 });
     }
     
-    let baseRent = Number(listing.rentalPrice);
-    let extensionRent = (baseRent / 4) * extensionDays;
-    
-    let amount = baseRent + extensionRent + Number(listing.securityDeposit);
+    const baseRent = Number(listing.rentalPrice);
+    const extensionRent = (baseRent / 4) * extensionDays;
+    const rentalCharge = baseRent + extensionRent;
+    const depositAmount = Number(listing.securityDeposit);
 
     let discount = 0;
     if (couponCode) {
@@ -110,11 +113,11 @@ export async function POST(request: Request) {
 
       if (coupon && coupon.isActive) {
         const isExpired = coupon.expiresAt && new Date(coupon.expiresAt) < new Date();
-        const meetMinOrder = !coupon.minOrderValue || amount >= Number(coupon.minOrderValue);
+        const meetMinOrder = !coupon.minOrderValue || rentalCharge >= Number(coupon.minOrderValue);
 
         if (!isExpired && meetMinOrder) {
           if (coupon.discountType === 'PERCENTAGE') {
-            discount = (amount * Number(coupon.discountValue)) / 100;
+            discount = (rentalCharge * Number(coupon.discountValue)) / 100;
           } else if (coupon.discountType === 'FLAT') {
             discount = Number(coupon.discountValue);
           }
@@ -122,8 +125,12 @@ export async function POST(request: Request) {
       }
     }
 
-    const finalAmount = Math.max(1, amount - discount);
+    // Cap discount strictly at the rental charge so it never cuts into the refundable security deposit
+    const finalDiscount = Math.min(discount, rentalCharge);
+    const discountedRent = Math.max(0, rentalCharge - finalDiscount);
+    const finalAmount = Math.max(1, Math.round(discountedRent + depositAmount));
 
+    const razorpay = getRazorpayInstance();
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(finalAmount * 100),
       currency: 'INR',
@@ -134,17 +141,34 @@ export async function POST(request: Request) {
       },
     });
 
+    // Persist a PENDING booking in database upfront to prevent payment substitution and allow webhook synchronization
+    await prisma.booking.create({
+      data: {
+        renterId: authUser.userId,
+        listingId: listing.id,
+        startDate: deliveryDate,
+        endDate: returnPickupDate,
+        rentAmount: discountedRent,
+        securityDeposit: depositAmount,
+        totalAmount: finalAmount,
+        status: 'PENDING',
+        razorpayOrderId: razorpayOrder.id,
+      }
+    });
+
+    const publicRazorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+
     return NextResponse.json({
       success: true,
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      keyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_uG62rYyFzD36XW',
+      keyId: publicRazorpayKey,
     });
   } catch (error: any) {
     console.error('API Razorpay Order Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to initiate Razorpay transaction order.' },
+      { success: false, error: error.message || 'Failed to initiate Razorpay transaction order.' },
       { status: 500 }
     );
   }

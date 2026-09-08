@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import RenterNavbar from '@/components/RenterNavbar';
 import RenterFooter from '@/components/RenterFooter';
+import './checkout.css';
 
 type Product = {
   id: string;
@@ -182,8 +183,9 @@ function CheckoutContent() {
           });
           const verData = await verRes.json();
           if (verRes.ok && verData.success) {
+            const confirmedId = verData.order?.id || orderData.orderId || `WRD-${Date.now().toString(36).toUpperCase()}`;
+            setPlacedOrderId(confirmedId);
             setCheckoutSuccess(true);
-            setPlacedOrderId(orderData.order.id);
           } else {
             setError(verData.error || 'Secure payment authentication failed.');
           }
@@ -225,24 +227,95 @@ function CheckoutContent() {
     </div>
   );
 
-  if (checkoutSuccess) {
+  if (checkoutSuccess && product) {
+    const displayId = placedOrderId ? (placedOrderId.length > 10 ? placedOrderId.substring(0, 10).toUpperCase() : placedOrderId.toUpperCase()) : 'WRD-CONFIRMED';
+    const targetEventDate = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'As Scheduled';
+
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', color: 'var(--ink)' }}>
         <RenterNavbar />
-        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
-          <div className="checkout-success-card" style={{ background: 'var(--bg-card)', padding: '64px', border: '1px solid var(--border)', textAlign: 'center', maxWidth: '540px', width: '100%' }}>
-            <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '16px' }}>Reservation Confirmed</p>
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, marginBottom: '24px', color: 'var(--ink)', lineHeight: 1.1 }}>Archive Secured</h1>
-            <p style={{ fontSize: '14px', color: 'var(--ink-secondary)', marginBottom: '48px', lineHeight: 1.7 }}>
-              Your rental record <strong style={{ fontWeight: 600, color: 'var(--ink)' }}>#{placedOrderId.substring(0,8).toUpperCase()}</strong> has been cataloged. The garment is queued for 60°C ozone sanitization and priority white-glove dispatch.
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}>
+          <div className="checkout-success-card" style={{
+            background: '#FFFFFF',
+            padding: '40px 28px',
+            border: '1px solid rgba(226, 214, 206, 0.85)',
+            borderRadius: '24px',
+            textAlign: 'center',
+            maxWidth: '520px',
+            width: '100%',
+            boxShadow: '0 20px 48px rgba(30, 30, 45, 0.08)'
+          }}>
+            {/* Animated Luxury Badge */}
+            <div style={{
+              width: '64px', height: '64px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(212, 86, 122, 0.15), rgba(212, 86, 122, 0.05))',
+              border: '2px solid rgba(212, 86, 122, 0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '28px'
+            }}>
+              ✨
+            </div>
+
+            <p style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '8px' }}>
+              Reservation Confirmed
             </p>
-            <Link href="/profile" style={{ 
-              background: 'var(--ink)', color: '#FFFFFF', padding: '16px 36px', fontSize: '10px', 
-              fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none',
-              display: 'inline-block', transition: 'var(--transition-smooth)'
-            }} className="hover-lift">
-              View Your Wardrobe
-            </Link>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '34px', fontWeight: 700, marginBottom: '14px', color: 'var(--ink)', lineHeight: 1.15 }}>
+              Archive Secured
+            </h1>
+
+            {/* Reference Badge */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              background: 'var(--bg-warm)', padding: '6px 14px', borderRadius: '999px',
+              border: '1px solid rgba(226, 214, 206, 0.8)',
+              marginBottom: '24px'
+            }}>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Booking Ref:</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink)', fontFamily: 'monospace' }}>#{displayId}</span>
+            </div>
+
+            {/* Product Mini Preview Box */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '14px',
+              background: '#FAF8F5', padding: '16px', borderRadius: '16px',
+              border: '1px solid rgba(226, 214, 206, 0.75)',
+              textAlign: 'left', marginBottom: '28px'
+            }}>
+              <div style={{ width: '60px', height: '75px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: '#EAE5E0' }}>
+                <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', margin: '0 0 4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {product.title}
+                </h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', margin: '0 0 2px', fontWeight: 500 }}>
+                  Size: {size} • Color: {color}
+                </p>
+                <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: 0, fontWeight: 500 }}>
+                  Event Date: {targetEventDate}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <Link href="/profile" style={{ 
+                background: 'var(--ink)', color: '#FFFFFF', padding: '16px 24px', fontSize: '11.5px', 
+                fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none',
+                borderRadius: '999px', display: 'block', transition: 'var(--transition-smooth)',
+                boxShadow: '0 6px 18px rgba(30, 30, 45, 0.12)'
+              }} className="hover-lift">
+                View in Your Wardrobe →
+              </Link>
+              <Link href="/catalog" style={{ 
+                background: 'transparent', color: 'var(--ink)', padding: '12px 24px', fontSize: '10.5px', 
+                fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'none',
+                borderRadius: '999px', border: '1px solid rgba(226, 214, 206, 0.9)', display: 'block'
+              }}>
+                Explore More Couture
+              </Link>
+            </div>
           </div>
         </main>
         <RenterFooter />
@@ -267,71 +340,51 @@ function CheckoutContent() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-      <style>{`
-        .checkout-main {
-          flex: 1; max-width: 1440px; margin: 0 auto; width: 100%;
-          padding: 64px 48px 120px; display: grid;
-          grid-template-columns: 1.4fr 1fr; gap: 80px; align-items: flex-start;
-        }
-        .checkout-addr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        .checkout-scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; font-size: 14px; }
-        .checkout-order-panel { position: sticky; top: 100px; }
-        @media (max-width: 768px) {
-          .checkout-main { padding: 24px 16px 48px; gap: 32px; }
-          .checkout-title { font-size: 28px !important; margin-bottom: 24px !important; }
-          .checkout-success-card { padding: 32px 20px !important; }
-          .checkout-addr-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
-          .checkout-scope-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-        }
-        @media (max-width: 560px) {
-          .checkout-main { padding: 20px 14px 48px; }
-        }
-      `}</style>
       <RenterNavbar />
       
       <main className="checkout-main">
         
-        {/* LEFT PANEL */}
-        <div>
-          <h1 className="checkout-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 400, color: 'var(--ink)', marginBottom: '48px' }}>Rental Registry</h1>
+        {/* LEFT PANEL: FORM */}
+        <div className="checkout-form-col">
+          <h1 className="checkout-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '40px', fontWeight: 700, color: 'var(--ink)', marginBottom: '36px' }}>Rental Registry</h1>
           
           <form onSubmit={handlePlaceOrder}>
             {/* Shipping */}
-            <div style={{ marginBottom: '64px' }}>
-              <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: '24px', color: 'var(--text-muted)' }}>Shipping Destination</h3>
+            <div className="checkout-section-box" style={{ marginBottom: '48px' }}>
+              <h3 style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '20px', color: 'var(--text-muted)' }}>Shipping Destination</h3>
               
-              <div style={{ marginBottom: '24px' }}>
+              <div style={{ marginBottom: '18px' }}>
                 <label style={labelStyle}>Street Address</label>
-                <input required value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} style={{ width: '100%', padding: '16px', background: 'transparent' }} placeholder="Suite, Flat, or Street Landmark" />
+                <input required value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} className="checkout-field-input" placeholder="Suite, Flat, or Street Landmark" />
               </div>
               
               <div className="checkout-addr-grid">
                 <div>
                   <label style={labelStyle}>City</label>
-                  <input required value={city} onChange={e => setCity(e.target.value)} style={{ width: '100%', padding: '16px', background: 'transparent' }} placeholder="Delhi" />
+                  <input required value={city} onChange={e => setCity(e.target.value)} className="checkout-field-input" placeholder="Delhi" />
                 </div>
                 <div>
                   <label style={labelStyle}>State</label>
-                  <input required value={state} onChange={e => setState(e.target.value)} style={{ width: '100%', padding: '16px', background: 'transparent' }} placeholder="Delhi NCR" />
+                  <input required value={state} onChange={e => setState(e.target.value)} className="checkout-field-input" placeholder="Delhi NCR" />
                 </div>
                 <div>
                   <label style={labelStyle}>Pincode</label>
-                  <input required value={pincode} onChange={e => setPincode(e.target.value)} style={{ width: '100%', padding: '16px', background: 'transparent' }} placeholder="110001" />
+                  <input required value={pincode} onChange={e => setPincode(e.target.value)} className="checkout-field-input" placeholder="110001" />
                 </div>
               </div>
             </div>
 
             {/* Rental Scope */}
-            <div style={{ marginBottom: '64px', borderTop: '1px solid var(--border)', paddingTop: '48px' }}>
-              <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: '24px', color: 'var(--text-muted)' }}>Rental Scope</h3>
+            <div className="checkout-section-box" style={{ marginBottom: '48px', borderTop: '1px solid var(--border)', paddingTop: '36px' }}>
+              <h3 style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '20px', color: 'var(--text-muted)' }}>Rental Scope</h3>
               <div className="checkout-scope-grid">
-                <div>
-                  <span style={{ color: 'var(--ink-secondary)', display: 'block', marginBottom: '8px', fontSize: '12px' }}>Target Event Date</span>
-                  <strong style={{ fontWeight: 500, color: 'var(--ink)' }}>{new Date(eventDate).toLocaleDateString('en-IN', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}</strong>
+                <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: '14px', border: '1px solid rgba(226, 214, 206, 0.75)' }}>
+                  <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Target Event Date</span>
+                  <strong style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '14px' }}>{new Date(eventDate).toLocaleDateString('en-IN', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}</strong>
                 </div>
-                <div>
-                  <span style={{ color: 'var(--ink-secondary)', display: 'block', marginBottom: '8px', fontSize: '12px' }}>Rental Package</span>
-                  <strong style={{ fontWeight: 500, color: 'var(--ink)' }}>{extensionDays > 0 ? `4 Days + ${extensionDays} Extension Days` : 'Standard 4 Days'}</strong>
+                <div style={{ background: '#FFFFFF', padding: '16px', borderRadius: '14px', border: '1px solid rgba(226, 214, 206, 0.75)' }}>
+                  <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '4px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Rental Package</span>
+                  <strong style={{ fontWeight: 700, color: 'var(--ink)', fontSize: '14px' }}>{extensionDays > 0 ? `4 Days + ${extensionDays} Extension Days` : 'Standard 4-Day Event'}</strong>
                 </div>
               </div>
             </div>
@@ -340,10 +393,12 @@ function CheckoutContent() {
               type="submit" 
               disabled={checkoutLoading} 
               style={{ 
-                width: '100%', padding: '20px', 
-                background: 'var(--ink)', color: '#FFFFFF', fontSize: '11px', fontWeight: 600, 
-                letterSpacing: '0.14em', textTransform: 'uppercase', border: 'none', cursor: checkoutLoading ? 'not-allowed' : 'pointer',
+                width: '100%', padding: '18px 24px', 
+                background: 'var(--ink)', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, 
+                letterSpacing: '0.12em', textTransform: 'uppercase', border: 'none', cursor: checkoutLoading ? 'not-allowed' : 'pointer',
+                borderRadius: '999px',
                 transition: 'var(--transition-smooth)',
+                boxShadow: '0 8px 24px rgba(30,30,45,0.12)'
               }}
               className={!checkoutLoading ? "hover-lift" : ""}
             >
@@ -352,10 +407,10 @@ function CheckoutContent() {
           </form>
         </div>
 
-        {/* RIGHT ORDER BREAKDOWN */}
-        <div style={{ position: 'sticky', top: '120px' }}>
-          <div style={{ background: 'var(--bg-card)', padding: '40px', border: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: '32px', color: 'var(--text-muted)' }}>Summary</h3>
+        {/* RIGHT PANEL: SUMMARY */}
+        <div className="checkout-summary-col">
+          <div className="checkout-summary-box">
+            <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '24px', color: 'var(--ink)' }}>Order Summary</h3>
             
             {/* Item */}
             <div style={{ display: 'flex', gap: '20px', marginBottom: '32px', paddingBottom: '32px', borderBottom: '1px solid var(--border)' }}>

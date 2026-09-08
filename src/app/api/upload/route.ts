@@ -26,6 +26,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File size exceeds the 8MB limit.' },
+        { status: 400 }
+      );
+    }
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {

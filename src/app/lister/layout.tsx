@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
+import './lister-layout.css';
 
 interface ListerInfo {
   name: string;
@@ -86,7 +87,6 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
             Loading workspace
           </span>
         </div>
-        <style>{`@keyframes dashboardSpin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -144,260 +144,11 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
 
   return (
     <>
-      <style>{`
-        @keyframes dashboardSpin { to { transform: rotate(360deg); } }
-        @keyframes sidebarFadeIn {
-          from { opacity: 0; transform: translateX(-12px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes contentFadeIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .sd-root {
-          display: flex;
-          min-height: 100vh;
-          background: #FFFAF5;
-        }
-
-        /* ── Sidebar ── */
-        .sd-sidebar {
-          width: ${sidebarW};
-          flex-shrink: 0;
-          position: fixed; left: 0; top: 0; bottom: 0;
-          background: #1E1E2D;
-          display: flex;
-          flex-direction: column;
-          border-right: 1px solid rgba(212,86,122,0.08);
-          transition: width 0.3s cubic-bezier(0.16,1,0.3,1);
-          overflow: hidden;
-          z-index: 100;
-        }
-
-        .sd-sidebar-top {
-          padding: ${sidebarCollapsed ? '24px 16px' : '28px 24px 20px'};
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          transition: padding 0.3s ease;
-          display: flex; align-items: center;
-          justify-content: ${sidebarCollapsed ? 'center' : 'space-between'};
-        }
-
-        .sd-logo-name {
-          font-family: var(--font-serif);
-          font-size: 22px; font-weight: 700; letter-spacing: 0.18em;
-          color: #FFFFFF; line-height: 1; white-space: nowrap;
-          text-decoration: none; text-transform: uppercase;
-        }
-        .sd-logo-sub {
-          font-size: 7px; letter-spacing: 0.4em; color: #D4567A;
-          font-weight: 700; text-transform: uppercase; margin-top: 5px;
-          display: block; white-space: nowrap;
-        }
-
-        .sd-collapse-btn {
-          background: none; border: none; cursor: pointer;
-          width: 28px; height: 28px; border-radius: 8px;
-          display: flex; align-items: center; justify-content: center;
-          color: rgba(255,255,255,0.35); flex-shrink: 0;
-          transition: all 0.25s ease;
-        }
-        .sd-collapse-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
-
-        .sd-nav {
-          flex: 1; padding: ${sidebarCollapsed ? '16px 8px' : '16px 12px'};
-          display: flex; flex-direction: column; gap: 4px;
-          transition: padding 0.3s ease; overflow-y: auto;
-        }
-
-        .sd-nav-label {
-          font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
-          text-transform: uppercase; color: rgba(212,86,122,0.45);
-          padding: ${sidebarCollapsed ? '12px 0 6px' : '12px 12px 6px'};
-          white-space: nowrap; overflow: hidden;
-          display: ${sidebarCollapsed ? 'none' : 'block'};
-        }
-
-        .sd-nav-link {
-          display: flex; align-items: center;
-          gap: 12px; text-decoration: none;
-          padding: ${sidebarCollapsed ? '10px 0' : '11px 12px'};
-          border-radius: 10px;
-          justify-content: ${sidebarCollapsed ? 'center' : 'flex-start'};
-          transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
-          position: relative; overflow: hidden;
-        }
-        .sd-nav-link::before {
-          content: '';
-          position: absolute; left: 0; top: 0; bottom: 0;
-          width: 3px; border-radius: 0 3px 3px 0;
-          background: #D4567A;
-          transform: scaleY(0); transition: transform 0.25s ease;
-        }
-        .sd-nav-link.active { background: rgba(212,86,122,0.1); }
-        .sd-nav-link.active::before { transform: scaleY(1); }
-        .sd-nav-link.active .sd-nav-icon { color: #D4567A; }
-        .sd-nav-link.active .sd-nav-text { color: #FFFFFF; }
-        .sd-nav-link:not(.active):hover { background: rgba(255,255,255,0.04); }
-        .sd-nav-link:not(.active):hover .sd-nav-icon { color: rgba(255,255,255,0.7); }
-        .sd-nav-link:not(.active):hover .sd-nav-text { color: rgba(255,255,255,0.7); }
-
-        .sd-nav-icon { color: rgba(255,255,255,0.38); transition: color 0.25s ease; flex-shrink: 0; }
-        .sd-nav-text {
-          color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 600;
-          letter-spacing: 0.01em; transition: color 0.25s ease; white-space: nowrap;
-        }
-        .sd-nav-subtext {
-          color: rgba(255,255,255,0.22); font-size: 10px; line-height: 1;
-          display: ${sidebarCollapsed ? 'none' : 'block'};
-        }
-        .sd-nav-texts { display: flex; flex-direction: column; gap: 3px; }
-
-        .sd-bottom {
-          padding: ${sidebarCollapsed ? '12px 8px' : '12px 12px 20px'};
-          border-top: 1px solid rgba(255,255,255,0.05);
-          display: flex; flex-direction: column; gap: 8px;
-          transition: padding 0.3s ease;
-        }
-
-        .sd-Lister-card {
-          display: flex; align-items: center; gap: 10px;
-          padding: ${sidebarCollapsed ? '8px 0' : '10px 12px'};
-          border-radius: 10px; background: rgba(255,255,255,0.04);
-          justify-content: ${sidebarCollapsed ? 'center' : 'flex-start'};
-        }
-        .sd-avatar {
-          width: 34px; height: 34px; border-radius: 10px;
-          background: linear-gradient(135deg, #D4567A, #B8405E);
-          display: flex; align-items: center; justify-content: center;
-          color: #FFFFFF; font-size: 13px; font-weight: 700;
-          border: 1px solid rgba(212,86,122,0.3); flex-shrink: 0;
-        }
-        .sd-Lister-info { overflow: hidden; display: ${sidebarCollapsed ? 'none' : 'block'}; }
-        .sd-Lister-name {
-          font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.8);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .sd-Lister-shop {
-          font-size: 10px; color: rgba(212,86,122,0.7);
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-
-        .sd-logout-btn {
-          display: flex; align-items: center; gap: 10px;
-          background: none; border: none; cursor: pointer;
-          padding: ${sidebarCollapsed ? '10px 0' : '10px 12px'};
-          border-radius: 10px; width: 100%;
-          justify-content: ${sidebarCollapsed ? 'center' : 'flex-start'};
-          color: rgba(255,255,255,0.3); font-size: 12px; font-weight: 600;
-          letter-spacing: 0.04em; transition: all 0.25s ease;
-        }
-        .sd-logout-btn:hover:not(:disabled) {
-          background: rgba(229,62,62,0.1); color: #FC8181;
-        }
-        .sd-logout-btn:disabled { opacity: 0.5; cursor: default; }
-
-        /* ── Content area ── */
-        .sd-content {
-          margin-left: ${sidebarW};
-          flex: 1; min-height: 100vh;
-          display: flex; flex-direction: column;
-          transition: margin-left 0.3s cubic-bezier(0.16,1,0.3,1);
-          animation: contentFadeIn 0.4s ease both;
-        }
-
-        /* ── Top bar ── */
-        .sd-topbar {
-          height: 60px; background: rgba(255, 250, 245, 0.92);
-          backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(240,230,224,0.8);
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 0 32px; position: sticky; top: 0; z-index: 50;
-        }
-        .sd-breadcrumb {
-          font-size: 12px; color: var(--text-muted); font-weight: 600;
-          letter-spacing: 0.05em; text-transform: uppercase;
-          display: flex; align-items: center; gap: 8px;
-        }
-        .sd-breadcrumb-sep { color: var(--border-strong); }
-        .sd-topbar-actions { display: flex; align-items: center; gap: 12px; }
-        .sd-topbar-badge {
-          display: flex; align-items: center; gap: 6px;
-          padding: 5px 12px; border-radius: 100px;
-          background: rgba(212,86,122,0.08); border: 1px solid rgba(212,86,122,0.2);
-          font-size: 11px; font-weight: 700; color: #D4567A; letter-spacing: 0.04em;
-        }
-        .sd-topbar-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: #D4567A; animation: dashboardPulse 2s infinite;
-        }
-        @keyframes dashboardPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-        .sd-page-content {
-          flex: 1; padding: 36px 40px 60px;
-        }
-
-        .sd-mobile-overlay {
-          display: none;
-        }
-
-        .sd-mobile-hamburger {
-          display: none;
-        }
-
-        @media (max-width: 768px) {
-          .sd-sidebar {
-            width: 260px !important;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-          }
-          .sd-sidebar.mobile-open {
-            transform: translateX(0);
-          }
-          
-          .sd-content {
-            margin-left: 0;
-          }
-
-          .sd-topbar {
-            padding: 0 16px;
-          }
-
-          .sd-page-content {
-            padding: 24px 16px;
-          }
-          
-          .sd-mobile-hamburger {
-            display: block;
-            background: none; border: none; cursor: pointer;
-            padding: 8px; margin-right: 12px;
-          }
-
-          .sd-collapse-btn {
-            display: none;
-          }
-
-          .sd-nav-label, .sd-nav-subtext, .sd-Lister-info, .sd-logout-btn span {
-            display: block !important;
-          }
-
-          .sd-mobile-overlay {
-            display: block;
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5); z-index: 90;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-          }
-          .sd-mobile-overlay.mobile-open {
-            opacity: 1; pointer-events: auto;
-          }
-        }
-      `}</style>
-
       <div className="sd-root">
         <div className={`sd-mobile-overlay ${mobileMenuOpen ? 'mobile-open' : ''}`} onClick={() => setMobileMenuOpen(false)}></div>
         
         {/* ──── Sidebar ──── */}
-        <aside className={`sd-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        <aside className={`sd-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           {/* Logo & collapse */}
           <div className="sd-sidebar-top">
             {!sidebarCollapsed && (
@@ -458,7 +209,7 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
         </aside>
 
         {/* ──── Main content ──── */}
-        <div className="sd-content">
+        <div className={`sd-content ${sidebarCollapsed ? 'collapsed' : ''}`}>
           {/* Top bar */}
           <header className="sd-topbar">
             <div style={{ display: 'flex', alignItems: 'center' }}>

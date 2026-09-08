@@ -38,17 +38,17 @@ async function seedFullSystem() {
 
     // Listers
     const listerUser1 = await prisma.user.create({
-      data: { name: 'Anita Dongre', email: 'anita@lister.com', phone: '9999900001', role: 'LISTER', walletBalance: 200, passwordHash: defaultPassword }
+      data: { name: 'Ananya Sharma', email: 'ananya@lister.com', phone: '9999900001', role: 'LISTER', walletBalance: 200, passwordHash: defaultPassword }
     });
     const listerProfile1 = await prisma.listerProfile.create({
-      data: { userId: listerUser1.id, shopName: 'Anita Exclusives', status: 'APPROVED', registrationFeePaid: true, referralCode: 'ANITA100', bankAccountNo: '111122223333', bankIfsc: 'HDFC0001' }
+      data: { userId: listerUser1.id, shopName: 'Ananya Exclusives', status: 'APPROVED', registrationFeePaid: true, referralCode: 'ANANYA100', bankAccountNo: '111122223333', bankIfsc: 'HDFC0001' }
     });
 
     const listerUser2 = await prisma.user.create({
-      data: { name: 'Rahul Mishra', email: 'rahul@lister.com', phone: '9999900002', role: 'LISTER', passwordHash: defaultPassword }
+      data: { name: 'Rohan Mehra', email: 'rohan@lister.com', phone: '9999900002', role: 'LISTER', passwordHash: defaultPassword }
     });
     const listerProfile2 = await prisma.listerProfile.create({
-      data: { userId: listerUser2.id, shopName: 'Rahul Couture', status: 'APPROVED', registrationFeePaid: true, referralCode: 'RAHUL200', referredByCode: 'ANITA100', bankAccountNo: '444455556666', bankIfsc: 'ICIC0002' }
+      data: { userId: listerUser2.id, shopName: 'Rohan Couture', status: 'APPROVED', registrationFeePaid: true, referralCode: 'ROHAN200', referredByCode: 'ANANYA100', bankAccountNo: '444455556666', bankIfsc: 'ICIC0002' }
     });
 
     // Renters
@@ -65,16 +65,16 @@ async function seedFullSystem() {
     // 2. Create Listings (10 Luxury Products)
     console.log('👗 Creating 10 Luxury Listings...');
     const products = [
-      { title: 'Sabyasachi Heritage Bridal Lehenga', category: 'Lehenga', rentalPrice: 8500, deposit: 3000, img: 'https://images.unsplash.com/photo-1583391733958-d259728fca8c?auto=format&fit=crop&q=80&w=800', sku: 'SAB-LEH-01' },
-      { title: 'Manish Malhotra Sequin Saree', category: 'Saree', rentalPrice: 4200, deposit: 1500, img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800', sku: 'MM-SAR-02' },
-      { title: 'Tarun Tahiliani Ivory Gown', category: 'Gown', rentalPrice: 6500, deposit: 2500, img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=800', sku: 'TT-GWN-03' },
-      { title: 'Anita Dongre Gotapatti Anarkali', category: 'Anarkali', rentalPrice: 3500, deposit: 1200, img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800', sku: 'AD-ANA-04' },
-      { title: 'Rahul Mishra Hand-Embroidered Kurta Set', category: 'Kurta Set', rentalPrice: 2800, deposit: 1000, img: 'https://images.unsplash.com/photo-1592305553535-714ccbd8b15d?auto=format&fit=crop&q=80&w=800', sku: 'RM-KUR-05' },
-      { title: 'Falguni Shane Peacock Feather Gown', category: 'Gown', rentalPrice: 7000, deposit: 2500, img: 'https://images.unsplash.com/photo-1566207455823-74cf8f20b411?auto=format&fit=crop&q=80&w=800', sku: 'FSP-GWN-06' },
-      { title: 'Abu Jani Sandeep Khosla Chikankari Saree', category: 'Saree', rentalPrice: 4500, deposit: 1800, img: 'https://images.unsplash.com/photo-1614050868884-1d6ebfa77da1?auto=format&fit=crop&q=80&w=800', sku: 'AJSK-SAR-07' },
-      { title: 'Raw Mango Silk Brocade Sharara', category: 'Sharara', rentalPrice: 3200, deposit: 1200, img: 'https://images.unsplash.com/photo-1610427845353-9fbd2f036577?auto=format&fit=crop&q=80&w=800', sku: 'RM-SHA-08' },
-      { title: 'Ritu Kumar Velvet Lehenga', category: 'Lehenga', rentalPrice: 5500, deposit: 2000, img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=800', sku: 'RK-LEH-09' },
-      { title: 'Gaurav Gupta Sculpted Concept Saree', category: 'Saree', rentalPrice: 6000, deposit: 2200, img: 'https://images.unsplash.com/photo-1583391733958-d259728fca8c?auto=format&fit=crop&q=80&w=800', sku: 'GG-SAR-10' }
+      { title: 'Royal Heritage Crimson Bridal Lehenga', category: 'Lehenga', rentalPrice: 8500, deposit: 3000, img: 'https://images.unsplash.com/photo-1583391733958-d259728fca8c?auto=format&fit=crop&q=80&w=800', sku: 'SAB-LEH-01' },
+      { title: 'Midnight Glamour Sequin Saree', category: 'Saree', rentalPrice: 4200, deposit: 1500, img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800', sku: 'MM-SAR-02' },
+      { title: 'Crystal Embellished Ivory Reception Gown', category: 'Gown', rentalPrice: 6500, deposit: 2500, img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=800', sku: 'TT-GWN-03' },
+      { title: 'Rose Pink Handcrafted Gotapatti Anarkali', category: 'Anarkali', rentalPrice: 3500, deposit: 1200, img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800', sku: 'AD-ANA-04' },
+      { title: 'Artisanal Floral Hand-Embroidered Kurta Set', category: 'Kurta Set', rentalPrice: 2800, deposit: 1000, img: 'https://images.unsplash.com/photo-1592305553535-714ccbd8b15d?auto=format&fit=crop&q=80&w=800', sku: 'RM-KUR-05' },
+      { title: 'Dramatic Black & Silver Reception Gown', category: 'Gown', rentalPrice: 7000, deposit: 2500, img: 'https://images.unsplash.com/photo-1566207455823-74cf8f20b411?auto=format&fit=crop&q=80&w=800', sku: 'FSP-GWN-06' },
+      { title: 'Classic White Chikankari Georgette Saree', category: 'Saree', rentalPrice: 4500, deposit: 1800, img: 'https://images.unsplash.com/photo-1614050868884-1d6ebfa77da1?auto=format&fit=crop&q=80&w=800', sku: 'AJSK-SAR-07' },
+      { title: 'Emerald Silk Brocade Festive Sharara', category: 'Sharara', rentalPrice: 3200, deposit: 1200, img: 'https://images.unsplash.com/photo-1610427845353-9fbd2f036577?auto=format&fit=crop&q=80&w=800', sku: 'RM-SHA-08' },
+      { title: 'Regal Velvet Embroidered Lehenga', category: 'Lehenga', rentalPrice: 5500, deposit: 2000, img: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=800', sku: 'RK-LEH-09' },
+      { title: 'Metallic Sculpted Concept Saree', category: 'Saree', rentalPrice: 6000, deposit: 2200, img: 'https://images.unsplash.com/photo-1583391733958-d259728fca8c?auto=format&fit=crop&q=80&w=800', sku: 'GG-SAR-10' }
     ];
 
     const listings = [];

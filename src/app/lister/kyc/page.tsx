@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import './lister-kyc.css';
 
 type KycStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | null;
 
@@ -30,6 +31,7 @@ export default function ListerKycPage() {
   const [registrationFeePaid, setRegistrationFeePaid] = useState<boolean>(true);
   const [feeLoading, setFeeLoading] = useState(false);
   const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState(false);
+  const [hasSubmittedDocs, setHasSubmittedDocs] = useState<boolean>(false);
 
   useEffect(() => {
     async function load() {
@@ -43,6 +45,8 @@ export default function ListerKycPage() {
             setListerStatus(p.status); 
             setIsVerified(p.isVerified); 
             setShopName(p.shopName);
+            const docsInDb = Boolean(p.aadhaarNumber && p.panNumber && p.bankAccountNo);
+            setHasSubmittedDocs(docsInDb);
             setAadhaarNumber(p.aadhaarNumber || ''); 
             setPanNumber(p.panNumber || '');
             setBankAccountNo(p.bankAccountNo || ''); 
@@ -161,7 +165,10 @@ export default function ListerKycPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSuccess(true); setListerStatus('PENDING'); setIsVerified(false);
+        setSuccess(true);
+        setHasSubmittedDocs(true);
+        setListerStatus('PENDING');
+        setIsVerified(false);
       } else {
         setError(data.error || 'Failed to submit KYC details.');
       }
@@ -207,263 +214,8 @@ export default function ListerKycPage() {
 
   if (loading) return null;
 
-  const hasSubmittedDocs = Boolean(aadhaarNumber || panNumber || bankAccountNo);
-
   return (
     <>
-      <style>{`
-        @keyframes kycFadeUp { from { opacity:0;transform:translateY(16px); } to { opacity:1;transform:translateY(0); } }
-        @keyframes checkPop { from { transform:scale(0) rotate(-30deg);opacity:0; } to { transform:scale(1) rotate(0deg);opacity:1; } }
-        @keyframes spin { to { transform:rotate(360deg); } }
-
-        .kyc-wrap { width: 100%; max-width: 860px; }
-
-        .kyc-header { margin-bottom: 28px; animation:kycFadeUp 0.4s ease both; }
-        .kyc-h1 { font-family:var(--font-cormorant),'Cormorant Garamond',Georgia,serif; font-size:32px; font-weight:400; color:#0D1A14; margin-bottom:4px; }
-        .kyc-sub { font-size:13px; color:#74897C; }
-
-        .status-banner {
-          border-radius:20px; padding:28px 32px; margin-bottom:28px;
-          border:1px solid; animation:kycFadeUp 0.4s ease 0.08s both;
-        }
-        .status-banner-top { display:flex; align-items:center; gap:20px; }
-        @media (max-width: 768px) {
-          .status-banner-top { flex-direction: column; align-items: flex-start; gap: 12px; }
-          .kyc-summary { gap: 16px; }
-          .kyc-summary-row { flex-direction: column; align-items: flex-start; gap: 4px; }
-        }
-        .status-banner-icon {
-          width:52px; height:52px; border-radius:16px;
-          display:flex; align-items:center; justify-content:center;
-          font-size:22px; color:#FFFFFF; flex-shrink:0;
-          box-shadow:0 6px 18px rgba(0,0,0,0.12);
-          animation:checkPop 0.4s cubic-bezier(0.16,1,0.3,1) 0.2s both;
-        }
-        .status-banner-title { font-family:var(--font-cormorant),serif; font-size:24px; font-weight:400; margin-bottom:4px; }
-        .status-banner-desc { font-size:13px; line-height:1.6; }
-
-        .kyc-summary {
-          background:rgba(255,255,255,0.7); border-radius:12px;
-          padding:16px; display:flex; flex-direction:column; gap:10px;
-          margin-top:16px; border:1px solid rgba(255,255,255,0.8);
-        }
-        .kyc-summary-row { display:flex; align-items:center; justify-content:space-between; font-size:12px; }
-        .kyc-summary-key { color:rgba(0,0,0,0.4); font-weight:600; letter-spacing:0.04em; text-transform:uppercase; font-size:10px; }
-        .kyc-summary-val { font-family:monospace; font-weight:700; font-size:13px; color:rgba(0,0,0,0.65); }
-
-        .approved-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
-        @media (max-width: 768px) {
-          .approved-actions { grid-template-columns:1fr; }
-        }
-        .action-btn-primary {
-          height:44px; border:none; border-radius:10px; cursor:pointer;
-          background:linear-gradient(135deg,#2C5E43,#1E4D33);
-          color:#FFFFFF; font-size:12px; font-weight:700; letter-spacing:0.08em;
-          transition:all 0.25s ease; display:flex; align-items:center; justify-content:center; gap:8px;
-        }
-        .action-btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(44,94,67,0.28); }
-        .action-btn-outline {
-          height:44px; border:1.5px solid rgba(44,94,67,0.25); border-radius:10px; cursor:pointer;
-          background:rgba(255,255,255,0.6); color:#2C5E43; font-size:12px; font-weight:700;
-          letter-spacing:0.08em; transition:all 0.25s ease;
-          display:flex; align-items:center; justify-content:center; gap:8px;
-        }
-        .action-btn-outline:hover { background:#2C5E43; color:#FFFFFF; border-color:#2C5E43; }
-
-        /* Form */
-        .kyc-form-card {
-          background:#FFFFFF; border-radius:20px;
-          border:1px solid rgba(44,94,67,0.08);
-          box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(44,94,67,0.04);
-          overflow:hidden; animation:kycFadeUp 0.4s ease 0.16s both;
-        }
-        .form-section-head {
-          padding:20px 28px; background:#F8FAF8;
-          border-bottom:1px solid rgba(44,94,67,0.07);
-          display:flex; align-items:center; gap:12px;
-        }
-        .section-icon {
-          width:36px; height:36px; border-radius:10px;
-          display:flex; align-items:center; justify-content:center;
-          font-size:16px; background:linear-gradient(135deg,rgba(44,94,67,0.1),rgba(197,168,128,0.06));
-        }
-        .section-title { font-size:12px; font-weight:700; color:#2C5E43; letter-spacing:0.08em; text-transform:uppercase; }
-        .section-subtitle { font-size:11px; color:#74897C; margin-top:2px; }
-
-        .form-fields { padding:24px 28px; display:flex; flex-direction:column; gap:18px; }
-        .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-        @media (max-width: 768px) {
-          .two-col { grid-template-columns: 1fr; }
-          .form-fields { padding: 20px; }
-        }
-        .field-lbl { display:block; font-size:10px; font-weight:700; color:#3D5347; margin-bottom:7px; letter-spacing:0.07em; text-transform:uppercase; }
-        .field-inp {
-          width:100%; height:46px; padding:0 14px;
-          border:1.5px solid #DDE4DF; border-radius:10px; outline:none;
-          font-size:13px; color:#1C2E24; background:#FAFBFA;
-          transition:all 0.2s ease;
-        }
-        .field-inp:focus { border-color:#2C5E43; background:#FFFFFF; box-shadow:0 0 0 3px rgba(44,94,67,0.07); }
-        .field-inp.mono { font-family:monospace; letter-spacing:0.1em; }
-
-        .form-divider { height:1px; background:rgba(44,94,67,0.06); margin:4px 0; }
-
-        .submit-section { padding:0 28px 28px; }
-        .submit-btn {
-          width:100%; height:52px; border:none; border-radius:14px;
-          background:linear-gradient(135deg,#2C5E43,#1E4D33);
-          color:#FFFFFF; font-size:13px; font-weight:700; letter-spacing:0.1em;
-          cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-          transition:all 0.25s ease;
-        }
-        .submit-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 24px rgba(44,94,67,0.3); }
-        .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .mini-spin { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#FFF; animation:spin 0.65s linear infinite; }
-
-        .alert-error { padding:14px 18px; border-radius:12px; margin-bottom:20px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:10px; background:#FFF5F5; border:1px solid #FEB2B2; color:#C53030; }
-        .success-banner {
-          padding:20px 24px; border-radius:14px; margin-bottom:20px;
-          background:linear-gradient(135deg,#F0FFF4,#C6F6D5);
-          border:1px solid #9AE6B4; display:flex; align-items:center; gap:12px;
-        }
-        .success-icon { width:36px; height:36px; border-radius:50%; background:#38A169; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:16px; flex-shrink:0; }
-
-        /* Verified Console Columns layout */
-        .pane-layout {
-          display: grid;
-          grid-template-columns: 1.2fr 1fr;
-          gap: 28px;
-          margin-top: 28px;
-          animation: kycFadeUp 0.4s ease 0.16s both;
-        }
-        @media (max-width: 900px) {
-          .pane-layout { grid-template-columns: 1fr; gap: 20px; }
-        }
-
-        .pane-section { display: flex; flex-direction: column; gap: 6px; }
-        .pane-lbl {
-          font-size: 9.5px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #74897C;
-          margin-bottom: 4px;
-        }
-        .pane-val { font-size: 13.5px; color: #334155; line-height: 1.6; }
-
-        /* Document Visual Cards (Aadhaar & PAN) */
-        .docs-container {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-          margin-top: 8px;
-        }
-        @media (max-width: 600px) {
-          .docs-container { grid-template-columns: 1fr; }
-        }
-
-        .doc-mockup-card {
-          width: 100%;
-          max-width: 320px;
-          aspect-ratio: 1.58 / 1;
-          border-radius: 12px;
-          padding: 16px;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 4px 12px rgba(15,23,42,0.03);
-          border: 1px solid;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          transition: all 0.2s ease;
-        }
-        .doc-mockup-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 18px rgba(15,23,42,0.06);
-        }
-
-        /* Aadhaar card details */
-        .aadhaar-style {
-          background: linear-gradient(135deg, #F0FDFA, #E0F2FE);
-          border-color: #93C5FD;
-        }
-        .aadhaar-header {
-          display: flex; justify-content: space-between; align-items: center;
-          border-bottom: 1px solid rgba(147, 197, 253, 0.4);
-          padding-bottom: 6px; margin-bottom: 6px;
-        }
-        .gov-seal-icon { font-size: 14px; }
-        .gov-text-small { font-size: 7.5px; font-weight: 800; color: #1E3A8A; text-transform: uppercase; }
-        .aadhaar-number-display {
-          font-family: monospace; font-size: 15px; font-weight: 700;
-          letter-spacing: 0.1em; color: #1E293B; text-align: center; margin: 8px 0;
-        }
-        .aadhaar-holder-label { font-size: 7.5px; color: #64748B; text-transform: uppercase; }
-        .aadhaar-holder-name { font-size: 10.5px; font-weight: 700; color: #1E293B; }
-
-        /* PAN card details */
-        .pan-style {
-          background: linear-gradient(135deg, #ECFDF5, #F0FDF4);
-          border-color: #6EE7B7;
-        }
-        .pan-header {
-          display: flex; justify-content: space-between; align-items: center;
-          border-bottom: 1px solid rgba(110, 231, 183, 0.4);
-          padding-bottom: 6px; margin-bottom: 6px;
-        }
-        .pan-header-text { font-size: 7.5px; font-weight: 800; color: #064E3B; text-transform: uppercase; }
-        .pan-number-display {
-          font-family: monospace; font-size: 15px; font-weight: 700;
-          letter-spacing: 0.12em; color: #0F172A; text-align: center; margin: 8px 0;
-          background: rgba(255,255,255,0.7); padding: 4px; border-radius: 6px;
-        }
-        .pan-subinfo { display: flex; justify-content: space-between; align-items: flex-end; }
-        .pan-signature-line { font-family: 'Georgia', serif; font-style: italic; font-size: 11px; color: #0F172A; border-bottom: 1px dashed #A7F3D0; padding-bottom: 2px; }
-
-        /* Settlement Payout Bank Card Mockup */
-        .bank-passbook-mockup {
-          width: 100%;
-          max-width: 320px;
-          aspect-ratio: 1.58 / 1;
-          background: linear-gradient(135deg, #1C2D24 0%, #0A140F 100%);
-          border-color: rgba(197, 168, 128, 0.25);
-          color: #FFFFFF;
-          border-radius: 14px;
-          padding: 16px 20px;
-          box-shadow: 0 10px 24px rgba(15,23,42,0.15);
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          overflow: hidden;
-        }
-        .bank-passbook-mockup::before {
-          content: ''; position: absolute; inset: 0;
-          background: radial-gradient(circle at 10% 10%, rgba(197, 168, 128, 0.08) 0%, transparent 60%);
-          pointer-events: none;
-        }
-        .bank-card-chip {
-          width: 32px; height: 24px; border-radius: 4px;
-          background: linear-gradient(135deg, #C5A880, #E5C59F);
-          position: relative;
-          margin-top: 6px;
-        }
-        .bank-card-chip::after {
-          content: ''; position: absolute; inset: 4px;
-          border: 1px solid rgba(0,0,0,0.15); border-radius: 2px;
-        }
-        .bank-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .bank-card-title { font-size: 8.5px; font-weight: 700; letter-spacing: 0.15em; color: #C5A880; text-transform: uppercase; }
-        .bank-card-number {
-          font-family: monospace; font-size: 16px; font-weight: 700;
-          letter-spacing: 0.08em; color: #FFFFFF; text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-          margin-top: 10px; margin-bottom: 10px;
-        }
-        .bank-card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
-        .bank-card-holder { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9); }
-        .bank-card-ifsc { font-size: 10px; font-family: monospace; color: #C5A880; font-weight: 700; }
-      `}</style>
-
       <div className="kyc-wrap">
         <div className="kyc-header">
           <h1 className="kyc-h1">KYC Verification</h1>
@@ -520,6 +272,24 @@ export default function ListerKycPage() {
                     <span className="kyc-summary-val">{bankIfsc}</span>
                   </div>
                 )}
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setHasSubmittedDocs(false)}
+                    style={{
+                      background: 'rgba(180, 83, 9, 0.1)',
+                      border: '1px solid rgba(180, 83, 9, 0.3)',
+                      color: '#92400E',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ✏️ Edit Submitted Information
+                  </button>
+                </div>
               </div>
             )}
 

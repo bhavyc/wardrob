@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import RenterNavbar from '@/components/RenterNavbar';
 import RenterFooter from '@/components/RenterFooter';
+import './categories.css';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -56,31 +57,6 @@ export default function CategoriesPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflowX: 'hidden' }}>
-      <style jsx global>{`
-        .hover-scale-img img {
-          transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .hover-scale-img:hover img {
-          transform: scale(1.05);
-        }
-        .cat-card-inner {
-          border-radius: 18px; overflow: hidden;
-          aspect-ratio: 3/4; background: #1E1E2D;
-          position: relative; box-shadow: 0 4px 16px rgba(30, 30, 45, 0.08);
-          border: 1px solid var(--border);
-        }
-        .cat-pg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-        @media (max-width: 1024px) {
-          .cat-pg-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        @media (max-width: 768px) {
-          .cat-pg-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-          .cat-pg-main { padding: 36px 14px !important; }
-          .cat-pg-main h1 { font-size: 28px !important; }
-          .cat-card-inner { aspect-ratio: 4/5; }
-        }
-      `}</style>
-
       <RenterNavbar />
 
       <main className="cat-pg-main" style={{ flex: 1, padding: '80px 40px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>

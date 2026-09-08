@@ -44,25 +44,37 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ success: false, error: 'Dispute reason is required' }, { status: 400 });
     }
 
-    // Create the Dispute and mark report as disputed
-    await prisma.damageReport.update({
-      where: { id: postReturnReport.id },
-      data: { isDisputed: true }
-    });
-
-    await prisma.dispute.create({
-      data: {
-        damageReportId: postReturnReport.id,
-        status: 'OPEN',
-        raisedBy: user.userId,
-        reason: reason.trim()
+    // Create the Dispute and mark report as disputed atomically
+    await prisma.$transaction(async (tx) => {
+      const report = await tx.damageReport.findUnique({
+        where: { id: postReturnReport.id }
+      });
+      if (!report || report.isDisputed) {
+        throw new Error('ALREADY_DISPUTED');
       }
+
+      await tx.damageReport.update({
+        where: { id: postReturnReport.id },
+        data: { isDisputed: true }
+      });
+
+      await tx.dispute.create({
+        data: {
+          damageReportId: postReturnReport.id,
+          status: 'OPEN',
+          raisedBy: user.userId,
+          reason: reason.trim()
+        }
+      });
     });
 
     return NextResponse.json({ success: true, message: 'Dispute submitted. Admin will review the case.' });
 
   } catch (error: any) {
     console.error('Dispute API Error:', error);
+    if (error.message === 'ALREADY_DISPUTED') {
+      return NextResponse.json({ success: false, error: 'This report is already disputed' }, { status: 400 });
+    }
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

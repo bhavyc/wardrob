@@ -43,6 +43,11 @@ export async function POST(request: Request) {
       }
     });
 
+    // Invalidate all active sessions for this user across all devices
+    await prisma.session.deleteMany({
+      where: { userId: user.id }
+    });
+
     return NextResponse.json({ success: true, message: 'Password has been successfully reset. You can now login.' });
 
   } catch (error: any) {

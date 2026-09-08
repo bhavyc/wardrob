@@ -2,36 +2,41 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('FATAL: JWT_SECRET environment variable is missing.');
-}
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Only enforce protection on /admin, /lister, and /hub paths
-  const isAdminPath = pathname.startsWith('/admin');
-  const isListerPath = pathname.startsWith('/lister');
-  const isHubPath = pathname.startsWith('/hub');
+  // 1. Identify protected route areas
+  const isAdminPath = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
+  const isListerPath = pathname.startsWith('/lister') || pathname.startsWith('/api/lister');
+  const isHubPath = pathname.startsWith('/hub') || pathname.startsWith('/api/hub');
+  const isRenterPath = 
+    pathname === '/profile' || pathname.startsWith('/profile/') ||
+    pathname === '/id-verification' || pathname.startsWith('/id-verification/') ||
+    pathname.startsWith('/api/user') ||
+    pathname.startsWith('/api/orders');
   const isApiPath = pathname.startsWith('/api/');
 
   // If path is not a protected area, bypass
-  if (!isAdminPath && !isListerPath && !isHubPath) {
+  if (!isAdminPath && !isListerPath && !isHubPath && !isRenterPath) {
     return NextResponse.next();
   }
 
-  // Bypass auth for public login and registration paths
+  // Bypass auth for public onboarding/login endpoints
   if (
     pathname.startsWith('/lister/register') ||
     pathname.startsWith('/lister/login') ||
     pathname.startsWith('/admin/login') ||
-    pathname.startsWith('/hub/login')
+    pathname.startsWith('/hub/login') ||
+    pathname === '/api/lister/register' ||
+    pathname === '/api/lister/login'
   ) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get('auth_token')?.value;
+  const token = request.cookies.get('auth_token')?.value || 
+    request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
 
   // If no token, return 401 JSON for API requests or redirect for pages
   if (!token) {
@@ -47,12 +52,26 @@ export async function proxy(request: NextRequest) {
     if (isHubPath) {
       return NextResponse.redirect(new URL('/hub/login', request.url));
     }
-    return NextResponse.redirect(new URL('/lister/login', request.url));
+    if (isListerPath) {
+      return NextResponse.redirect(new URL('/lister/login', request.url));
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (!JWT_SECRET_RAW) {
+    console.error('FATAL: JWT_SECRET environment variable is missing.');
+    if (isApiPath) {
+      return NextResponse.json({ success: false, error: 'Server authentication configuration error.' }, { status: 500 });
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   try {
-    // Verify JWT payload on the Node.js runtime using 'jose'
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const secretKey = new TextEncoder().encode(JWT_SECRET_RAW);
+    // Enforce HS256 algorithm to reject any signature algorithm confusion attacks
+    const { payload } = await jwtVerify(token, secretKey, {
+      algorithms: ['HS256'],
+    });
     const role = payload.role as string;
 
     // 2. Protect Admin routes
@@ -91,9 +110,9 @@ export async function proxy(request: NextRequest) {
     if (isApiPath) {
       return NextResponse.json({ success: false, error: 'Invalid or expired token' }, { status: 401 });
     }
-    const target = isAdminPath ? '/admin/login' : isHubPath ? '/hub/login' : '/lister/login';
+    const target = isAdminPath ? '/admin/login' : isHubPath ? '/hub/login' : isListerPath ? '/lister/login' : '/login';
     const redirectResponse = NextResponse.redirect(new URL(target, request.url));
-    redirectResponse.cookies.delete('auth_token');
+    redirectResponse.cookies.set('auth_token', '', { path: '/', maxAge: 0 });
     return redirectResponse;
   }
 }
@@ -104,5 +123,14 @@ export const config = {
     '/admin/:path*',
     '/lister/:path*',
     '/hub/:path*',
+    '/profile/:path*',
+    '/profile',
+    '/id-verification/:path*',
+    '/id-verification',
+    '/api/admin/:path*',
+    '/api/lister/:path*',
+    '/api/hub/:path*',
+    '/api/user/:path*',
+    '/api/orders/:path*',
   ],
 };

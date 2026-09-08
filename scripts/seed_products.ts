@@ -45,7 +45,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1583391733958-d259728fca8c?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Manish Malhotra Sequin Saree',
+        title: 'Midnight Glamour Sequin Saree',
         description: 'Dazzling rose-gold sequin saree that catches the light beautifully. Paired with a velvet blouse.',
         category: 'Saree',
         size: 'FREE_SIZE',
@@ -55,7 +55,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Tarun Tahiliani Ivory Gown',
+        title: 'Crystal Embellished Ivory Reception Gown',
         description: 'Exquisite ivory reception gown featuring Swarovski crystals and sheer paneling. An absolute showstopper.',
         category: 'Gown',
         size: 'S',
@@ -65,7 +65,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Anita Dongre Gotapatti Anarkali',
+        title: 'Rose Pink Handcrafted Gotapatti Anarkali',
         description: 'Signature powder blue Anarkali suit featuring delicate silver Gota Patti work. Perfect for haldi or mehendi.',
         category: 'Anarkali',
         size: 'L',
@@ -75,7 +75,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Rahul Mishra Hand-Embroidered Kurta Set',
+        title: 'Artisanal Floral Hand-Embroidered Kurta Set',
         description: 'Elegant ivory kurta set with 3D floral hand embroidery and matching organza dupatta.',
         category: 'Kurta Set',
         size: 'M',
@@ -85,7 +85,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1592305553535-714ccbd8b15d?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Falguni Shane Peacock Feather Gown',
+        title: 'Dramatic Black & Silver Reception Gown',
         description: 'Dramatic black and silver reception gown with signature feather detailing on the hem.',
         category: 'Gown',
         size: 'M',
@@ -95,7 +95,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1566207455823-74cf8f20b411?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Abu Jani Sandeep Khosla Chikankari Saree',
+        title: 'Classic White Chikankari Georgette Saree',
         description: 'Classic white Chikankari saree woven on premium georgette. A timeless piece of luxury.',
         category: 'Saree',
         size: 'FREE_SIZE',
@@ -105,7 +105,7 @@ async function seedProducts() {
         baselineImages: ['https://images.unsplash.com/photo-1614050868884-1d6ebfa77da1?auto=format&fit=crop&q=80&w=800'],
       },
       {
-        title: 'Raw Mango Silk Brocade Sharara',
+        title: 'Emerald Silk Brocade Festive Sharara',
         description: 'Vibrant emerald green silk sharara set with gold zari weaving. Traditional yet modern.',
         category: 'Sharara',
         size: 'XL',

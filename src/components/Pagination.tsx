@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import './Pagination.css';
 
 interface PaginationProps {
   currentPage: number;
@@ -17,12 +18,14 @@ export default function Pagination({
   onPageChange,
   className = '',
 }: PaginationProps) {
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const safeItemsPerPage = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : 10;
+  const safeTotalItems = totalItems && totalItems > 0 ? totalItems : 0;
+  const totalPages = Math.ceil(safeTotalItems / safeItemsPerPage);
 
-  if (totalPages <= 1) return null;
+  if (isNaN(totalPages) || totalPages <= 1) return null;
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  const startItem = (currentPage - 1) * safeItemsPerPage + 1;
+  const endItem = Math.min(currentPage * safeItemsPerPage, safeTotalItems);
 
   // Generate page numbers array with ellipsis if needed
   const getPageNumbers = () => {
@@ -51,88 +54,6 @@ export default function Pagination({
 
   return (
     <div className={`pagination-container ${className}`}>
-      <style jsx>{`
-        .pagination-container {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px 20px;
-          background: #FFFFFF;
-          border-top: 1px solid rgba(44, 94, 67, 0.08);
-          border-bottom-left-radius: 16px;
-          border-bottom-right-radius: 16px;
-          flex-wrap: wrap;
-          gap: 12px;
-          font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
-        }
-
-        .pagination-info {
-          font-size: 13px;
-          color: #64748B;
-          font-weight: 500;
-        }
-        .pagination-info strong {
-          color: #0F172A;
-          font-weight: 700;
-        }
-
-        .pagination-controls {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .pg-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 34px;
-          height: 34px;
-          padding: 0 8px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 600;
-          border: 1px solid rgba(44, 94, 67, 0.12);
-          background: #FFFFFF;
-          color: #334155;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .pg-btn:hover:not(:disabled):not(.active) {
-          background: #F1F5F9;
-          border-color: #CBD5E1;
-          color: #0F172A;
-        }
-
-        .pg-btn.active {
-          background: #2C5E43;
-          color: #FFFFFF;
-          border-color: #2C5E43;
-          box-shadow: 0 2px 6px rgba(44, 94, 67, 0.25);
-        }
-
-        .pg-btn:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-          background: #F8FAFC;
-        }
-
-        .pg-ellipsis {
-          padding: 0 4px;
-          color: #94A3B8;
-          font-size: 13px;
-        }
-
-        @media (max-width: 640px) {
-          .pagination-container {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-          }
-        }
-      `}</style>
-
       <div className="pagination-info">
         Showing <strong>{startItem}</strong> to <strong>{endItem}</strong> of <strong>{totalItems}</strong> entries
       </div>

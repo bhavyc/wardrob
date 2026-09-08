@@ -36,16 +36,19 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Decrypt Renter KYC for Admin view
+    // Decrypt Renter KYC for Admin view with masked Aadhaar (UIDAI compliance)
     const { decryptString } = await import('@/lib/encryption');
-    const safeBookings = bookings.map(b => ({
-      ...b,
-      renter: {
-        ...b.renter,
-        aadhaarNumber: b.renter.aadhaarNumber ? decryptString(b.renter.aadhaarNumber) : null,
-        panNumber: b.renter.panNumber ? decryptString(b.renter.panNumber) : null,
-      }
-    }));
+    const safeBookings = bookings.map(b => {
+      const decryptedAadhaar = b.renter.aadhaarNumber ? decryptString(b.renter.aadhaarNumber) : null;
+      return {
+        ...b,
+        renter: {
+          ...b.renter,
+          aadhaarNumber: decryptedAadhaar ? `XXXX XXXX ${decryptedAadhaar.slice(-4)}` : null,
+          panNumber: b.renter.panNumber ? decryptString(b.renter.panNumber) : null,
+        }
+      };
+    });
 
     return NextResponse.json({ success: true, bookings: safeBookings });
   } catch (error: any) {

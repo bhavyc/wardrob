@@ -19,7 +19,16 @@ export async function POST(request: Request) {
       where: { id: bookingId }
     });
 
-    if (!booking || booking.status !== 'IN_USE') {
+    if (!booking) {
+      return NextResponse.json({ success: false, error: 'Booking not found.' }, { status: 404 });
+    }
+
+    // Access control: only the renter of this booking or Admin can trigger return
+    if (booking.renterId !== authUser.userId && authUser.role !== 'ADMIN') {
+      return NextResponse.json({ success: false, error: 'Unauthorized to initiate return for this booking.' }, { status: 403 });
+    }
+
+    if (booking.status !== 'IN_USE') {
       return NextResponse.json({ success: false, error: 'Booking is not in use or return is already initiated.' }, { status: 400 });
     }
 

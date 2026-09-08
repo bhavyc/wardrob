@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
 import { Suspense } from 'react';
+import './register.css';
+
 function RegisterForm() {
   const router = useRouter();
 
@@ -101,47 +103,6 @@ function RegisterForm() {
 
   return (
     <>
-      <style jsx global>{`
-        @keyframes registerFadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.08; }
-        }
-        @keyframes successPop {
-          0% { transform: scale(0.8); opacity: 0; }
-          70% { transform: scale(1.05); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        .reg-input:focus {
-          border-color: var(--accent) !important;
-          box-shadow: 0 0 0 4px var(--accent-light) !important;
-        }
-        .eye-btn {
-          position: absolute;
-          right: 14px;
-          top: 50%;
-          transform: translateY(-50%);
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: var(--text-muted);
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          transition: color 0.2s;
-        }
-        .eye-btn:hover { color: var(--ink); }
-        .strength-bar {
-          height: 3px;
-          border-radius: 2px;
-          transition: all 0.3s ease;
-        }
-      `}</style>
-
       <div style={{
         minHeight: '100vh', width: '100%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',

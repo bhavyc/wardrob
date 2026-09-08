@@ -44,6 +44,10 @@ export async function GET(
       isBestSeller: listing.isFeatured,
       lister: {
         shopName: listing.lister.shopName || listing.lister.user.name,
+        user: {
+          name: listing.lister.user.name,
+          rating: listing.lister.user.rating ? Number(listing.lister.user.rating) : null,
+        },
       },
     };
 

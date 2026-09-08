@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import './hub-dashboard.css';
 
 export default function HubDashboard() {
   const router = useRouter();
@@ -41,101 +42,6 @@ export default function HubDashboard() {
 
   return (
     <>
-      <style>{`
-        @keyframes pageFadeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hub-header { margin-bottom: 32px; animation: pageFadeIn 0.4s ease both; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-        @media (max-width: 768px) {
-          .hub-header { flex-direction: column; align-items: stretch; }
-          .hub-header > div:last-child { display: flex; flex-direction: column; width: 100%; gap: 8px; }
-          .action-btn { justify-content: center; width: 100%; }
-        }
-        
-        .hub-h1 {
-          font-family: var(--font-inter), sans-serif;
-          font-size: 32px; font-weight: 800; color: #0F172A; margin-bottom: 8px; letter-spacing: -0.02em;
-        }
-        @media (max-width: 768px) {
-          .hub-h1 { font-size: 24px; }
-        }
-        
-        .hub-sub { font-size: 14px; color: #64748B; font-weight: 500; }
-
-        .kpi-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
-          margin-bottom: 32px; animation: pageFadeIn 0.4s ease 0.1s both;
-        }
-        @media (max-width: 768px) {
-          .kpi-grid { grid-template-columns: 1fr; }
-        }
-
-        .kpi-card {
-          background: #FFFFFF; border-radius: 16px; padding: 24px;
-          border: 1px solid rgba(15,23,42,0.06);
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02);
-          display: flex; align-items: center; gap: 20px;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
-          text-decoration: none; color: inherit;
-        }
-        .kpi-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02);
-        }
-        .kpi-icon {
-          width: 56px; height: 56px; border-radius: 14px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 24px; flex-shrink: 0;
-        }
-        .kpi-num { font-size: 32px; font-weight: 800; color: #0F172A; line-height: 1; margin-bottom: 4px; }
-        .kpi-lbl { font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; }
-
-        .kpi-card.intake .kpi-icon { background: #EEF2FF; color: #4F46E5; }
-        .kpi-card.dispatch .kpi-icon { background: #ECFDF5; color: #059669; }
-        .kpi-card.return .kpi-icon { background: #FFF7ED; color: #EA580C; }
-
-        .action-btn {
-          background: #3B82F6; color: #FFFFFF; border: none; border-radius: 12px;
-          padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer;
-          transition: background 0.2s ease; text-decoration: none; white-space: nowrap;
-          display: inline-flex; align-items: center; gap: 8px;
-        }
-        .action-btn:hover { background: #2563EB; }
-        .action-btn.scan {
-          background: #10B981;
-        }
-        .action-btn.scan:hover { background: #059669; }
-
-        .panel-grid {
-          display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
-          animation: pageFadeIn 0.4s ease 0.2s both;
-        }
-        @media (max-width: 900px) {
-          .panel-grid { grid-template-columns: 1fr; }
-        }
-
-        .panel-card {
-          background: #FFF; border-radius: 16px; padding: 24px;
-          border: 1px solid rgba(15,23,42,0.06);
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-        }
-        .panel-title {
-          font-size: 16px; font-weight: 700; color: #0F172A; margin-bottom: 16px;
-          display: flex; align-items: center; justify-content: space-between;
-        }
-
-        .return-item {
-          padding: 16px; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px;
-          background: #F8FAFC;
-        }
-        .return-item:last-child { margin-bottom: 0; }
-        .return-item strong { display: block; color: #0F172A; font-size: 14px; margin-bottom: 4px; }
-        .return-item span { color: #64748B; font-size: 12px; }
-
-      `}</style>
-
       <div className="hub-header">
         <div>
           <h1 className="hub-h1">Operations Dashboard</h1>

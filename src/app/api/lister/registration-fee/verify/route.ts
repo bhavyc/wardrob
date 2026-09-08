@@ -75,6 +75,20 @@ export async function POST(request: Request) {
       });
     }
 
+    // PAYMENT REPLAY GUARD: Ensure this payment ID has not been used anywhere else
+    const paymentAlreadyUsed = await prisma.registrationPayment.findFirst({
+      where: {
+        razorpayPaymentId: razorpay_payment_id,
+        id: { not: paymentRecord.id }
+      }
+    }) || await prisma.booking.findFirst({
+      where: { razorpayPaymentId: razorpay_payment_id }
+    });
+
+    if (paymentAlreadyUsed) {
+      return NextResponse.json({ success: false, error: 'This payment transaction has already been claimed or credited.' }, { status: 400 });
+    }
+
     // Atomic transaction for payment completion + referral reward trigger
     await prisma.$transaction(async (tx) => {
       // 1. Mark payment record COMPLETED

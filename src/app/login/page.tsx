@@ -4,12 +4,14 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import BrandLogo from '@/components/BrandLogo';
+import './login.css';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -26,7 +28,7 @@ function LoginForm() {
         if (!res.ok) return;
         const data = await res.json();
         if (data.success && data.user) {
-          if (data.user.role === 'LISTER') router.replace('/lister/products');
+          if (data.user.role === 'LISTER') router.replace('/lister/listings');
           else if (data.user.role === 'ADMIN') router.replace('/admin');
           else router.replace('/');
         }
@@ -48,202 +50,188 @@ function LoginForm() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        if (data.user.role === 'LISTER') router.push('/lister/products');
+        if (data.user.role === 'LISTER') router.push('/lister/listings');
         else if (data.user.role === 'ADMIN') router.push('/admin');
         else router.push('/');
       } else {
-        setError(data.error || 'Invalid email or password.');
+        setError(data.error || 'Invalid email or password. Please verify credentials.');
       }
     } catch {
-      setError('Connection error. Please check your network.');
+      setError('Connection timeout. Please check your internet connection.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleQuickDemo = () => {
+    setEmail('renter@wardrob.com');
+    setPassword('renter123');
+    setError('');
+  };
+
   return (
-    <>
-      <style jsx global>{`
-        @keyframes loginFadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.08; }
-        }
-        .renter-login-card {
-          width: 100%;
-          max-width: 440px;
-          background: #FFFFFF;
-          border: 1px solid rgba(212,86,122,0.18);
-          border-radius: 16px;
-          padding: 44px 36px;
-          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.04);
-          animation: loginFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-          position: relative;
-          z-index: 10;
-          margin: 0 auto;
-        }
-        .renter-form-input {
-          width: 100%;
-          height: 48px;
-          padding: 0 16px;
-          background: #FFFFFF;
-          border: 1.5px solid rgba(212,86,122,0.25);
-          border-radius: 10px;
-          font-size: 14px;
-          color: var(--ink);
-          outline: none;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-          box-sizing: border-box;
-        }
-        .renter-form-input:focus {
-          border-color: #D4567A;
-          box-shadow: 0 0 0 4px rgba(212,86,122,0.1);
-        }
-        @media (max-width: 480px) {
-          .renter-login-card { padding: 40px 24px; }
-        }
-      `}</style>
+    <div className="renter-auth-wrapper">
+      {/* Back to Home navigation */}
+      <Link href="/" className="auth-nav-back" title="Return to Homepage">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Explore Collection</span>
+      </Link>
 
-      <div style={{
-        minHeight: '100vh', width: '100%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'var(--bg)',
-        padding: '40px 24px',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        {/* Subtle dot pattern background */}
-        <div style={{
-          position: 'absolute', inset: 0, opacity: 0.4,
-          backgroundImage: 'radial-gradient(circle, var(--border) 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-          animation: 'dotPulse 4s ease-in-out infinite',
-        }} />
+      {/* Centered Luxury Card */}
+      <div className="auth-form-card">
+        {/* Logo Header */}
+        <div className="auth-brand-head" onClick={() => router.push('/')}>
+          <BrandLogo size="lg" showSubtitle={true} subtitle="PREMIUM FASHION RENTAL" />
+        </div>
 
-        <div className="renter-login-card">
-          {/* Logo */}
-          <div style={{
-            textAlign: 'center', marginBottom: '28px',
-            cursor: 'pointer',
-          }} onClick={() => router.push('/')}>
-            <BrandLogo size="lg" showSubtitle={true} subtitle="PREMIUM FASHION RENTAL" />
+        <div className="auth-header-text">
+          <span className="auth-badge-pill">Renter Portal</span>
+          <h1 className="auth-title">Welcome Back</h1>
+          <p className="auth-subtitle">Sign in to access your curated wardrobe, measurements &amp; active rentals.</p>
+        </div>
+
+        {/* Quick Demo Fill Helper */}
+        <div className="auth-demo-pill">
+          <span>Demo Account: <code>renter@wardrob.com</code></span>
+          <button type="button" onClick={handleQuickDemo} className="auth-demo-action">
+            Auto-Fill
+          </button>
+        </div>
+
+        {error && (
+          <div className="auth-error-banner">
+            <span style={{ fontSize: '15px' }}>⚠</span>
+            <span>{error}</span>
           </div>
+        )}
 
-          <h1 style={{
-            fontFamily: 'var(--font-serif)', fontSize: '28px', fontWeight: 700,
-            color: 'var(--ink)', marginBottom: '8px', textAlign: 'center',
-          }}>Welcome Back</h1>
-          <p style={{
-            fontSize: '14px', color: 'var(--ink-secondary)', lineHeight: 1.5,
-            marginBottom: '32px', textAlign: 'center',
-          }}>Sign in to access your account and bookings.</p>
-
-          {error && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '14px 16px', background: '#FFF5F5',
-              border: '1px solid #FFD5D5', borderRadius: 'var(--radius-md)',
-              color: '#CC2222', fontSize: '13px', fontWeight: 500,
-              marginBottom: '24px',
-            }}>
-              <span>⚠</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block', fontSize: '12px', fontWeight: 600,
-                color: 'var(--ink)', marginBottom: '8px',
-                letterSpacing: '0.06em',
-              }}>Email Address</label>
+        <form onSubmit={handleLogin}>
+          <div className="auth-field">
+            <label className="auth-label">
+              <span>Email or Mobile</span>
+            </label>
+            <div className="auth-input-wrapper">
               <input
-                type="email"
+                type="text"
                 required
                 autoFocus
-                placeholder="hello@wardrob.com"
+                placeholder="name@example.com or 10-digit mobile"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="renter-form-input"
+                className="auth-input"
               />
+              <div className="auth-input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
             </div>
-            
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block', fontSize: '12px', fontWeight: 600,
-                color: 'var(--ink)', marginBottom: '8px',
-                letterSpacing: '0.06em',
-              }}>Password</label>
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-label">
+              <span>Password</span>
+              <Link href="/forgot-password" className="auth-forgot-link">
+                Forgot?
+              </Link>
+            </label>
+            <div className="auth-input-wrapper">
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
-                placeholder="••••••••"
+                placeholder="Enter your account password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="renter-form-input"
+                className="auth-input"
               />
+              <div className="auth-input-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <button
+                type="button"
+                className="auth-pw-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+              </button>
             </div>
-
-            <div style={{ textAlign: 'right', marginBottom: '24px' }}>
-              <Link href="/forgot-password" style={{
-                fontSize: '13px', color: 'var(--accent)', fontWeight: 500,
-                textDecoration: 'none',
-              }}>
-                Forgot Password?
-              </Link>
-            </div>
-
-            <button type="submit" disabled={loading || !email || !password} style={{
-              width: '100%', height: '48px', border: 'none',
-              borderRadius: '10px',
-              background: loading || !email || !password ? '#EBEBEB' : '#1E1E2D',
-              color: loading || !email || !password ? '#999999' : '#FFFFFF',
-              fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase',
-              cursor: loading || !email || !password ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              transition: 'all 0.25s ease',
-            }}>
-              {loading ? (
-                <>
-                  <div style={{
-                    width: '16px', height: '16px', borderRadius: '50%',
-                    border: '2px solid rgba(255,255,255,0.3)',
-                    borderTopColor: '#FFF', animation: 'spin 0.6s linear infinite',
-                  }} />
-                  Verifying...
-                </>
-              ) : 'Sign In →'}
-            </button>
-          </form>
-
-          {/* Register link */}
-          <div style={{
-            marginTop: '28px', paddingTop: '24px',
-            borderTop: '1px solid var(--border)',
-            textAlign: 'center',
-          }}>
-            <p style={{ fontSize: '14px', color: 'var(--ink-secondary)' }}>
-              New to Wardrob?{' '}
-              <Link href="/register" style={{
-                color: 'var(--accent)', fontWeight: 600, textDecoration: 'none',
-              }}>
-                Create an Account
-              </Link>
-            </p>
           </div>
+
+          <button
+            type="submit"
+            disabled={loading || !email.trim() || !password.trim()}
+            className="auth-submit-btn"
+          >
+            {loading ? (
+              <>
+                <div className="auth-submit-spinner" />
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Closet</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Switch to Lister Sign in */}
+        <div style={{ marginTop: '18px', textAlign: 'center' }}>
+          <Link
+            href="/lister/login"
+            style={{
+              fontSize: '12px',
+              color: '#666677',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              transition: 'color 0.2s ease',
+            }}
+          >
+            <span>Are you a registered Lister?</span>
+            <span style={{ color: '#D4567A', fontWeight: 600 }}>Lister Portal →</span>
+          </Link>
+        </div>
+
+        <div className="auth-card-footer">
+          <p className="auth-footer-text">
+            New to Wardrob?
+            <Link href="/register" className="auth-footer-link">
+              Create an Account
+            </Link>
+          </p>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg)' }} />}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg, #FFFAF5)' }} />}>
       <LoginForm />
     </Suspense>
   );

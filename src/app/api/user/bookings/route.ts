@@ -39,9 +39,21 @@ export async function GET(request: Request) {
       },
     });
 
+    const bookingIds = bookings.map(b => b.id);
+    const reviews = await prisma.review.findMany({
+      where: {
+        bookingId: { in: bookingIds },
+      },
+    });
+
+    const bookingsWithReviews = bookings.map(b => ({
+      ...b,
+      reviews: reviews.filter(r => r.bookingId === b.id),
+    }));
+
     return NextResponse.json({
       success: true,
-      bookings,
+      bookings: bookingsWithReviews,
     });
   } catch (error: any) {
     console.error('API User Bookings Error:', error);

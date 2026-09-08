@@ -27,6 +27,7 @@ type Shipment = {
 };
 
 import Pagination from '@/components/Pagination';
+import './hub-shipments.css';
 
 export default function HubShipmentsPage() {
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -132,86 +133,6 @@ export default function HubShipmentsPage() {
 
   return (
     <>
-      <style>{`
-        @keyframes pageFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .ship-header { margin-bottom: 32px; animation: pageFadeIn 0.4s ease both; }
-        .ship-h1 { font-family: var(--font-inter), sans-serif; font-size: 32px; font-weight: 800; color: #0F172A; margin-bottom: 8px; letter-spacing: -0.02em; }
-        .ship-sub { font-size: 14px; color: #64748B; font-weight: 500; }
-        
-        .ship-tabs { display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid #E2E8F0; }
-        .ship-tab { padding: 12px 24px; font-size: 14px; font-weight: 600; color: #64748B; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-        .ship-tab.active { color: #0F172A; border-bottom-color: #0F172A; }
-        
-        .ship-grid { display: grid; gap: 24px; animation: pageFadeIn 0.4s ease 0.1s both; }
-        
-        .ship-card { background: #FFFFFF; border-radius: 16px; border: 1px solid rgba(15,23,42,0.08); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-        .ship-card-head { padding: 20px 24px; border-bottom: 1px solid rgba(15,23,42,0.06); background: #F8FAFC; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-        
-        .ship-leg-badge { display: inline-block; background: #0F172A; color: #FFF; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
-        .ship-title { font-size: 18px; font-weight: 700; color: #0F172A; margin-bottom: 4px; }
-        .ship-booking-id { font-size: 12px; color: #64748B; font-weight: 500; }
-        .ship-booking-id span { font-family: monospace; background: rgba(15,23,42,0.04); padding: 2px 6px; border-radius: 4px; color: #475569; }
-        
-        .ship-status { padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
-        .status-PENDING { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .status-PICKED_UP { background: #DBEAFE; color: #1E40AF; border: 1px solid #BFDBFE; }
-        .status-IN_TRANSIT { background: #E0E7FF; color: #3730A3; border: 1px solid #C7D2FE; }
-        .status-DELIVERED { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
-        .status-FAILED { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
-        
-        .ship-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-        @media (max-width: 900px) { .ship-body { grid-template-columns: 1fr; gap: 20px; } }
-        
-        .ship-section-title { font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
-        .ship-text { font-size: 14px; color: #334155; line-height: 1.6; }
-        .ship-text strong { color: #0F172A; }
-        .ship-text-muted { font-size: 13px; color: #64748B; margin-top: 4px; }
-        
-        .ship-info-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px; }
-        .ship-info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-        .ship-info-row:last-child { margin-bottom: 0; }
-        .ship-info-label { color: #64748B; font-weight: 500; }
-        .ship-info-val { color: #0F172A; font-weight: 600; }
-        .ship-info-val.mono { font-family: monospace; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        
-        .ship-action-col { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; }
-        @media (max-width: 900px) { .ship-action-col { align-items: flex-start; gap: 16px; } }
-        
-        .ship-timestamp { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 6px; margin-bottom: 8px; }
-        .ts-dispatched { background: #F1F5F9; color: #475569; }
-        .ts-delivered { background: #ECFDF5; color: #059669; }
-        
-        .ship-btn { padding: 10px 20px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; font-weight: 600; color: #0F172A; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .ship-btn:hover { background: #F8FAFC; border-color: #CBD5E1; }
-        
-        /* Edit Form */
-        .edit-form { grid-column: span 2; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; }
-        @media (max-width: 900px) { .edit-form { grid-column: span 1; } }
-        .edit-title { font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-        
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
-        
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group.full { grid-column: 1 / -1; }
-        .form-label { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; }
-        .form-input { padding: 12px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 14px; color: #0F172A; background: #FFFFFF; outline: none; transition: all 0.2s; }
-        .form-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .form-input.mono { font-family: monospace; font-weight: 600; letter-spacing: 1px; }
-        
-        .form-actions { display: flex; gap: 12px; justify-content: flex-end; }
-        .btn-cancel { padding: 10px 20px; background: transparent; border: none; font-size: 13px; font-weight: 600;  color: #64748B; cursor: pointer; }
-        .btn-cancel:hover { color: #0F172A; }
-        .btn-save { padding: 10px 24px; background: #0F172A; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #FFFFFF; cursor: pointer; transition: all 0.2s; }
-        .btn-save:hover { background: #1E293B; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        
-        .empty-state { text-align: center; padding: 60px 20px; background: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 16px; }
-        .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-        .empty-title { font-size: 18px; font-weight: 700; color: #0F172A; margin-bottom: 8px; }
-        .empty-desc { font-size: 14px; color: #64748B; }
-      `}</style>
-
       <div className="ship-header">
         <h1 className="ship-h1">Shipments & Deliveries</h1>
         <div className="ship-sub">Track and manage 4-leg logistics</div>

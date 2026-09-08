@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { decryptString } from '@/lib/encryption';
 
 export async function GET(request: Request) {
   try {
@@ -42,10 +43,17 @@ export async function GET(request: Request) {
       );
     }
 
+    const decryptedProfile = {
+      ...profile,
+      aadhaarNumber: profile.aadhaarNumber ? decryptString(profile.aadhaarNumber) : null,
+      panNumber: profile.panNumber ? decryptString(profile.panNumber) : null,
+      bankAccountNo: profile.bankAccountNo ? decryptString(profile.bankAccountNo) : null,
+    };
+
     return NextResponse.json({
       success: true,
-      profile,
-      Lister: profile,
+      profile: decryptedProfile,
+      Lister: decryptedProfile,
     });
   } catch (error: any) {
     console.error('API Lister Profile GET Error:', error);

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
 export async function GET() {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ success: false, error: 'Endpoint disabled in production.' }, { status: 403 });
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ success: false, error: 'Endpoint restricted to local development.' }, { status: 404 });
   }
 
   try {

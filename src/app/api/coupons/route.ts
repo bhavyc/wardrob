@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getAuthUser } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const authUser = await getAuthUser(request);
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required to view available promotions.' },
+        { status: 401 }
+      );
+    }
+
     const coupons = await prisma.coupon.findMany({
       where: {
         isActive: true,
@@ -10,6 +19,14 @@ export async function GET() {
           { expiresAt: null },
           { expiresAt: { gt: new Date() } },
         ],
+      },
+      select: {
+        id: true,
+        code: true,
+        discountType: true,
+        discountValue: true,
+        minOrderValue: true,
+        expiresAt: true,
       },
       orderBy: { code: 'asc' },
     });

@@ -39,15 +39,30 @@ export async function POST(request: Request) {
     }
 
     if (trackingNumber || courierName) {
-      await prisma.shipment.create({
-        data: {
-          bookingId,
-          leg: 'LISTER_TO_HUB',
-          trackingNumber,
-          courierName,
-          status: 'IN_TRANSIT',
-        },
+      const existingShipment = await prisma.shipment.findFirst({
+        where: { bookingId, leg: 'LISTER_TO_HUB' }
       });
+
+      if (existingShipment) {
+        await prisma.shipment.update({
+          where: { id: existingShipment.id },
+          data: {
+            trackingNumber: trackingNumber || existingShipment.trackingNumber,
+            courierName: courierName || existingShipment.courierName,
+            status: 'IN_TRANSIT',
+          },
+        });
+      } else {
+        await prisma.shipment.create({
+          data: {
+            bookingId,
+            leg: 'LISTER_TO_HUB',
+            trackingNumber,
+            courierName,
+            status: 'IN_TRANSIT',
+          },
+        });
+      }
     }
 
     return NextResponse.json({

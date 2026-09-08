@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation';
 import RenterNavbar from '@/components/RenterNavbar';
 import RenterFooter from '@/components/RenterFooter';
 import EventDatePicker from '@/components/EventDatePicker';
+import './product-detail.css';
 
 type Product = {
   id: string;
   title: string;
   description: string;
   price: number;
+  rentalPrice?: number;
+  securityDeposit?: number;
+  category?: string;
+  size?: string;
+  condition?: string;
   stock: number;
   sizes: string[];
   colors: string[];
@@ -96,61 +102,6 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-      <style>{`
-        .pdp-main {
-          flex: 1; max-width: 1440px; margin: 0 auto; width: 100%;
-          padding: 56px 40px 120px; display: grid;
-          grid-template-columns: 1.2fr 1fr; gap: 64px; align-items: flex-start;
-        }
-        .pdp-sticky { position: sticky; top: 100px; display: flex; flex-direction: column; }
-        .pdp-gallery { display: flex; gap: 20px; }
-        .pdp-thumbnails { display: flex; flex-direction: column; gap: 12px; }
-        
-        .pdp-mobile-bottom-bar {
-          display: none;
-          position: fixed;
-          bottom: calc(60px + env(safe-area-inset-bottom, 12px));
-          left: 0;
-          right: 0;
-          padding: 12px 16px;
-          background: rgba(255, 250, 245, 0.96);
-          backdrop-filter: blur(20px);
-          border-top: 1px solid rgba(240, 230, 224, 0.9);
-          z-index: 850;
-          box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        @media (max-width: 768px) {
-          .pdp-main { padding: 16px 14px 80px; gap: 28px; grid-template-columns: 1fr !important; }
-          .pdp-sticky { position: static; top: auto; }
-          .pdp-title { font-size: 26px !important; margin-bottom: 12px !important; line-height: 1.18 !important; }
-          .pdp-gallery { flex-direction: column-reverse; gap: 12px; }
-          .pdp-thumbnails {
-            flex-direction: row !important;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 4px;
-            gap: 8px;
-          }
-          .pdp-thumbnails::-webkit-scrollbar { display: none; }
-          .pdp-thumbnails button {
-            width: 60px !important;
-            flex-shrink: 0;
-            border-radius: 12px !important;
-          }
-          .pdp-main-img {
-            border-radius: 20px !important;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(30, 30, 45, 0.08);
-          }
-          .pdp-mobile-bottom-bar {
-            display: flex;
-          }
-        }
-      `}</style>
       <RenterNavbar />
 
       <main className="pdp-main">
@@ -199,70 +150,84 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {/* ━━━ ATELIER WHITE-GLOVE EXPERIENCE ━━━ */}
+          {/* ━━━ ATELIER SPECIFICATIONS & LISTER'S CRAFT NOTES ━━━ */}
           <div style={{
             marginTop: '24px',
             background: '#FFFFFF',
             borderRadius: '20px',
             border: '1px solid rgba(226, 214, 206, 0.75)',
-            padding: '22px 20px',
+            padding: '24px 22px',
             boxShadow: '0 8px 24px rgba(30,30,45,0.04)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid rgba(240, 230, 224, 0.8)', paddingBottom: '12px' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid rgba(240, 230, 224, 0.8)', paddingBottom: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '14px' }}>💎</span>
-                <span style={{ fontSize: '11.5px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)' }}>
-                  The Wardrob Standard
+                <span style={{ fontSize: '15px' }}>🧵</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink)' }}>
+                  Atelier Specifications
                 </span>
               </div>
-              <span style={{ fontSize: '9.5px', color: 'var(--accent)', fontWeight: 700, background: 'var(--accent-light)', padding: '3px 10px', borderRadius: '999px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                White-Glove Service
+              <span style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700, background: 'var(--accent-light)', padding: '3px 10px', borderRadius: '999px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Direct from Lister
               </span>
             </div>
 
+            {/* Lister Description / Craft Story */}
+            {product.description && (
+              <div style={{ marginBottom: '18px', background: 'var(--bg-warm)', padding: '14px 16px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                  Lister Craftsmanship Note
+                </div>
+                <p style={{ fontSize: '13px', color: 'var(--ink)', margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>
+                  "{product.description}"
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '11px', color: 'var(--ink-secondary)', fontWeight: 600 }}>
+                  <span>— {listerName}</span>
+                  <span style={{ color: 'var(--accent)', fontSize: '10px' }}>✓ Verified Atelier</span>
+                </div>
+              </div>
+            )}
+
+            {/* Garment Technical Specs Grid */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '12px',
             }}>
-              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '12px' }}>🛡️</span>
-                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>₹0 Accidental Shield</span>
-                </div>
-                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                  Minor spills, snags & loose embroidery are covered with zero repair fees.
-                </p>
+              <div style={{ background: '#FAF8F5', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(240, 230, 224, 0.8)' }}>
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '2px' }}>
+                  Silhouette / Category
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                  {product.category || 'Haute Couture'}
+                </span>
               </div>
 
-              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '12px' }}>🧼</span>
-                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>60°C Ozone Sanitized</span>
-                </div>
-                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                  Hospital-grade sterilization, eco-dry cleaned, and vacuum sealed.
-                </p>
+              <div style={{ background: '#FAF8F5', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(240, 230, 224, 0.8)' }}>
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '2px' }}>
+                  Condition & Grade
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#059669' }}>
+                  ✨ {product.condition || 'Pristine (Hub-Certified)'}
+                </span>
               </div>
 
-              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '12px' }}>📦</span>
-                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>Hard-Shell Wardrobe Box</span>
-                </div>
-                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                  Dispatched in a custom preservation trunk with hanger & prepaid return kit.
-                </p>
+              <div style={{ background: '#FAF8F5', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(240, 230, 224, 0.8)' }}>
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '2px' }}>
+                  Size Listed
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                  {product.size || product.sizes?.[0] || 'Standard Fit'}
+                </span>
               </div>
 
-              <div style={{ background: 'var(--bg-warm)', padding: '12px 14px', borderRadius: '14px', border: '1px solid rgba(240, 230, 224, 0.85)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '12px' }}>⏳</span>
-                  <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--ink)' }}>72-Hr Early Buffer</span>
-                </div>
-                <p style={{ fontSize: '10.5px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
-                  Arrives 2 days before your event for effortless trials & jewellery styling.
-                </p>
+              <div style={{ background: '#FAF8F5', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(240, 230, 224, 0.8)' }}>
+                <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '2px' }}>
+                  Refundable Deposit
+                </span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                  ₹{Number(product.securityDeposit || product.price * 0.4).toLocaleString('en-IN')} (100% Refundable)
+                </span>
               </div>
             </div>
           </div>
@@ -271,13 +236,25 @@ export default function ProductDetailsPage({ params }: { params: Promise<{ id: s
         {/* ━━━━━━━━ RIGHT: DETAILS & BOOKING ━━━━━━━━ */}
         <div className="pdp-sticky">
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
             <p style={{ ...labelStyle, margin: 0 }}>{listerName}</p>
-            {product.lister?.user?.rating && (
-              <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '2px' }}>
-                ★ {Number(product.lister.user.rating).toFixed(1)}
+            <span style={{
+              fontSize: '11px',
+              color: '#B45309',
+              background: '#FEF3C7',
+              padding: '2.5px 8px',
+              borderRadius: '999px',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '3px',
+              border: '1px solid #FDE68A'
+            }}>
+              ★ {product.lister?.user?.rating ? Number(product.lister.user.rating).toFixed(1) : '5.0'}
+              <span style={{ fontSize: '9px', fontWeight: 600, color: '#92400E', opacity: 0.85 }}>
+                {product.lister?.user?.rating ? 'Top Rated' : 'New Atelier'}
               </span>
-            )}
+            </span>
           </div>
           
           <h1 className="pdp-title" style={{ fontFamily: 'var(--font-serif)', fontSize: '38px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15, marginBottom: '16px' }}>

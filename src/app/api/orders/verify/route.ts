@@ -13,11 +13,21 @@ export async function POST(request: Request) {
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { listing: true },
+      include: {
+        listing: { include: { lister: true } },
+      },
     });
 
     if (!booking) {
       return NextResponse.json({ success: false, error: 'Booking not found.' }, { status: 404 });
+    }
+
+    const isRenter = booking.renterId === authUser.userId;
+    const isLister = booking.listing?.lister?.userId === authUser.userId;
+    const isAuthorized = isRenter || isLister || authUser.role === 'ADMIN' || authUser.role === 'HUB_PARTNER';
+
+    if (!isAuthorized) {
+      return NextResponse.json({ success: false, error: 'Unauthorized to view this booking.' }, { status: 403 });
     }
 
     return NextResponse.json({

@@ -49,13 +49,19 @@ export async function POST(request: Request) {
             },
           });
 
-          await tx.shipment.create({
-            data: {
-              bookingId: booking.id,
-              leg: 'LISTER_TO_HUB',
-              status: 'PENDING',
-            },
+          const existingShipment = await tx.shipment.findFirst({
+            where: { bookingId: booking.id, leg: 'LISTER_TO_HUB' }
           });
+
+          if (!existingShipment) {
+            await tx.shipment.create({
+              data: {
+                bookingId: booking.id,
+                leg: 'LISTER_TO_HUB',
+                status: 'PENDING',
+              },
+            });
+          }
         });
       }
     }

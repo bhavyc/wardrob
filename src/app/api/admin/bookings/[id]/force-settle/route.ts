@@ -43,15 +43,19 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const securityDeposit = Number(booking.securityDeposit);
     const rentAmount = Number(booking.rentAmount);
     const extensionFee = Number(booking.extensionFee) || 0;
+    const MIN_COMMISSION_FLOOR = 2000;
+    const COMMISSION_RATE = 0.35;
     
-    const commissionRate = 0.35; // Flat 35% commission (65% Lister / 35% Admin)
+    // 1. Base rent commission: minimum ₹2000 floor or 35%, whichever is higher
+    const adminRentCommission = Math.max(MIN_COMMISSION_FLOOR, Math.round(rentAmount * COMMISSION_RATE));
+    const listerRentShare = Math.max(0, rentAmount - adminRentCommission);
     
-    const listerRentShare = rentAmount * (1 - commissionRate);
-    const listerExtensionShare = extensionFee * 0.50; // 50/50 split for extension fee
+    // 2. Extension fee split remains 50/50 without floor
+    const listerExtensionShare = Math.round(extensionFee * 0.50);
+    const adminExtensionCommission = Math.round(extensionFee * 0.50);
     
-    const commission = (rentAmount * commissionRate) + (extensionFee * 0.50);
-    
-    // Lister receives their share of rent + extension fee + the entire security deposit (forfeited by Renter)
+    // 3. Final Admin Commission & Lister Payout (Lost item security deposit goes 100% to Lister)
+    const commission = adminRentCommission + adminExtensionCommission;
     const finalListerPayout = listerRentShare + listerExtensionShare + securityDeposit;
 
     // Run updates atomically

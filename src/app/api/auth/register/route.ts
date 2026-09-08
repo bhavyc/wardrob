@@ -2,9 +2,34 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { encryptString } from '@/lib/encryption';
+import { getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const recentAttempts = await prisma.duplicatePhotoHash.count({
+      where: {
+        contextId: 'RATE_LIMIT_REGISTER',
+        hashValue: { startsWith: ip },
+        createdAt: { gte: fifteenMinutesAgo }
+      }
+    });
+
+    if (recentAttempts >= 5) {
+      return NextResponse.json(
+        { success: false, error: 'Too many registration attempts. Please try again in 15 minutes.' },
+        { status: 429 }
+      );
+    }
+
+    await prisma.duplicatePhotoHash.create({
+      data: {
+        contextId: 'RATE_LIMIT_REGISTER',
+        hashValue: `${ip}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      }
+    });
+
     const body = await request.json();
     const { name, email, phone, password, confirmPassword, aadhaarNumber, panNumber } = body;
 

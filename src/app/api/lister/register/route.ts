@@ -3,8 +3,12 @@ import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { getAuthUser } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
+import { getClientIp } from '@/lib/rate-limit';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'wardrob-fallback-secret-key-12345';
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is missing.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function generateReferralCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -17,6 +21,30 @@ function generateReferralCode(): string {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const recentAttempts = await prisma.duplicatePhotoHash.count({
+      where: {
+        contextId: 'RATE_LIMIT_LISTER_REGISTER',
+        hashValue: { startsWith: ip },
+        createdAt: { gte: fifteenMinutesAgo }
+      }
+    });
+
+    if (recentAttempts >= 5) {
+      return NextResponse.json(
+        { success: false, error: 'Too many registration attempts. Please try again in 15 minutes.' },
+        { status: 429 }
+      );
+    }
+
+    await prisma.duplicatePhotoHash.create({
+      data: {
+        contextId: 'RATE_LIMIT_LISTER_REGISTER',
+        hashValue: `${ip}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      }
+    });
+
     const body = await request.json();
     const authUser = await getAuthUser(request);
 
@@ -147,9 +175,24 @@ export async function POST(request: Request) {
         },
       });
 
+      // Create server-side session for revocation tracking
+      const sessionExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const sessionRecord = await prisma.session.create({
+        data: {
+          userId: newUser.id,
+          token: `${newUser.id}_${Date.now()}_${Math.random().toString(36).substring(2)}`,
+          expiresAt: sessionExpiresAt,
+        }
+      });
+
       // Auto login token cookie
       const token = jwt.sign(
-        { userId: newUser.id, email: newUser.email, role: newUser.role },
+        { 
+          userId: newUser.id, 
+          email: newUser.email, 
+          role: newUser.role,
+          sessionId: sessionRecord.id,
+        },
         JWT_SECRET,
         { expiresIn: '7d' }
       );

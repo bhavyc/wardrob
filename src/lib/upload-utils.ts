@@ -12,7 +12,8 @@ const s3Client = new S3Client({
 
 export async function processAndUploadImage(
   buffer: Buffer,
-  contextId: string
+  contextId: string,
+  hostBaseUrl?: string
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
     // 1. File size check (50KB to 8MB)
@@ -26,10 +27,10 @@ export async function processAndUploadImage(
     const image = sharp(buffer);
     const metadata = await image.metadata();
 
-    // 2. Minimum resolution check (1080px on the shortest edge)
+    // 2. Minimum resolution check (720px on the shortest edge for mobile camera friendliness)
     const minSide = Math.min(metadata.width || 0, metadata.height || 0);
-    if (minSide < 1080) {
-      return { success: false, error: 'Resolution too low. Image must be at least 1080px on the shortest side.' };
+    if (minSide < 720) {
+      return { success: false, error: 'Resolution too low. Image must be at least 720px on the shortest side.' };
     }
 
     // 3. Blur detection using a Laplacian variance proxy
@@ -94,18 +95,44 @@ export async function processAndUploadImage(
       .jpeg({ quality: 80 })
       .toBuffer();
 
-    // 7. Upload to AWS S3 / Lightsail
+    // 7. Upload to AWS S3 / Lightsail or fallback to local static storage
     const bucketName = process.env.AWS_BUCKET_NAME || 'wardrob-uploads';
+    const isAwsConfigured = process.env.AWS_ACCESS_KEY_ID && 
+                            process.env.AWS_ACCESS_KEY_ID !== 'mock_access_key' &&
+                            process.env.AWS_SECRET_ACCESS_KEY &&
+                            process.env.AWS_SECRET_ACCESS_KEY !== 'mock_secret_key';
+
+    let url = '';
     const filename = `${contextId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
 
-    await s3Client.send(new PutObjectCommand({
-      Bucket: bucketName,
-      Key: filename,
-      Body: processedBuffer,
-      ContentType: 'image/jpeg',
-    }));
+    if (isAwsConfigured) {
+      try {
+        await s3Client.send(new PutObjectCommand({
+          Bucket: bucketName,
+          Key: filename,
+          Body: processedBuffer,
+          ContentType: 'image/jpeg',
+        }));
+        url = `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
+      } catch (s3Err) {
+        console.warn('S3 upload failed, falling back to local static storage:', s3Err);
+      }
+    }
 
-    const url = `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
+    if (!url) {
+      // Local dev storage fallback
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const safeContext = contextId.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const localDir = path.join(process.cwd(), 'public', 'uploads', safeContext);
+      await fs.mkdir(localDir, { recursive: true });
+      const localFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+      const localFilePath = path.join(localDir, localFileName);
+      await fs.writeFile(localFilePath, processedBuffer);
+      
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || hostBaseUrl || 'http://127.0.0.1:3000';
+      url = `${appUrl}/uploads/${safeContext}/${localFileName}`;
+    }
 
     // 8. Store hash
     await prisma.duplicatePhotoHash.create({

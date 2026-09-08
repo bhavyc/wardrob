@@ -28,9 +28,23 @@ export class RateLimiter {
 }
 
 export function getClientIp(request: Request): string {
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp && realIp.trim().length > 0) {
+    return realIp.trim();
+  }
+
+  const cfConnectingIp = request.headers.get('cf-connecting-ip');
+  if (cfConnectingIp && cfConnectingIp.trim().length > 0) {
+    return cfConnectingIp.trim();
+  }
+
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
-    return forwardedFor.split(',')[0].trim();
+    const rawIp = forwardedFor.split(',')[0]?.trim();
+    if (rawIp && /^[\da-fA-F.:]+$/.test(rawIp)) {
+      return rawIp;
+    }
   }
-  return 'unknown-ip';
+
+  return '127.0.0.1';
 }

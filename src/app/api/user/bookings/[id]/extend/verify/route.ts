@@ -54,6 +54,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ success: false, error: 'Payment signature verification failed.' }, { status: 400 });
     }
 
+    // Replay Attack Guard: Check if payment ID has already been credited
+    const paymentAlreadyUsed = await prisma.booking.findFirst({
+      where: {
+        razorpayPaymentId: razorpay_payment_id,
+      }
+    });
+
+    if (paymentAlreadyUsed) {
+      return NextResponse.json({ success: false, error: 'This payment transaction has already been credited.' }, { status: 400 });
+    }
+
     // Success! Update the Booking to finalize the extension
     // We add the extension fee to the total rent amount. Security deposit is untouched.
     
@@ -84,11 +95,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
           endDate: newEndDate, // Officially locked
           extensionFee: Number(lockedBooking.extensionFee) + totalExtensionFee,
           totalAmount: Number(lockedBooking.totalAmount) + totalExtensionFee,
-          razorpayOrderId: razorpay_order_id,
-          razorpayPaymentId: razorpay_payment_id,
           pendingExtensionDate: null,
           pendingExtensionOrderId: null,
-          pendingExtensionExpiry: null
+          pendingExtensionExpiry: null,
+          razorpayPaymentId: razorpay_payment_id,
         }
       });
     }, {

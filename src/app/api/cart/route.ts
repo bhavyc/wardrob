@@ -60,11 +60,26 @@ export async function POST(request: Request) {
       );
     }
 
+    if (cart.length > 50) {
+      return NextResponse.json(
+        { success: false, error: 'Cart cannot hold more than 50 items.' },
+        { status: 400 }
+      );
+    }
+
+    const serialized = JSON.stringify(cart);
+    if (serialized.length > 100 * 1024) {
+      return NextResponse.json(
+        { success: false, error: 'Cart data exceeds maximum permissible size.' },
+        { status: 400 }
+      );
+    }
+
     // Save serialized cart to the user record
     await prisma.user.update({
       where: { id: authUser.userId },
       data: {
-        cartState: JSON.stringify(cart),
+        cartState: serialized,
       },
     });
 

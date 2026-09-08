@@ -6,13 +6,13 @@ export async function POST(request: Request) {
   try {
     const authUser = await getAuthUser(request);
     const authHeader = request.headers.get('Authorization');
-    const cronSecret = process.env.CRON_SECRET || 'wardrob_cron_secret_token_12345';
+    const cronSecret = process.env.CRON_SECRET;
     
     let isAuthorized = false;
     
     if (authUser && authUser.role === 'ADMIN') {
       isAuthorized = true;
-    } else if (authHeader === `Bearer ${cronSecret}`) {
+    } else if (cronSecret && authHeader === `Bearer ${cronSecret}`) {
       isAuthorized = true;
     }
 

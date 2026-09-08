@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'User account not found.' },
+        { success: false, error: 'Invalid email/phone or password.' },
         { status: 400 }
       );
     }
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-// Verify password matching
+    // Verify password matching
     let isPasswordCorrect = false;
 
     if (user.passwordHash) {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       }
 
       return NextResponse.json(
-        { success: false, error: 'Incorrect password.' },
+        { success: false, error: 'Invalid email/phone or password.' },
         { status: 400 }
       );
     }
@@ -109,12 +109,23 @@ export async function POST(request: Request) {
       }
     }
 
+    // Create server-side session for revocation tracking
+    const sessionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const sessionRecord = await prisma.session.create({
+      data: {
+        userId: user.id,
+        token: `${user.id}_${Date.now()}_${Math.random().toString(36).substring(2)}`,
+        expiresAt: sessionExpiresAt,
+      }
+    });
+
     // Generate JWT token
     const token = jwt.sign(
       {
         userId: user.id,
         role: user.role,
         phone: user.phone,
+        sessionId: sessionRecord.id,
       },
       JWT_SECRET,
       { expiresIn: '30d' }
@@ -131,6 +142,7 @@ export async function POST(request: Request) {
         role: user.role,
         walletBalance: Number(user.walletBalance),
       },
+      token: token,
     });
 
     response.cookies.set('auth_token', token, {

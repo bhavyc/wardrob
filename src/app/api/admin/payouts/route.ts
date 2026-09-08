@@ -59,10 +59,24 @@ export async function PATCH(request: Request) {
         where: { id: payoutId },
         include: {
           lister: { include: { user: true } },
+          booking: {
+            include: {
+              damageReports: {
+                include: { dispute: true }
+              }
+            }
+          }
         }
       });
 
       if (!payout) throw new Error('Payout not found');
+
+      if (status === 'COMPLETED') {
+        const hasOpenDispute = payout.booking?.damageReports?.some(dr => dr.dispute?.status === 'OPEN');
+        if (hasOpenDispute) {
+          throw new Error('Cannot mark payout as completed while an active dispute is open on this booking.');
+        }
+      }
       
       let finalAmount: number = Number(payout.amount);
       let finalBatchRef = batchRef || undefined;

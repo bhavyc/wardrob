@@ -19,12 +19,15 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    const decryptedListers = listers.map(lister => ({
-      ...lister,
-      aadhaarNumber: lister.aadhaarNumber ? decryptString(lister.aadhaarNumber) : null,
-      panNumber: lister.panNumber ? decryptString(lister.panNumber) : null,
-      bankAccountNo: lister.bankAccountNo ? decryptString(lister.bankAccountNo) : null,
-    }));
+    const decryptedListers = listers.map(lister => {
+      const decryptedAadhaar = lister.aadhaarNumber ? decryptString(lister.aadhaarNumber) : null;
+      return {
+        ...lister,
+        aadhaarNumber: decryptedAadhaar ? `XXXX XXXX ${decryptedAadhaar.slice(-4)}` : null,
+        panNumber: lister.panNumber ? decryptString(lister.panNumber) : null,
+        bankAccountNo: lister.bankAccountNo ? decryptString(lister.bankAccountNo) : null,
+      };
+    });
 
     return NextResponse.json({ success: true, listers: decryptedListers });
   } catch (error: any) {
