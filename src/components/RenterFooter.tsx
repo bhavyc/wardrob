@@ -3,42 +3,86 @@ import BrandLogo from '@/components/BrandLogo';
 import './RenterFooter.css';
 
 export default function RenterFooter() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="ft-minimal-wrap">
-      <div className="ft-minimal-container">
-        {/* Brand & Clean Tagline */}
-        <div className="ft-minimal-brand">
-          <BrandLogo size="md" align="left" />
-          <p className="ft-minimal-tagline">
-            India&apos;s premier peer-to-peer luxury fashion rental.
+    <footer style={{ background: 'var(--bg-warm)', borderTop: '1px solid var(--border)', marginTop: '0' }}>
+      {/* Upper Footer */}
+      <div className="ft-grid">
+        {/* Brand Column */}
+        <div className="ft-brand-col">
+          <div style={{ marginBottom: '16px' }}>
+            <BrandLogo size="md" align="left" />
+          </div>
+          <p style={{
+            fontSize: '14px', lineHeight: 1.8, color: 'var(--text-muted)',
+            maxWidth: '300px', marginBottom: '24px',
+          }}>
+            India&apos;s premier peer-to-peer luxury fashion rental. Connecting heritage artisans with modern celebration.
           </p>
         </div>
 
-        {/* Real Essential Links Only - No Hardcoded Collections */}
-        <nav className="ft-minimal-nav" aria-label="Footer navigation">
-          <Link href="/catalog" className="ft-minimal-link">
-            Explore All Couture
-          </Link>
-          <Link href="/lister/login" className="ft-minimal-link">
-            List Your Outfits
-          </Link>
-          <Link href="/hub/login" className="ft-minimal-link">
-            Central Hub Portal
-          </Link>
-          <Link href="/profile" className="ft-minimal-link">
-            My Wardrobe
-          </Link>
-        </nav>
+        {/* Link Columns */}
+        {[
+          {
+            title: 'Collections',
+            links: [
+              { label: 'Heritage Sarees', href: '/catalog?category=Saree' },
+              { label: 'Bridal Lehengas', href: '/catalog?category=Lehenga' },
+              { label: 'Designer Sherwanis', href: '/catalog?category=Kurta' },
+              { label: 'Artisanal Stoles', href: '/catalog?category=Shawl' },
+            ]
+          },
+          {
+            title: 'Trust & Safety',
+            links: [
+              { label: 'Sanitization Protocol', href: '#' },
+              { label: 'Hub Inspections', href: '#' },
+              { label: 'Deposit Guarantee', href: '#' },
+              { label: 'Eco Packaging', href: '#' },
+            ]
+          },
+          {
+            title: 'For Partners',
+            links: [
+              { label: 'Lend Garments', href: '/lister/login' },
+              { label: 'Hub Operator', href: '#' },
+              { label: 'Corporate', href: '#' },
+            ]
+          },
+          {
+            title: 'Company',
+            links: [
+              { label: 'About Us', href: '#' },
+              { label: 'Careers', href: '#' },
+              { label: 'Contact', href: '#' },
+            ]
+          }
+        ].map((col, i) => (
+          <div key={i}>
+            <h4 style={{
+              fontSize: '11px', fontWeight: 600, letterSpacing: '0.14em',
+              textTransform: 'uppercase', color: 'var(--accent)',
+              marginBottom: '20px',
+            }}>{col.title}</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {col.links.map((link, j) => (
+                <Link key={j} href={link.href} className="hover-gold-underline" style={{
+                  fontSize: '14px', color: 'var(--ink-secondary)', textDecoration: 'none',
+                  transition: 'color 0.3s ease',
+                }}>{link.label}</Link>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Sleek Lower Bar */}
-      <div className="ft-minimal-bottom">
-        <span>© {currentYear} Wardrob Technologies Pvt. Ltd. All rights reserved.</span>
-        <div className="ft-minimal-legal">
-          <a href="#privacy">Privacy</a>
-          <a href="#terms">Terms</a>
+      {/* Lower Bar */}
+      <div className="ft-bottom">
+        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          © {new Date().getFullYear()} Wardrob Technologies Pvt. Ltd.
+        </span>
+        <div style={{ display: 'flex', gap: '24px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</a>
+          <a href="#" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</a>
         </div>
       </div>
     </footer>
