@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { Prisma } from '@/generated/prisma/client';
+import { POST_RETURN_TURNAROUND_DAYS } from '@/lib/availability';
 import Razorpay from 'razorpay';
 
 const razorpay = new Razorpay({
@@ -39,6 +40,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
       // Check for conflicting bookings during the extension period
       // Note: We also consider other users' pending extensions if they haven't expired
+      const newEndWithTurnaround = new Date(newEndDate);
+      newEndWithTurnaround.setDate(newEndWithTurnaround.getDate() + POST_RETURN_TURNAROUND_DAYS);
+
       const conflictingBooking = await tx.booking.findFirst({
         where: {
           listingId: booking.listingId,
@@ -47,12 +51,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
           OR: [
             {
               // Overlaps with an actual booking's locked dates
-              startDate: { lte: newEndDate },
+              startDate: { lte: newEndWithTurnaround },
               endDate: { gte: booking.endDate }
             },
             {
               // Overlaps with someone else's active pending extension
-              startDate: { lte: newEndDate },
+              startDate: { lte: newEndWithTurnaround },
               pendingExtensionDate: { gte: booking.endDate },
               pendingExtensionExpiry: { gt: new Date() }
             }

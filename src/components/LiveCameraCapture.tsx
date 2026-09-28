@@ -6,11 +6,20 @@ type LiveCameraCaptureProps = {
   onCapture: (blob: Blob, base64: string) => void;
   buttonText?: string;
   guideText?: string;
+  multiCapture?: boolean;
+  captureCount?: number;
 };
 
-export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo", guideText = "Align garment inside the frame" }: LiveCameraCaptureProps) {
+export default function LiveCameraCapture({ 
+  onCapture, 
+  buttonText = "Snap Photo", 
+  guideText = "Align garment inside the frame",
+  multiCapture = false,
+  captureCount = 0,
+}: LiveCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isActive, setIsActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -18,9 +27,36 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
   const [capturedPreview, setCapturedPreview] = useState<string>('');
   const [hasTorch, setHasTorch] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [justCaptured, setJustCaptured] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (!multiCapture) {
+        setCapturedPreview(base64);
+      } else {
+        setJustCaptured(true);
+        setTimeout(() => setJustCaptured(false), 1500);
+      }
+      onCapture(file, base64);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   const startCamera = async () => {
     try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        // Plain HTTP IP contexts (insecure context) disable WebRTC getUserMedia.
+        // Fall back directly to the native phone camera input!
+        fileInputRef.current?.click();
+        return;
+      }
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: { ideal: 'environment' }, 
@@ -35,9 +71,8 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
 
       // Check for torch capabilities
       const track = mediaStream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-      // @ts-ignore - TS doesn't perfectly type image capture capabilities yet
-      if (capabilities.torch) {
+      const capabilities: any = track.getCapabilities ? track.getCapabilities() : {};
+      if (capabilities && 'torch' in capabilities && Boolean(capabilities.torch)) {
         setHasTorch(true);
       } else {
         setHasTorch(false);
@@ -48,9 +83,12 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
       setCapturedPreview('');
       setTorchOn(false);
     } catch (err) {
-      console.error('Camera access failed', err);
-      setWarning('Camera not detected. Simulating high-quality studio capture.');
-      setIsActive(true);
+      console.warn('In-browser camera access unavailable, using native phone camera:', err);
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      } else {
+        setWarning('Camera not detected. Please select an image.');
+      }
     }
   };
 
@@ -179,9 +217,14 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
       const base64 = canvas.toDataURL('image/jpeg', 0.9);
       canvas.toBlob((blob) => {
         if (blob) {
-          setCapturedPreview(base64);
+          if (!multiCapture) {
+            setCapturedPreview(base64);
+            stopCamera();
+          } else {
+            setJustCaptured(true);
+            setTimeout(() => setJustCaptured(false), 1500);
+          }
           onCapture(blob, base64);
-          stopCamera();
         }
       }, 'image/jpeg', 0.9);
     }
@@ -189,7 +232,7 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)', width: '100%' }}>
-      {!isActive && !capturedPreview && (
+      {!isActive && (!capturedPreview || multiCapture) && (
         <button
           type="button"
           onClick={startCamera}
@@ -199,7 +242,7 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
             textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
           }}
         >
-          <span>📷</span> {buttonText}
+          <span>📷</span> {multiCapture && captureCount > 0 ? `Snap Next Angle (${captureCount}/3 captured)` : buttonText}
         </button>
       )}
 
@@ -216,6 +259,18 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: '12px' }}>
               Initializing Camera Stream...
+            </div>
+          )}
+
+          {/* Flash Feedback overlay on multi capture */}
+          {justCaptured && (
+            <div style={{
+              position: 'absolute', inset: 0, background: 'rgba(5, 150, 105, 0.4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#FFFFFF', fontWeight: 800, fontSize: '14px', zIndex: 40,
+              pointerEvents: 'none', textTransform: 'uppercase', letterSpacing: '0.05em'
+            }}>
+              ✓ Photo Added! Align Next Angle
             </div>
           )}
 
@@ -261,20 +316,21 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
               onClick={stopCamera}
               style={{ background: '#FFFFFF', border: '1px solid var(--border)', color: 'var(--ink)', padding: '8px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer' }}
             >
-              Cancel
+              Close
             </button>
             <button
               type="button"
               onClick={capturePhoto}
-              style={{ background: 'var(--ink)', border: 'none', color: '#FFFFFF', padding: '8px 24px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer' }}
+              style={{ background: 'var(--ink)', border: 'none', color: '#FFFFFF', padding: '8px 24px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              Capture
+              <span>📸</span>
+              <span>{multiCapture ? (captureCount >= 2 ? 'Capture (Min Met)' : `Capture (${captureCount + 1}/3)`) : 'Capture'}</span>
             </button>
           </div>
         </div>
       )}
 
-      {capturedPreview && (
+      {!multiCapture && capturedPreview && (
         <div style={{ position: 'relative', width: '100%', border: '1px solid var(--border)' }}>
           <img src={capturedPreview} alt="Captured Preview" style={{ width: '100%', aspectRatio: '4/3', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', bottom: '12px', right: '12px' }}>
@@ -296,6 +352,14 @@ export default function LiveCameraCapture({ onCapture, buttonText = "Snap Photo"
       )}
 
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
     </div>
   );
 }

@@ -431,15 +431,6 @@ export default function Storefront() {
                           {/* — Image — */}
                           <div className="prod-img-wrap" style={{ position: 'relative' }}>
                             <span className="prod-badge">✨ Verified Atelier</span>
-                            <button
-                              className="prod-wishlist"
-                              aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
-                              onClick={(e) => toggleLike(e, product.id)}
-                            >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill={liked ? '#D4567A' : 'none'} stroke={liked ? '#D4567A' : '#1E1E2D'} strokeWidth="2.2">
-                                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
-                              </svg>
-                            </button>
                             <img
                               src={displayImg}
                               alt={product.title}

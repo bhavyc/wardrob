@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 
+import { decryptString } from '@/lib/encryption';
+
 export async function GET(request: Request) {
   try {
     const user = await getAuthUser(request);
@@ -33,7 +35,26 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ success: true, payouts });
+    const decryptedPayouts = payouts.map((p) => {
+      let decryptedBank = p.lister.bankAccountNo;
+      try {
+        if (p.lister.bankAccountNo) {
+          decryptedBank = decryptString(p.lister.bankAccountNo);
+        }
+      } catch (e) {
+        // Fallback to raw if not encrypted
+      }
+
+      return {
+        ...p,
+        lister: {
+          ...p.lister,
+          bankAccountNo: decryptedBank,
+        },
+      };
+    });
+
+    return NextResponse.json({ success: true, payouts: decryptedPayouts });
   } catch (error: any) {
     console.error('Admin Payouts GET Error:', error);
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });

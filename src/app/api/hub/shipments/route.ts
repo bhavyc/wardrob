@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { sendListerPickupScheduledNotification } from '@/lib/whatsapp';
 
 
 export async function GET(request: Request) {
@@ -17,8 +18,22 @@ export async function GET(request: Request) {
             id: true,
             startDate: true,
             endDate: true,
+            status: true,
+            shippingAddress: true,
+            city: true,
+            state: true,
+            pincode: true,
+            contactPhone: true,
+            contactName: true,
             listing: {
-              select: { title: true, lister: { select: { user: { select: { name: true, phone: true } } } } }
+              select: {
+                title: true,
+                category: true,
+                size: true,
+                sku: true,
+                baselineImages: true,
+                lister: { select: { user: { select: { name: true, phone: true } } } }
+              }
             },
             renter: {
               select: { name: true, phone: true }
@@ -63,7 +78,19 @@ export async function PATCH(request: Request) {
 
     const existingShipment = await prisma.shipment.findUnique({
       where: { id: shipmentId },
-      include: { booking: true }
+      include: {
+        booking: {
+          include: {
+            listing: {
+              include: {
+                lister: {
+                  include: { user: true }
+                }
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!existingShipment) {
@@ -75,11 +102,29 @@ export async function PATCH(request: Request) {
       data: updateData,
     });
 
+    // Notify Lister via WhatsApp when Hub staff schedules/assigns courier pickup (Leg 1)
+    if (existingShipment.leg === 'LISTER_TO_HUB') {
+      const lister = existingShipment.booking.listing?.lister;
+      const listerPhone = lister?.user?.phone;
+      
+      // Trigger when courier/tracking is assigned or status indicates pickup coordination
+      if (listerPhone && (courierName || trackingNumber || status === 'PENDING' || status === 'IN_TRANSIT')) {
+        sendListerPickupScheduledNotification({
+          phone: listerPhone,
+          listerName: lister.shopName || lister.user.name || 'Boutique Partner',
+          bookingId: existingShipment.bookingId,
+          listingTitle: existingShipment.booking.listing.title,
+          courierName: courierName || existingShipment.courierName || 'Wardrob Express Logistics',
+          trackingNumber: trackingNumber || existingShipment.trackingNumber,
+        }).catch(err => console.error('[WHATSAPP META] Failed to send Lister pickup notification:', err));
+      }
+    }
+
     // Synchronize Booking and Listing statuses
     const leg = existingShipment.leg;
     const bookingId = existingShipment.bookingId;
     const listingId = existingShipment.booking.listingId;
-    
+
     let newBookingStatus;
     let newListingStatus;
 
@@ -105,8 +150,8 @@ export async function PATCH(request: Request) {
         where: { id: bookingId },
         data: {
           ...(newBookingStatus && { status: newBookingStatus as any }),
-          ...(newListingStatus && { 
-            listing: { update: { status: newListingStatus as any } } 
+          ...(newListingStatus && {
+            listing: { update: { status: newListingStatus as any } }
           })
         }
       });

@@ -149,9 +149,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ),
     },
     {
+      href: '/admin/refunds',
+      label: 'Renter Refunds',
+      sublabel: 'Deposit returns (Razorpay/Wallet)',
+      badge: 'Review',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M3 10h18M7 15h1m4 0h1m4 0h1M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+        </svg>
+      ),
+    },
+    {
       href: '/admin/payouts',
       label: 'Lister Payouts',
-      sublabel: 'Manual settlement & transfers',
+      sublabel: 'Rental earnings & damages (Bank/UPI)',
       badge: 'Action',
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

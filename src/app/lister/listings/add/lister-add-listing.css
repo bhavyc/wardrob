@@ -15,12 +15,26 @@
   animation: pageFadeIn 0.4s ease both;
   padding: 20px;
 }
+@media (max-width: 600px) {
+  .add-page-wrap {
+    padding: 12px 6px;
+  }
+}
 
 .add-page-header {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 28px;
+}
+@media (max-width: 600px) {
+  .add-page-header {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .add-title {
+    font-size: 24px !important;
+  }
 }
 .back-link {
   width: 36px;
@@ -33,6 +47,7 @@
   color: #74897C;
   text-decoration: none;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 .back-link:hover {
   border-color: #2C5E43;
@@ -56,7 +71,8 @@
 
 @media (max-width: 600px) {
   .form-card {
-    padding: 24px 16px;
+    padding: 22px 14px;
+    border-radius: 16px;
   }
 }
 
@@ -147,6 +163,12 @@
   gap: 16px;
   margin-top: 20px;
 }
+@media (max-width: 480px) {
+  .images-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
 .image-preview-card {
   position: relative;
   aspect-ratio: 4/5;
@@ -199,6 +221,13 @@
   color: #276749;
   font-size: 13px;
 }
+@media (max-width: 600px) {
+  .trust-badge {
+    font-size: 11.5px;
+    padding: 12px;
+    gap: 10px;
+  }
+}
 
 .submit-section {
   border-top: 1px solid rgba(44, 94, 67, 0.08);
@@ -206,6 +235,16 @@
   display: flex;
   justify-content: flex-end;
   gap: 14px;
+}
+@media (max-width: 600px) {
+  .submit-section {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .cancel-btn,
+  .save-btn {
+    width: 100%;
+  }
 }
 .cancel-btn {
   height: 48px;

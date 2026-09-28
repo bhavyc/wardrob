@@ -25,7 +25,7 @@ export default function ProvenanceTimeline() {
 
   const steps = [
     { title: 'Verified by Hub', desc: 'Fabric authenticity & structural assessment complete.' },
-    { title: 'Ozone Sanitized', desc: 'Dry-cleaned and vacuum-sealed at 60°C.' },
+    { title: 'Ozone Sanitized', desc: 'Atelier dry-cleaned & cold-ozone sanitized.' },
     { title: 'Ready for You', desc: 'Securely dispatched in custom garment preservation box.' }
   ];
 

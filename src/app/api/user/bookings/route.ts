@@ -15,6 +15,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
+    // Strict 1-role enforcement: this endpoint is for Renter booking history only.
+    if (user.role !== 'RENTER' && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, error: 'This endpoint is for Renter accounts only.' },
+        { status: 403 }
+      );
+    }
+
     const bookings = await prisma.booking.findMany({
       where: {
         renterId: user.userId,
@@ -33,6 +41,7 @@ export async function GET(request: Request) {
         },
         shipments: true,
         damageReports: { include: { dispute: true } },
+        refund: true,
       },
       orderBy: {
         createdAt: 'desc',

@@ -34,8 +34,24 @@
   z-index: 10;
 }
 @media (max-width: 480px) {
+  .reg-root {
+    padding: 20px 12px;
+  }
   .reg-card {
-    padding: 36px 20px;
+    padding: 28px 16px;
+  }
+  .reg-step-label:not(.active) {
+    display: none;
+  }
+  .reg-step-line {
+    margin: 0 6px;
+  }
+  .reg-btn-row {
+    flex-direction: column-reverse;
+  }
+  .reg-back-btn,
+  .reg-next-btn {
+    width: 100%;
   }
 }
 

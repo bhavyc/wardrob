@@ -435,10 +435,16 @@
 
 @media (max-width: 480px) {
   .lister-auth-wrapper {
-    padding: 70px 16px 30px;
+    padding: 68px 14px 24px;
+  }
+  .lister-nav-back {
+    top: 16px;
+    left: 14px;
+    padding: 6px 12px;
+    font-size: 11px;
   }
   .lister-form-card {
-    padding: 34px 22px;
+    padding: 28px 18px;
     border-radius: 16px;
   }
   .lister-title {

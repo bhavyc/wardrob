@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { sendListerPickupScheduledNotification } from '@/lib/whatsapp';
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
-        listing: { include: { lister: true } },
+        listing: { include: { lister: { include: { user: true } } } },
       },
     });
 
@@ -60,6 +61,19 @@ export async function POST(request: Request) {
         where: { id: bookingId },
         data: { status: 'AT_HUB_PRE' }
       });
+    }
+
+    // Send WhatsApp notification to Lister
+    const lister = booking.listing?.lister;
+    if (lister?.user?.phone) {
+      sendListerPickupScheduledNotification({
+        phone: lister.user.phone,
+        listerName: lister.shopName || lister.user.name || 'Boutique Partner',
+        bookingId: booking.id,
+        listingTitle: booking.listing.title,
+        courierName: shipment.courierName || 'Wardrob Express Logistics',
+        trackingNumber: shipment.trackingNumber || undefined,
+      }).catch(err => console.error('[WHATSAPP META] Lister pickup trigger notification failed:', err));
     }
 
     return NextResponse.json({ 

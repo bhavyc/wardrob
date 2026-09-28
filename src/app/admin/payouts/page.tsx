@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-
+import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import Pagination from '@/components/Pagination';
+import './admin-payouts.css';
 
 interface PayoutItem {
   id: string;
@@ -24,11 +25,13 @@ interface PayoutItem {
       walletBalance: string | number;
     };
   };
+  walletBalanceIncluded?: string | number;
   booking: {
     id: string;
     startDate: string;
     endDate: string;
     rentAmount: string;
+    extensionFee?: string | number;
     listing: {
       title: string;
       category: string;
@@ -40,6 +43,8 @@ interface PayoutItem {
     };
     damageReports?: {
       id: string;
+      inspectionType?: string;
+      deductionAmount?: string | number;
       dispute?: {
         id: string;
         status: string;
@@ -52,10 +57,12 @@ export default function AdminPayoutsPage() {
   const [payouts, setPayouts] = useState<PayoutItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeModal, setActiveModal] = useState<PayoutItem | null>(null);
   const [batchRefInput, setBatchRefInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
@@ -103,13 +110,55 @@ export default function AdminPayoutsPage() {
       } else {
         setToast({ message: data.error || 'Failed to update payout', type: 'error' });
       }
-    } catch (err) {
+    } catch {
       setToast({ message: 'Network error occurred', type: 'error' });
     } finally {
       setSubmitting(false);
       setTimeout(() => setToast(null), 4000);
     }
   };
+
+  const copyToClipboard = (text: string, id: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const getPayoutBreakdown = (p: PayoutItem) => {
+    const rentAmt = Number(p.booking.rentAmount || 0);
+    const comm = Number(p.commissionPaid || 0);
+    const extFee = Number(p.booking.extensionFee || 0);
+    const extShare = Math.round(extFee * 0.50);
+    const listerBase = Math.max(0, rentAmt - (comm - extShare));
+    const walletInc = Number(p.walletBalanceIncluded || 0);
+    let damageComp = (p.booking.damageReports || [])
+      .filter(dr => dr.inspectionType === 'POST_RETURN' || Number(dr.deductionAmount) > 0)
+      .reduce((sum, dr) => sum + Number(dr.deductionAmount || 0), 0);
+    if (damageComp === 0 && Number(p.amount) > (listerBase + extShare + walletInc)) {
+      damageComp = Number(p.amount) - (listerBase + extShare + walletInc);
+    }
+    const isOnHold = p.status === 'PENDING' && p.booking.damageReports?.some(dr => dr.dispute?.status === 'OPEN');
+    const clubbedWallet = p.status === 'PENDING' ? Number(p.lister.user.walletBalance || 0) : walletInc;
+    const totalRequired = Number(p.amount) + (p.status === 'PENDING' ? clubbedWallet : 0);
+
+    return {
+      rentAmt,
+      comm,
+      extFee,
+      extShare,
+      listerBase,
+      walletInc,
+      damageComp,
+      isOnHold,
+      clubbedWallet,
+      totalRequired,
+      netPayable: Number(p.amount),
+    };
+  };
+
+  const pendingCount = payouts.filter((p) => p.status === 'PENDING').length;
+  const completedCount = payouts.filter((p) => p.status === 'COMPLETED').length;
 
   const pendingTotal = payouts
     .filter((p) => p.status === 'PENDING')
@@ -119,8 +168,29 @@ export default function AdminPayoutsPage() {
     .filter((p) => p.status === 'COMPLETED')
     .reduce((sum, p) => sum + Number(p.amount), 0);
 
+  const filteredPayouts = useMemo(() => {
+    let list = payouts;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((p) =>
+        p.lister.user.name.toLowerCase().includes(q) ||
+        (p.lister.shopName && p.lister.shopName.toLowerCase().includes(q)) ||
+        (p.lister.user.phone && p.lister.user.phone.includes(q)) ||
+        (p.lister.bankAccountNo && p.lister.bankAccountNo.includes(q)) ||
+        p.booking.id.toLowerCase().includes(q) ||
+        p.booking.listing.title.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [payouts, searchQuery]);
+
+  const paginatedPayouts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredPayouts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPayouts, currentPage]);
+
   return (
-    <div style={{ paddingBottom: 40 }}>
+    <div className="adm-payouts-page">
       {/* Toast */}
       {toast && (
         <div
@@ -133,275 +203,482 @@ export default function AdminPayoutsPage() {
             color: '#fff',
             padding: '12px 20px',
             borderRadius: 8,
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 10px 20px rgba(0, 0, 0, 0.15)',
             fontWeight: 600,
             fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
+          <span>{toast.type === 'success' ? '✓' : '⚠️'}</span>
           {toast.message}
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      {/* Entity Separation Switcher Tabs */}
+      <div className="adm-entity-nav-tabs">
+        <Link href="/admin/refunds" className="adm-entity-tab">
+          <span className="adm-entity-tab-icon">🧑‍💼</span>
+          <div className="adm-entity-tab-info">
+            <span className="adm-entity-tab-title">Renter Security Refunds</span>
+            <span className="adm-entity-tab-sub">Customer security deposit returns (Razorpay / Wallet)</span>
+          </div>
+          <span className="adm-entity-tab-tag renter">Switch to Renter ↗</span>
+        </Link>
+        <Link href="/admin/payouts" className="adm-entity-tab active">
+          <span className="adm-entity-tab-icon">👗</span>
+          <div className="adm-entity-tab-info">
+            <span className="adm-entity-tab-title">Lister Rental Payouts</span>
+            <span className="adm-entity-tab-sub">Owner rental earnings & damage compensation (Bank / UPI)</span>
+          </div>
+          <span className="adm-entity-tab-tag lister">Lister Desk (Active)</span>
+        </Link>
+      </div>
+
+      {/* Desk Clarification Banner */}
+      <div className="adm-entity-desk-banner lister">
+        <span style={{ fontSize: '18px' }}>ℹ️</span>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#0F172A', margin: 0 }}>
-            Lister Payouts & Settlement
+          <strong>Lister Payout Desk:</strong> Yeh desk sirf garment owners (Listers) ko unka <strong>Rent Share</strong> aur <strong>Damage Compensation</strong> transfer karne ke liye hai (Bank/UPI manual transfer). Renters ki security deposit wapas return karne ke liye upar <strong>Renter Security Refunds</strong> tab par click karein.
+        </div>
+      </div>
+
+      {/* Header */}
+      <div className="adm-payouts-header">
+        <div className="adm-payouts-title-group">
+          <h1>
+            <span>Lister Payouts & Settlement</span>
           </h1>
-          <p style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+          <p>
             Manual settlement queue: Transfer net rent to lister via Bank/UPI and mark as complete.
           </p>
         </div>
         <button
           onClick={fetchPayouts}
-          style={{
-            background: '#fff',
-            border: '1px solid #CBD5E1',
-            borderRadius: 6,
-            padding: '8px 14px',
-            fontSize: 13,
-            fontWeight: 600,
-            color: '#334155',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
+          className="adm-refresh-btn"
         >
-          🔄 Refresh
+          <span style={{ display: 'inline-block', transform: loading ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>🔄</span>
+          <span>Refresh Data</span>
         </button>
       </div>
 
       {/* Metric Cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: 20,
-          marginBottom: 32,
-        }}
-      >
-        <div style={{ 
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
-          padding: 24, 
-          borderRadius: 16, 
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, background: 'radial-gradient(circle, rgba(217,119,6,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: 20 }}>⏳</span>
-            <span style={{ fontSize: 13, color: '#64748B', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              Pending Settlement
+      <div className="adm-metrics-grid">
+        <div className="adm-metric-card pending">
+          <div className="adm-metric-top">
+            <span className="adm-metric-label">
+              <span>⏳</span> Pending Settlement
             </span>
+            <div className="adm-metric-icon-badge">₹</div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#0F172A', letterSpacing: '-1px' }}>
+          <div className="adm-metric-value">
             ₹{pendingTotal.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 8, fontWeight: 500 }}>
-            <strong style={{ color: '#D97706' }}>{payouts.filter((p) => p.status === 'PENDING').length} payouts</strong> awaiting manual transfer
+          <div className="adm-metric-footer">
+            <strong style={{ color: '#D97706' }}>{pendingCount} payouts</strong> awaiting manual transfer
           </div>
         </div>
 
-        <div style={{ 
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', 
-          padding: 24, 
-          borderRadius: 16, 
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, background: 'radial-gradient(circle, rgba(5,150,105,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: 20 }}>✅</span>
-            <span style={{ fontSize: 13, color: '#64748B', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-              Completed Payouts
+        <div className="adm-metric-card completed">
+          <div className="adm-metric-top">
+            <span className="adm-metric-label">
+              <span>✅</span> Completed Payouts
             </span>
+            <div className="adm-metric-icon-badge">✓</div>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#0F172A', letterSpacing: '-1px' }}>
+          <div className="adm-metric-value">
             ₹{completedTotal.toLocaleString('en-IN')}
           </div>
-          <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 8, fontWeight: 500 }}>
-            <strong style={{ color: '#059669' }}>{payouts.filter((p) => p.status === 'COMPLETED').length} settled</strong> to listers
+          <div className="adm-metric-footer">
+            <strong style={{ color: '#059669' }}>{completedCount} settled</strong> to listers
+          </div>
+        </div>
+
+        <div className="adm-metric-card total">
+          <div className="adm-metric-top">
+            <span className="adm-metric-label">
+              <span>💼</span> Total Settled Volume
+            </span>
+            <div className="adm-metric-icon-badge">∑</div>
+          </div>
+          <div className="adm-metric-value">
+            ₹{(pendingTotal + completedTotal).toLocaleString('en-IN')}
+          </div>
+          <div className="adm-metric-footer">
+            <span>{payouts.length} total transactions logged</span>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-        {(['ALL', 'PENDING', 'COMPLETED'] as const).map((f) => (
+      {/* Control Bar: Filter Tabs & Search */}
+      <div className="adm-control-bar">
+        <div className="adm-filter-tabs">
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 24,
-              fontSize: 13,
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              background: filter === f ? 'linear-gradient(135deg, #0F172A 0%, #334155 100%)' : '#F1F5F9',
-              color: filter === f ? '#FFF' : '#64748B',
-              boxShadow: filter === f ? '0 4px 12px rgba(15, 23, 42, 0.15)' : 'none',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              transform: filter === f ? 'translateY(-1px)' : 'none',
-            }}
+            onClick={() => { setFilter('ALL'); setCurrentPage(1); }}
+            className={`adm-tab-pill ${filter === 'ALL' ? 'active' : ''}`}
           >
-            {f === 'ALL' ? 'All Payouts' : f === 'PENDING' ? '⏳ Pending Manual Action' : '✅ Completed'}
+            All Payouts
+            <span className="adm-tab-pill-badge">{payouts.length}</span>
           </button>
-        ))}
+          <button
+            onClick={() => { setFilter('PENDING'); setCurrentPage(1); }}
+            className={`adm-tab-pill ${filter === 'PENDING' ? 'active' : ''}`}
+          >
+            ⏳ Pending Manual Action
+            <span className="adm-tab-pill-badge">{pendingCount}</span>
+          </button>
+          <button
+            onClick={() => { setFilter('COMPLETED'); setCurrentPage(1); }}
+            className={`adm-tab-pill ${filter === 'COMPLETED' ? 'active' : ''}`}
+          >
+            ✅ Completed
+            <span className="adm-tab-pill-badge">{completedCount}</span>
+          </button>
+        </div>
+
+        <div className="adm-search-input-wrap">
+          <span className="adm-search-icon">🔍</span>
+          <input
+            type="text"
+            className="adm-search-input"
+            placeholder="Search lister, phone, booking..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
       </div>
 
-      {/* Table */}
-      <div
-        style={{
-          background: '#FFF',
-          borderRadius: 16,
-          border: '1px solid #E2E8F0',
-          overflow: 'hidden',
-          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025)',
-        }}
-      >
+      {/* Main Content Container: Desktop Table & Mobile Cards */}
+      <div className="adm-table-card">
         {loading ? (
           <div style={{ padding: 60, textAlign: 'center', color: '#64748B', fontSize: 14, fontWeight: 500 }}>
-            <div className="mini-spin" style={{ display: 'inline-block', marginRight: 12, border: '3px solid #E2E8F0', borderTopColor: '#0F172A' }} />
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                border: '3px solid #E2E8F0',
+                borderTopColor: '#0F172A',
+                borderRadius: '50%',
+                display: 'inline-block',
+                animation: 'spin 0.8s linear infinite',
+                marginRight: 10,
+                verticalAlign: 'middle',
+              }}
+            />
             Loading payouts...
           </div>
-        ) : payouts.length === 0 ? (
-          <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8', fontSize: 15, fontWeight: 500 }}>No payouts found in this view.</div>
+        ) : filteredPayouts.length === 0 ? (
+          <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8', fontSize: 15, fontWeight: 500 }}>
+            No payouts found {searchQuery ? 'matching your search' : 'in this view'}.
+          </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
-              <thead>
-                <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: 11 }}>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Lister Details</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Bank Account / IFSC</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Rental Item</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Gross Rent</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Commission</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Net Payable</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700 }}>Status</th>
-                  <th style={{ padding: '16px 24px', fontWeight: 700, textAlign: 'right' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payouts
-                  .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-                  .map((p) => {
-                  const isOnHold = p.status === 'PENDING' && p.booking.damageReports?.some(dr => dr.dispute?.status === 'OPEN');
-                  return (
-                    <tr
-                      key={p.id}
-                      style={{
-                        borderBottom: '1px solid #F1F5F9',
-                        transition: 'background 0.1s',
-                        background: isOnHold ? '#FFF5F5' : 'transparent',
-                        borderLeft: isOnHold ? '4px solid #EF4444' : 'none'
-                      }}
-                    >
-                    <td style={{ padding: '16px 20px' }}>
-                      <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>
-                        {p.lister.user.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-                        {p.lister.shopName ? `Shop: ${p.lister.shopName}` : p.lister.user.email}
-                      </div>
-                      {p.lister.user.phone && (
-                        <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>📞 {p.lister.user.phone}</div>
-                      )}
-                    </td>
-
-                    <td style={{ padding: '16px 20px' }}>
-                      {p.lister.bankAccountNo ? (
-                        <div>
-                          <div style={{ fontWeight: 600, color: '#0F172A', fontSize: 13 }}>
-                            A/C: {p.lister.bankAccountNo}
+          <>
+            {/* DESKTOP TABLE VIEW (> 960px) */}
+            <div className="adm-desktop-table-container">
+              <table className="adm-payouts-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '18%' }}>Lister Details</th>
+                    <th style={{ width: '18%' }}>Bank Account / IFSC</th>
+                    <th style={{ width: '18%' }}>Rental Item</th>
+                    <th style={{ width: '10%' }}>Gross Rent</th>
+                    <th style={{ width: '10%' }}>Commission</th>
+                    <th style={{ width: '14%' }}>Net Payable</th>
+                    <th style={{ width: '12%' }}>Status</th>
+                    <th style={{ width: '10%', textAlign: 'right' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedPayouts.map((p) => {
+                    const b = getPayoutBreakdown(p);
+                    return (
+                      <tr key={p.id} className={b.isOnHold ? 'on-hold' : ''}>
+                        {/* Lister Details */}
+                        <td className="adm-lister-cell">
+                          <div className="adm-lister-name">{p.lister.user.name}</div>
+                          <div className="adm-lister-shop">
+                            {p.lister.shopName ? `Shop: ${p.lister.shopName}` : p.lister.user.email}
                           </div>
-                          <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-                            IFSC: {p.lister.bankIfsc}
-                          </div>
-                          {p.lister.panNumber && (
-                            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>PAN: {p.lister.panNumber}</div>
-                          )}
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: 12, color: '#B91C1C', fontWeight: 600, background: '#FEE2E2', padding: '4px 8px', borderRadius: 4 }}>
-                          ⚠️ Bank details missing
-                        </span>
-                      )}
-                    </td>
-
-                    <td style={{ padding: '16px 20px', maxWidth: 220 }}>
-                      <div style={{ fontWeight: 600, color: '#1E293B', fontSize: 13, lineHeight: 1.4 }}>
-                        {p.booking.listing.title}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>
-                        ID: {p.booking.id.slice(0, 8)}...
-                      </div>
-                    </td>
-
-                    <td style={{ padding: '16px 20px', color: '#475569', fontWeight: 500, fontSize: 14 }}>
-                      ₹{Number(p.booking.rentAmount).toLocaleString('en-IN')}
-                    </td>
-
-                    <td style={{ padding: '16px 20px', color: '#EF4444', fontWeight: 500, fontSize: 14 }}>
-                      -₹{Number(p.commissionPaid).toLocaleString('en-IN')}
-                    </td>
-
-                    <td style={{ padding: '16px 20px' }}>
-                      <span style={{ fontWeight: 700, color: '#059669', fontSize: 15 }}>
-                        ₹{Number(p.amount).toLocaleString('en-IN')}
-                      </span>
-                    </td>
-
-                    <td style={{ padding: '16px 20px' }}>
-                      {p.status === 'PENDING' ? (
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            background: isOnHold ? '#FEE2E2' : '#FEF3C7',
-                            color: isOnHold ? '#991B1B' : '#92400E',
-                            padding: '4px 10px',
-                            borderRadius: 12,
-                            fontSize: 11,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {isOnHold ? 'ON HOLD' : 'PENDING'}
-                        </span>
-                      ) : (
-                        <div>
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              background: '#D1FAE5',
-                              color: '#065F46',
-                              padding: '4px 10px',
-                              borderRadius: 12,
-                              fontSize: 11,
-                              fontWeight: 700,
-                            }}
-                          >
-                            ✅ PAID
-                          </span>
-                          {p.batchRef && (
-                            <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>
-                              Ref: {p.batchRef}
+                          {p.lister.user.phone && (
+                            <div className="adm-lister-phone">
+                              <span>📞 {p.lister.user.phone}</span>
+                              <button
+                                className="adm-copy-btn"
+                                onClick={() => copyToClipboard(p.lister.user.phone || '', `ph-${p.id}`)}
+                                title="Copy Phone / UPI"
+                              >
+                                {copiedId === `ph-${p.id}` ? '✓' : '⧉'}
+                              </button>
                             </div>
                           )}
-                        </div>
-                      )}
-                    </td>
+                        </td>
 
-                    <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                        {/* Bank Account / IFSC */}
+                        <td>
+                          {p.lister.bankAccountNo ? (
+                            <div className="adm-bank-box">
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                                <div className="adm-bank-ac">A/C: {p.lister.bankAccountNo}</div>
+                                <button
+                                  className="adm-copy-btn"
+                                  onClick={() => copyToClipboard(p.lister.bankAccountNo || '', `ac-${p.id}`)}
+                                  title="Copy Account Number"
+                                >
+                                  {copiedId === `ac-${p.id}` ? '✓' : '⧉'}
+                                </button>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginTop: 2 }}>
+                                <div className="adm-bank-ifsc">IFSC: {p.lister.bankIfsc}</div>
+                                <button
+                                  className="adm-copy-btn"
+                                  onClick={() => copyToClipboard(p.lister.bankIfsc || '', `ifsc-${p.id}`)}
+                                  title="Copy IFSC"
+                                >
+                                  {copiedId === `ifsc-${p.id}` ? '✓' : '⧉'}
+                                </button>
+                              </div>
+                              {p.lister.panNumber && (
+                                <div className="adm-bank-pan">PAN: {p.lister.panNumber}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="adm-bank-missing">
+                              ⚠️ Bank details missing
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Rental Item */}
+                        <td className="adm-garment-cell">
+                          <div className="adm-garment-title">{p.booking.listing.title}</div>
+                          <div className="adm-booking-id-pill">
+                            ID: {p.booking.id.slice(0, 8)}...
+                          </div>
+                        </td>
+
+                        {/* Gross Rent */}
+                        <td>
+                          <span className="adm-gross-val">
+                            ₹{b.rentAmt.toLocaleString('en-IN')}
+                          </span>
+                        </td>
+
+                        {/* Commission */}
+                        <td>
+                          <span className="adm-comm-val">
+                            -₹{b.comm.toLocaleString('en-IN')}
+                          </span>
+                        </td>
+
+                        {/* Net Payable */}
+                        <td>
+                          <div className="adm-net-val">
+                            ₹{b.netPayable.toLocaleString('en-IN')}
+                          </div>
+                          {b.damageComp > 0 && (
+                            <div className="adm-comp-badge">
+                              🛡️ +₹{b.damageComp.toLocaleString('en-IN')} Damage
+                            </div>
+                          )}
+                          {b.extShare > 0 && (
+                            <div className="adm-ext-badge">
+                              ⏱️ +₹{b.extShare.toLocaleString('en-IN')} Ext.
+                            </div>
+                          )}
+                          {b.walletInc > 0 && (
+                            <div className="adm-wallet-badge">
+                              👛 +₹{b.walletInc.toLocaleString('en-IN')} Wallet
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td>
+                          {p.status === 'PENDING' ? (
+                            <span className={`adm-status-badge ${b.isOnHold ? 'on-hold' : 'pending'}`}>
+                              {b.isOnHold ? '⚠️ ON HOLD' : '⏳ PENDING'}
+                            </span>
+                          ) : (
+                            <div>
+                              <span className="adm-status-badge paid">
+                                ✅ PAID
+                              </span>
+                              {p.batchRef && (
+                                <div className="adm-batch-ref">
+                                  Ref: {p.batchRef}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Action */}
+                        <td style={{ textAlign: 'right' }}>
+                          {p.status === 'PENDING' ? (
+                            b.isOnHold ? (
+                              <div className="adm-hold-alert-tag">
+                                <span style={{ fontSize: 11, fontWeight: 700, color: '#991B1B' }}>DISPUTE ACTIVE</span>
+                                <span style={{ fontSize: 10, color: '#DC2626' }}>Inspection review</span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setActiveModal(p);
+                                  setBatchRefInput('');
+                                }}
+                                className="adm-action-btn"
+                              >
+                                Mark as Paid
+                              </button>
+                            )
+                          ) : (
+                            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+                              ✓ Settled
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* MOBILE & TABLET CARDS VIEW (<= 960px) */}
+            <div className="adm-mobile-cards-view">
+              {paginatedPayouts.map((p) => {
+                const b = getPayoutBreakdown(p);
+                return (
+                  <div
+                    key={`mob-${p.id}`}
+                    className={`adm-payout-card-mobile ${b.isOnHold ? 'on-hold' : ''}`}
+                  >
+                    {/* Header: Lister & Status */}
+                    <div className="adm-mob-header">
+                      <div>
+                        <div className="adm-mob-lister-title">{p.lister.user.name}</div>
+                        <div className="adm-mob-shop-tag">
+                          {p.lister.shopName ? `Shop: ${p.lister.shopName}` : p.lister.user.email}
+                        </div>
+                        {p.lister.user.phone && (
+                          <div className="adm-mob-phone-tag">
+                            <span>📞 {p.lister.user.phone}</span>
+                            <button
+                              className="adm-copy-btn"
+                              onClick={() => copyToClipboard(p.lister.user.phone || '', `mob-ph-${p.id}`)}
+                            >
+                              {copiedId === `mob-ph-${p.id}` ? '✓ Copied' : '⧉ Copy'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        {p.status === 'PENDING' ? (
+                          <span className={`adm-status-badge ${b.isOnHold ? 'on-hold' : 'pending'}`}>
+                            {b.isOnHold ? '⚠️ ON HOLD' : '⏳ PENDING'}
+                          </span>
+                        ) : (
+                          <span className="adm-status-badge paid">
+                            ✅ PAID
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Garment Title & Booking ID */}
+                    <div className="adm-mob-garment-box">
+                      <div className="adm-mob-garment-title">{p.booking.listing.title}</div>
+                      <div className="adm-mob-booking-id">#{p.booking.id.slice(0, 8)}</div>
+                    </div>
+
+                    {/* Bank / UPI Box */}
+                    {p.lister.bankAccountNo ? (
+                      <div className="adm-mob-bank-box">
+                        <div className="adm-mob-bank-row">
+                          <span className="adm-mob-bank-lbl">Account No:</span>
+                          <span className="adm-mob-bank-val">
+                            {p.lister.bankAccountNo}
+                            <button
+                              className="adm-copy-btn"
+                              onClick={() => copyToClipboard(p.lister.bankAccountNo || '', `mob-ac-${p.id}`)}
+                            >
+                              {copiedId === `mob-ac-${p.id}` ? '✓' : '⧉'}
+                            </button>
+                          </span>
+                        </div>
+                        <div className="adm-mob-bank-row">
+                          <span className="adm-mob-bank-lbl">IFSC Code:</span>
+                          <span className="adm-mob-bank-val">
+                            {p.lister.bankIfsc}
+                            <button
+                              className="adm-copy-btn"
+                              onClick={() => copyToClipboard(p.lister.bankIfsc || '', `mob-ifsc-${p.id}`)}
+                            >
+                              {copiedId === `mob-ifsc-${p.id}` ? '✓' : '⧉'}
+                            </button>
+                          </span>
+                        </div>
+                        {p.lister.panNumber && (
+                          <div className="adm-mob-bank-row">
+                            <span className="adm-mob-bank-lbl">PAN:</span>
+                            <span className="adm-mob-bank-val">{p.lister.panNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="adm-bank-missing" style={{ width: '100%', boxSizing: 'border-box', justifyContent: 'center' }}>
+                        ⚠️ Bank details missing — request details before payout
+                      </div>
+                    )}
+
+                    {/* 3-Column Financial Breakdown */}
+                    <div className="adm-mob-fin-grid">
+                      <div className="adm-mob-fin-item">
+                        <span className="adm-mob-fin-lbl">Gross Rent</span>
+                        <span className="adm-mob-fin-val gross">₹{b.rentAmt.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="adm-mob-fin-item">
+                        <span className="adm-mob-fin-lbl">Commission</span>
+                        <span className="adm-mob-fin-val comm">-₹{b.comm.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="adm-mob-fin-item">
+                        <span className="adm-mob-fin-lbl">Net Payable</span>
+                        <span className="adm-mob-fin-val net">₹{b.netPayable.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+
+                    {/* Adjustments Badges */}
+                    {(b.damageComp > 0 || b.extShare > 0 || b.walletInc > 0) && (
+                      <div className="adm-mob-badges-row">
+                        {b.damageComp > 0 && (
+                          <div className="adm-comp-badge">
+                            🛡️ +₹{b.damageComp.toLocaleString('en-IN')} Damage Compensation
+                          </div>
+                        )}
+                        {b.extShare > 0 && (
+                          <div className="adm-ext-badge">
+                            ⏱️ +₹{b.extShare.toLocaleString('en-IN')} Extension (50%)
+                          </div>
+                        )}
+                        {b.walletInc > 0 && (
+                          <div className="adm-wallet-badge">
+                            👛 +₹{b.walletInc.toLocaleString('en-IN')} Wallet Credit
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Mobile Card Action */}
+                    <div className="adm-mob-action-wrap">
                       {p.status === 'PENDING' ? (
-                        p.booking.damageReports?.some(dr => dr.dispute?.status === 'OPEN') ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: '#991B1B', background: '#FEE2E2', padding: '4px 8px', borderRadius: 4, letterSpacing: '0.05em' }}>⚠️ ON HOLD</span>
-                            <span style={{ fontSize: 10, color: '#991B1B', fontWeight: 600 }}>DISPUTE ACTIVE</span>
+                        b.isOnHold ? (
+                          <div style={{ background: '#FEE2E2', color: '#991B1B', padding: '10px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, textAlign: 'center' }}>
+                            ⚠️ Settlement On Hold — Dispute Active in Hub
                           </div>
                         ) : (
                           <button
@@ -409,110 +686,157 @@ export default function AdminPayoutsPage() {
                               setActiveModal(p);
                               setBatchRefInput('');
                             }}
-                            style={{
-                              background: '#0F172A',
-                              color: '#FFF',
-                              border: 'none',
-                              borderRadius: 6,
-                              padding: '8px 14px',
-                              fontSize: 12,
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                              transition: 'background 0.2s',
-                            }}
-                            onMouseOver={(e) => e.currentTarget.style.background = '#1E293B'}
-                            onMouseOut={(e) => e.currentTarget.style.background = '#0F172A'}
+                            className="adm-mob-pay-btn"
                           >
-                            Mark as Paid
+                            <span>Mark as Paid</span>
+                            <span>→</span>
                           </button>
                         )
                       ) : (
-                        <span style={{ fontSize: 11, color: '#94A3B8' }}>Settled</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F0FDF4', padding: '8px 12px', borderRadius: 8, fontSize: 12, color: '#166534' }}>
+                          <span style={{ fontWeight: 700 }}>✓ Settled to Lister</span>
+                          {p.batchRef && <span style={{ fontFamily: 'monospace' }}>Ref: {p.batchRef}</span>}
+                        </div>
                       )}
-                    </td>
-                  </tr>
-                )})}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Pagination Controls */}
         <Pagination
           currentPage={currentPage}
-          totalItems={payouts.length}
+          totalItems={filteredPayouts.length}
           itemsPerPage={ITEMS_PER_PAGE}
           onPageChange={setCurrentPage}
         />
       </div>
 
-      {/* Modal for Mark as Paid */}
+      {/* Modal for Mark as Paid (Responsive) */}
       {activeModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 999,
-          }}
+          className="adm-modal-overlay"
+          onClick={() => !submitting && setActiveModal(null)}
         >
           <div
-            style={{
-              background: '#FFF',
-              borderRadius: 12,
-              padding: 24,
-              maxWidth: 480,
-              width: '90%',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            }}
+            className="adm-modal-container"
+            onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0F172A', margin: '0 0 12px' }}>
-              Confirm Manual Transfer
-            </h3>
-            <div style={{ background: '#F8FAFC', padding: 16, borderRadius: 8, marginBottom: 16, border: '1px solid #E2E8F0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: '#64748B' }}>
-                <span>Rental Payout:</span>
-                <span style={{ color: '#0F172A', fontWeight: 600 }}>₹{Number(activeModal.amount).toLocaleString('en-IN')}</span>
-              </div>
-              {Number(activeModal.lister.user.walletBalance) > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: '#64748B' }}>
-                  <span>Referral Wallet Balance (Clubbed):</span>
-                  <span style={{ color: '#059669', fontWeight: 600 }}>+ ₹{Number(activeModal.lister.user.walletBalance).toLocaleString('en-IN')}</span>
-                </div>
-              )}
-              <div style={{ borderTop: '1px solid #E2E8F0', margin: '8px 0' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
-                <span>Total Transfer Required:</span>
-                <span>₹{(Number(activeModal.amount) + (activeModal.status === 'PENDING' ? Number(activeModal.lister.user.walletBalance || 0) : 0)).toLocaleString('en-IN')}</span>
-              </div>
+            <div className="adm-modal-header">
+              <h3 className="adm-modal-title">Confirm Manual Transfer</h3>
+              <button
+                type="button"
+                className="adm-modal-close-btn"
+                onClick={() => setActiveModal(null)}
+                disabled={submitting}
+              >
+                ✕
+              </button>
             </div>
-            
-            <p style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5, margin: '0 0 16px' }}>
-              Please ensure you have transferred the <strong>Total Transfer Required</strong> amount to{' '}
-              <strong>{activeModal.lister.user.name}</strong> via Bank Transfer or UPI.
+
+            {(() => {
+              const b = getPayoutBreakdown(activeModal);
+
+              return (
+                <div style={{ background: '#F8FAFC', padding: 16, borderRadius: 12, marginBottom: 16, border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13, color: '#64748B' }}>
+                    <span>Gross Rent:</span>
+                    <span style={{ color: '#0F172A', fontWeight: 600 }}>₹{b.rentAmt.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13, color: '#DC2626' }}>
+                    <span>Platform Commission (35% · min ₹2k):</span>
+                    <span style={{ fontWeight: 600 }}>-₹{(b.comm - b.extShare).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13, color: '#64748B', paddingLeft: 8, borderLeft: '2px solid #CBD5E1' }}>
+                    <span>Base Rent Share (Lister 65%):</span>
+                    <span style={{ color: '#0F172A', fontWeight: 600 }}>₹{b.listerBase.toLocaleString('en-IN')}</span>
+                  </div>
+                  {b.extShare > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13, color: '#2563EB' }}>
+                      <span>Extension Share (50%):</span>
+                      <span style={{ fontWeight: 600 }}>+₹{b.extShare.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  {b.damageComp > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13, color: '#D97706', background: 'rgba(217, 119, 6, 0.08)', padding: '4px 8px', borderRadius: 4 }}>
+                      <span>Damage Assessment Compensation (100%):</span>
+                      <span style={{ fontWeight: 700 }}>+₹{b.damageComp.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  {b.clubbedWallet > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13, color: '#059669', background: 'rgba(5, 150, 105, 0.08)', padding: '4px 8px', borderRadius: 4 }}>
+                      <span>Wallet Balance (Clubbed):</span>
+                      <span style={{ fontWeight: 700 }}>+₹{b.clubbedWallet.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
+                  <div style={{ borderTop: '1px solid #CBD5E1', margin: '10px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 16, fontWeight: 800, color: '#0F172A' }}>
+                    <span>Total Transfer Required:</span>
+                    <span style={{ color: '#059669' }}>₹{b.totalRequired.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <p style={{ fontSize: 12.5, color: '#64748B', lineHeight: 1.5, margin: '0 0 14px' }}>
+              Please verify you have transferred the <strong>Total Transfer Required</strong> amount to{' '}
+              <strong style={{ color: '#0F172A' }}>{activeModal.lister.user.name}</strong> via Bank Transfer or UPI.
             </p>
 
+            {/* Bank details card with click-to-copy */}
             <div
               style={{
-                background: '#F8FAFC',
+                background: '#F1F5F9',
                 border: '1px solid #E2E8F0',
-                borderRadius: 8,
+                borderRadius: 10,
                 padding: 14,
                 marginBottom: 16,
-                fontSize: 12,
+                fontSize: 12.5,
               }}
             >
-              <div><strong>Account Number:</strong> {activeModal.lister.bankAccountNo || 'N/A'}</div>
-              <div style={{ marginTop: 4 }}><strong>IFSC Code:</strong> {activeModal.lister.bankIfsc || 'N/A'}</div>
-              <div style={{ marginTop: 4 }}><strong>Lister Phone / UPI:</strong> {activeModal.lister.user.phone || 'N/A'}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div><strong>Account Number:</strong> {activeModal.lister.bankAccountNo || 'N/A'}</div>
+                {activeModal.lister.bankAccountNo && (
+                  <button
+                    type="button"
+                    className="adm-copy-btn"
+                    onClick={() => copyToClipboard(activeModal.lister.bankAccountNo || '', 'modal-ac')}
+                  >
+                    {copiedId === 'modal-ac' ? '✓ Copied' : '⧉ Copy'}
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                <div><strong>IFSC Code:</strong> {activeModal.lister.bankIfsc || 'N/A'}</div>
+                {activeModal.lister.bankIfsc && (
+                  <button
+                    type="button"
+                    className="adm-copy-btn"
+                    onClick={() => copyToClipboard(activeModal.lister.bankIfsc || '', 'modal-ifsc')}
+                  >
+                    {copiedId === 'modal-ifsc' ? '✓ Copied' : '⧉ Copy'}
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                <div><strong>Lister Phone / UPI:</strong> {activeModal.lister.user.phone || 'N/A'}</div>
+                {activeModal.lister.user.phone && (
+                  <button
+                    type="button"
+                    className="adm-copy-btn"
+                    onClick={() => copyToClipboard(activeModal.lister.user.phone || '', 'modal-ph')}
+                  >
+                    {copiedId === 'modal-ph' ? '✓ Copied' : '⧉ Copy'}
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
                 Transaction Ref / UPI UTR Number (Optional)
               </label>
               <input
@@ -522,11 +846,12 @@ export default function AdminPayoutsPage() {
                 placeholder="e.g. UPI/423187219837 or IMPS-129381"
                 style={{
                   width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 6,
+                  padding: '10px 14px',
+                  borderRadius: 8,
                   border: '1px solid #CBD5E1',
                   fontSize: 13,
                   boxSizing: 'border-box',
+                  outline: 'none',
                 }}
               />
             </div>
@@ -537,10 +862,10 @@ export default function AdminPayoutsPage() {
                 onClick={() => setActiveModal(null)}
                 disabled={submitting}
                 style={{
-                  padding: '8px 16px',
+                  padding: '10px 18px',
                   background: '#F1F5F9',
                   border: 'none',
-                  borderRadius: 6,
+                  borderRadius: 8,
                   fontSize: 13,
                   fontWeight: 600,
                   color: '#475569',
@@ -554,14 +879,15 @@ export default function AdminPayoutsPage() {
                 onClick={handleMarkAsPaid}
                 disabled={submitting}
                 style={{
-                  padding: '8px 16px',
+                  padding: '10px 20px',
                   background: '#059669',
                   border: 'none',
-                  borderRadius: 6,
+                  borderRadius: 8,
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: '#FFF',
                   cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(5, 150, 105, 0.2)',
                 }}
               >
                 {submitting ? 'Updating...' : 'Confirm & Mark Paid'}

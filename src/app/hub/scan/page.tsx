@@ -101,14 +101,6 @@ export default function HubScanPage() {
                 <strong>Current Status:</strong>
                 <span>{result.listing.status}</span>
               </div>
-              <div className="result-row">
-                <strong>Shelf Location:</strong>
-                <span>{result.listing.shelfLocation ? (
-                  <strong style={{ color: '#0F172A', background: '#F1F5F9', padding: '2px 6px', borderRadius: 4 }}>
-                    {result.listing.shelfLocation}
-                  </strong>
-                ) : 'Not Assigned'}</span>
-              </div>
 
               {result.currentBooking && (
                 <>
@@ -134,13 +126,9 @@ export default function HubScanPage() {
                 <div className="indicator-dot" style={{ background: result.actionColor }} />
                 {result.nextAction}
               </div>
-              {result.nextAction.includes('Inspection') ? (
+              {result.nextAction.includes('Inspection') && (
                 <Link href={`/hub/inspections?sku=${result.listing.sku}`} className="proceed-btn">
                   Start Inspection &rarr;
-                </Link>
-              ) : (
-                <Link href={`/hub/inspections?sku=${result.listing.sku}&action=store`} className="proceed-btn">
-                  Update Storage Location &rarr;
                 </Link>
               )}
             </div>

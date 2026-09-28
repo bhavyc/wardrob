@@ -20,8 +20,8 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Register and login pages bypass the sidebar entirely
-  const isPublicPage = pathname?.startsWith('/hub/login');
+  // Register, login, and mobile camera capture pages bypass the sidebar and auth check entirely
+  const isPublicPage = pathname?.startsWith('/hub/login') || pathname?.startsWith('/hub/mobile-capture');
 
   useEffect(() => {
     if (isPublicPage) {
@@ -56,7 +56,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
     setLoggingOut(true);
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {}
+    } catch { }
     router.replace('/hub/login');
   };
 
@@ -126,7 +126,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
     <>
       <div className="hub-root">
         <div className={`hub-mobile-overlay ${mobileMenuOpen ? 'mobile-open' : ''}`} onClick={() => setMobileMenuOpen(false)}></div>
-        
+
         {/* ──── Sidebar ──── */}
         <aside className={`hub-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           {/* Logo & collapse */}
@@ -153,7 +153,12 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
             {navLinks.map(link => {
               const isActive = pathname === link.href;
               return (
-                <Link key={link.href} href={link.href} className={`hub-nav-link${isActive ? ' active' : ''}`}>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`hub-nav-link${isActive ? ' active' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <span className="hub-nav-icon">{link.icon}</span>
                   {!sidebarCollapsed && (
                     <span className="hub-nav-texts">
@@ -203,8 +208,9 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
                 <span className="hub-breadcrumb-sep">/</span>
                 <span style={{ color: '#0F172A' }}>
                   {pathname === '/hub' ? 'Dashboard'
-                    : pathname === '/hub/inspections' ? 'Inspections'
-                    : 'Hub'}
+                    : pathname === '/hub/inspections' ? 'Inspections & Quality'
+                      : pathname === '/hub/shipments' ? 'Deliveries & Logistics'
+                        : 'Hub'}
                 </span>
               </div>
             </div>
@@ -217,7 +223,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
               )}
             </div>
           </header>
-          
+
           <main className="hub-page-content">
             {children}
           </main>

@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { sendNotification } from '@/lib/notifications';
+import { POST_RETURN_TURNAROUND_DAYS } from '@/lib/availability';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 
 export async function POST(request: Request) {
   let razorpay_payment_id: string | undefined;
@@ -12,7 +15,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const body = await request.json();
+    // Strict 1-role enforcement: only RENTER accounts can complete a rental payment.
+    if (authUser.role !== 'RENTER') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Payment verification is only available to Renter accounts. Your account is registered as a ${authUser.role.replace('_', ' ')}.`,
+        },
+        { status: 403 }
+      );
+    }
+
+    let body: any = {};
+    try {
+      const rawText = await request.text();
+      body = rawText && rawText.trim().length > 0 ? JSON.parse(rawText) : {};
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid JSON request payload.' }, { status: 400 });
+    }
+
     razorpay_payment_id = body.razorpay_payment_id;
     const {
       razorpay_order_id,
@@ -20,8 +41,8 @@ export async function POST(request: Request) {
       productId,
     } = body;
 
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !productId) {
-      return NextResponse.json({ success: false, error: 'Missing required payment or booking details.' }, { status: 400 });
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+      return NextResponse.json({ success: false, error: 'Missing required payment details (order ID, payment ID, or signature).' }, { status: 400 });
     }
 
     // 1. Verify Razorpay Payment Signature
@@ -59,7 +80,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Payment does not belong to your account.' }, { status: 403 });
     }
 
-    if (existingBooking.listingId !== productId) {
+    if (productId && existingBooking.listingId !== productId) {
       return NextResponse.json({ success: false, error: 'Security Exception: Listing mismatch for order verification.' }, { status: 400 });
     }
 
@@ -88,6 +109,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'This payment transaction has already been credited to another reservation.' }, { status: 400 });
     }
 
+    // 5b. Calculate if partial wallet deduction was applied to this order
+    let walletToDeduct = 0;
+    try {
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+        key_secret: secret,
+      });
+      const rzOrder = await razorpay.orders.fetch(razorpay_order_id);
+      const gatewayPaid = Math.round(Number(rzOrder.amount) / 100);
+      const bookingTotal = Math.round(Number(existingBooking.totalAmount));
+      if (bookingTotal > gatewayPaid) {
+        walletToDeduct = bookingTotal - gatewayPaid;
+      }
+    } catch (rzErr) {
+      console.warn('Failed to fetch Razorpay order for wallet deduction verification:', rzErr);
+    }
+
     // 6. Atomically confirm Booking inside serializable transaction
     let booking = null;
     let retries = 3;
@@ -96,16 +134,22 @@ export async function POST(request: Request) {
       try {
         booking = await prisma.$transaction(async (tx) => {
           // Double check conflicting bookings
+          const returnPickupWithTurnaround = new Date(existingBooking.endDate);
+          returnPickupWithTurnaround.setDate(returnPickupWithTurnaround.getDate() + POST_RETURN_TURNAROUND_DAYS);
+
+          const deliveryMinusTurnaround = new Date(existingBooking.startDate);
+          deliveryMinusTurnaround.setDate(deliveryMinusTurnaround.getDate() - POST_RETURN_TURNAROUND_DAYS);
+
           const conflictingBooking = await tx.booking.findFirst({
             where: {
               listingId: existingBooking.listingId,
               id: { not: existingBooking.id },
               status: { in: ['CONFIRMED', 'AT_HUB_PRE', 'OUT_FOR_DELIVERY', 'IN_USE'] },
               OR: [
-                { startDate: { lte: existingBooking.endDate }, endDate: { gte: existingBooking.startDate } },
+                { startDate: { lte: returnPickupWithTurnaround }, endDate: { gte: deliveryMinusTurnaround } },
                 {
-                  startDate: { lte: existingBooking.endDate },
-                  pendingExtensionDate: { gte: existingBooking.startDate },
+                  startDate: { lte: returnPickupWithTurnaround },
+                  pendingExtensionDate: { gte: deliveryMinusTurnaround },
                   pendingExtensionExpiry: { gt: new Date() }
                 }
               ]
@@ -114,6 +158,21 @@ export async function POST(request: Request) {
 
           if (conflictingBooking) {
             throw new Error('CONFLICT');
+          }
+
+          // If partial wallet deduction was used, deduct it atomically now that payment is verified
+          if (walletToDeduct > 0) {
+            const renterUser = await tx.user.findUnique({
+              where: { id: existingBooking.renterId },
+              select: { walletBalance: true },
+            });
+            const actualDeduct = Math.min(Number(renterUser?.walletBalance || 0), walletToDeduct);
+            if (actualDeduct > 0) {
+              await tx.user.update({
+                where: { id: existingBooking.renterId },
+                data: { walletBalance: { decrement: actualDeduct } },
+              });
+            }
           }
 
           // Confirm the booking
@@ -165,6 +224,31 @@ export async function POST(request: Request) {
       }
     }
 
+    // Dispatch In-App Notifications
+    if (booking) {
+      await sendNotification({
+        userId: booking.renterId,
+        title: 'Booking Confirmed',
+        message: `Your booking for "${existingBooking.listing.title}" is confirmed! Prepared for central hub dispatch.`,
+        type: 'ORDER_CONFIRMED',
+        linkUrl: `/profile`,
+      });
+
+      const lister = await prisma.listerProfile.findUnique({
+        where: { id: existingBooking.listing.listerProfileId },
+        select: { userId: true },
+      });
+      if (lister) {
+        await sendNotification({
+          userId: lister.userId,
+          title: 'New Booking Received',
+          message: `New rental booking received for "${existingBooking.listing.title}". Please prepare garment for transit.`,
+          type: 'NEW_BOOKING',
+          linkUrl: `/lister/bookings`,
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Rental booking confirmed successfully!',
@@ -198,7 +282,7 @@ export async function POST(request: Request) {
 
     if (error.message === 'CONFLICT') {
       return NextResponse.json(
-        { success: false, error: 'Item is already booked for these dates. Any payment has been auto-refunded.' },
+        { success: false, error: 'Listing not available for this date. Any payment has been auto-refunded.' },
         { status: 409 }
       );
     }

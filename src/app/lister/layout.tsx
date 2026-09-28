@@ -23,8 +23,8 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Register and login pages bypass the sidebar entirely
-  const isPublicPage = pathname?.startsWith('/lister/register') || pathname?.startsWith('/lister/login');
+  // Register, login, and mobile capture pages bypass the sidebar entirely
+  const isPublicPage = pathname?.startsWith('/lister/register') || pathname?.startsWith('/lister/login') || pathname?.startsWith('/lister/mobile-capture');
 
   useEffect(() => {
     if (isPublicPage) {
@@ -57,6 +57,10 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
       }
     }
     loadSession();
+
+    const handleUpdate = () => loadSession();
+    window.addEventListener('lister-updated', handleUpdate);
+    return () => window.removeEventListener('lister-updated', handleUpdate);
   }, [router, isPublicPage]);
 
   const handleLogout = async () => {
@@ -165,6 +169,12 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
                 : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18L9 12 15 6" /></svg>
               }
             </button>
+            <button className="sd-mobile-close-btn" onClick={() => setMobileMenuOpen(false)} title="Close menu">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
           {/* Nav */}
@@ -173,7 +183,12 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
             {navLinks.map(link => {
               const isActive = pathname === link.href || pathname?.startsWith(link.href + '/');
               return (
-                <Link key={link.href} href={link.href} className={`sd-nav-link${isActive ? ' active' : ''}`}>
+                <Link 
+                  key={link.href} 
+                  href={link.href} 
+                  className={`sd-nav-link${isActive ? ' active' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <span className="sd-nav-icon">{link.icon}</span>
                   {!sidebarCollapsed && (
                     <span className="sd-nav-texts">

@@ -150,6 +150,21 @@ export async function GET(request: Request) {
     });
 
     const unifiedList: UnifiedTransaction[] = [];
+    const generatedIds = new Set<string>();
+
+    const createTxnId = (prefix: string, rawId: string): string => {
+      const stripped = rawId.replace(/^(pay|book|ref|reg|usr)[_-]/i, '').replace(/-/g, '');
+      const shortCode = stripped.length >= 8 ? stripped.slice(-8).toUpperCase() : stripped.toUpperCase();
+      let candidate = `TXN-${prefix}-${shortCode}`;
+      
+      let counter = 1;
+      while (generatedIds.has(candidate)) {
+        candidate = `TXN-${prefix}-${shortCode}-${counter}`;
+        counter++;
+      }
+      generatedIds.add(candidate);
+      return candidate;
+    };
 
     // --- Transform Bookings into Rental Payment Inflows ---
     for (const b of bookings) {
@@ -158,14 +173,14 @@ export async function GET(request: Request) {
       const deposit = Number(b.securityDeposit);
       const extFee = Number(b.extensionFee || 0);
       const penalty = Number(b.lateReturnPenalty || 0);
-      const commission = Number(b.payout?.commissionPaid || rent * 0.20);
+      const commission = Number(b.payout?.commissionPaid || (Math.max(2000, Math.round(rent * 0.35)) + Math.round(extFee * 0.50)));
 
       let status: 'COMPLETED' | 'PENDING' | 'REFUNDED' | 'FAILED' | 'CANCELLED' = 'COMPLETED';
       if (b.status === 'PENDING') status = 'PENDING';
       else if (b.status === 'CANCELLED') status = 'CANCELLED';
 
       unifiedList.push({
-        id: `TXN-RENT-${b.id.slice(0, 8).toUpperCase()}`,
+        id: createTxnId('RENT', b.id),
         rawId: b.id,
         type: 'RENTAL_PAYMENT',
         direction: 'INFLOW',
@@ -181,7 +196,7 @@ export async function GET(request: Request) {
           extensionFee: extFee,
           latePenalty: penalty,
           platformCommission: commission,
-          commissionRatePercent: 20,
+          commissionRatePercent: 35,
         },
         payer: {
           name: b.renter.name,
@@ -225,10 +240,13 @@ export async function GET(request: Request) {
     for (const r of refunds) {
       const refundAmt = Number(r.amount);
       const originalDep = Number(r.booking.securityDeposit);
-      const damageDeduction = Number(r.booking.damageReports?.[0]?.deductionAmount || 0);
+      const damageDeduction = (r.booking.damageReports || [])
+        .filter(dr => dr.inspectionType === 'POST_RETURN' || Number(dr.deductionAmount) > 0)
+        .reduce((sum, dr) => sum + Number(dr.deductionAmount || 0), 0);
+      const latePenalty = Number(r.booking.lateReturnPenalty || 0);
 
       unifiedList.push({
-        id: `TXN-REF-${r.id.slice(0, 8).toUpperCase()}`,
+        id: createTxnId('REF', r.id),
         rawId: r.id,
         type: 'SECURITY_DEPOSIT_REFUND',
         direction: 'REFUND',
@@ -241,6 +259,7 @@ export async function GET(request: Request) {
         breakdown: {
           securityDeposit: originalDep,
           damageDeduction: damageDeduction,
+          latePenalty: latePenalty,
           refundedAmount: refundAmt,
         },
         payer: {
@@ -284,7 +303,7 @@ export async function GET(request: Request) {
       const walletInc = Number(p.walletBalanceIncluded || 0);
 
       unifiedList.push({
-        id: `TXN-PAY-${p.id.slice(0, 8).toUpperCase()}`,
+        id: createTxnId('PAY', p.id),
         rawId: p.id,
         type: 'LISTER_PAYOUT',
         direction: 'OUTFLOW',
@@ -298,7 +317,7 @@ export async function GET(request: Request) {
           baseRent: baseRent,
           platformCommission: commPaid,
           netPayout: payoutAmt,
-          commissionRatePercent: 20,
+          commissionRatePercent: 35,
         },
         payer: {
           name: 'Wardrob Payout Desk',
@@ -342,7 +361,7 @@ export async function GET(request: Request) {
       else if (reg.status === 'FAILED') regStatus = 'FAILED';
 
       unifiedList.push({
-        id: `TXN-REG-${reg.id.slice(0, 8).toUpperCase()}`,
+        id: createTxnId('REG', reg.id),
         rawId: reg.id,
         type: 'REGISTRATION_FEE',
         direction: 'INFLOW',

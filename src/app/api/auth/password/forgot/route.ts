@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
-
 import { getClientIp } from '@/lib/rate-limit';
+import { sendPasswordResetEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -50,27 +50,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
     }
 
-    // Generate token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    // Generate 6-digit secure numeric verification code
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     const resetTokenExpires = new Date(Date.now() + 15 * 60000); // 15 mins
 
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        resetToken,
+        resetToken: resetCode,
         resetTokenExpires
       }
     });
 
-    // In production, send email/SMS. In development mode only, log to console.
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV ONLY] Password reset token for ${user.email}: ${resetToken}`);
-    }
+    // Determine base URL for email link
+    const origin = request.headers.get('origin');
+    const host = request.headers.get('host');
+    const proto = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = origin || (host ? `${proto}://${host}` : 'http://localhost:3000');
+    const resetUrl = `${baseUrl}/reset-password?token=${resetCode}`;
+
+    // Send real luxury branded email via Gmail SMTP
+    await sendPasswordResetEmail({
+      to: user.email,
+      resetUrl,
+      resetCode,
+      userName: user.name || 'Valued Member',
+    });
 
     return NextResponse.json({ 
       success: true, 
-      message: 'If that email exists in our records, a password reset link has been sent.',
-      ...(process.env.NODE_ENV === 'development' ? { dev_token: resetToken } : {})
+      message: 'A password reset code and direct link have been sent to your email.',
+      ...(process.env.NODE_ENV === 'development' ? { dev_token: resetCode } : {})
     });
 
   } catch (error: any) {

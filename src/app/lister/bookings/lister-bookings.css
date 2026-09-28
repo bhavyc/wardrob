@@ -70,7 +70,18 @@
 }
 @media (max-width: 768px) {
   .kpi-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    padding: 14px 12px;
+  }
+  .kpi-num {
+    font-size: 20px;
+  }
+  .kpi-lbl {
+    font-size: 10px;
   }
 }
 .kpi-card {
@@ -150,21 +161,50 @@
   align-items: center;
   cursor: pointer;
 }
+.order-card-main {
+  display: contents;
+}
+
 @media (max-width: 768px) {
   .order-card-top {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
+    padding: 14px;
     align-items: flex-start;
   }
-  .order-thumb {
+  .order-card-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
-    height: 160px;
-    margin-bottom: 8px;
+  }
+  .order-thumb {
+    width: 52px !important;
+    height: 64px !important;
+    border-radius: 8px !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0;
+  }
+  .order-prod-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .order-prod-title {
+    font-size: 13.5px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .order-right {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(44, 94, 67, 0.06);
   }
 }
 .order-thumb {
@@ -377,6 +417,45 @@
   display: flex;
   gap: 12px;
   margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .ord-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .ord-h1 {
+    font-size: 26px;
+  }
+  .modal-overlay {
+    padding: 16px;
+  }
+  .modal-box {
+    border-radius: 16px;
+  }
+  .modal-top {
+    padding: 20px 20px 0;
+  }
+  .modal-title {
+    font-size: 22px;
+  }
+  .modal-desc {
+    font-size: 12px;
+    padding-bottom: 16px;
+  }
+  .modal-body {
+    padding: 16px 20px 24px;
+    gap: 14px;
+  }
+  .modal-actions {
+    flex-direction: column;
+  }
+  .tracking-bar {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+  }
 }
 .cancel-btn {
   flex: 1;

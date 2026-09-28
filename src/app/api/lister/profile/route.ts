@@ -30,7 +30,6 @@ export async function GET(request: Request) {
           select: {
             listings: true,
             payouts: true,
-            referralsMade: true,
           },
         },
       },

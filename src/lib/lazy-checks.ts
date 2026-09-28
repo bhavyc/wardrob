@@ -23,13 +23,20 @@ export async function sendUpcomingReturnReminders() {
       },
       include: {
         renter: true,
+        listing: { select: { title: true } },
       }
     });
 
     for (const booking of upcomingBookings) {
       if (booking.renter.phone) {
-        // Send WhatsApp stub
-        await sendReturnReminder(booking.renter.phone, booking.id, booking.endDate);
+        // Send WhatsApp return pickup reminder via Meta Cloud API
+        await sendReturnReminder(
+          booking.renter.phone,
+          booking.id,
+          booking.endDate,
+          booking.renter.name,
+          booking.listing.title
+        );
         
         // Mark as sent to prevent spamming
         await prisma.booking.update({
@@ -97,7 +104,10 @@ export async function sendEscalatingOverdueReminders() {
         status: 'RETURNED_TO_HUB',
         endDate: { lt: now },
       },
-      include: { renter: true }
+      include: {
+        renter: true,
+        listing: { select: { title: true } },
+      }
     });
 
     for (const booking of stuckBookings) {
@@ -108,7 +118,14 @@ export async function sendEscalatingOverdueReminders() {
 
       // Day 1 Reminder (1 to 2 days)
       if (daysOverdue >= 1 && !booking.overdueReminder1SentAt) {
-        await sendOverdueReminder(booking.renter.phone, booking.id, daysOverdue, 1);
+        await sendOverdueReminder(
+          booking.renter.phone,
+          booking.id,
+          daysOverdue,
+          1,
+          booking.renter.name,
+          booking.listing.title
+        );
         await prisma.booking.update({
           where: { id: booking.id },
           data: { overdueReminder1SentAt: now }
@@ -116,7 +133,14 @@ export async function sendEscalatingOverdueReminders() {
       }
       // Day 3 Reminder (3 to 6 days)
       else if (daysOverdue >= 3 && !booking.overdueReminder3SentAt) {
-        await sendOverdueReminder(booking.renter.phone, booking.id, daysOverdue, 3);
+        await sendOverdueReminder(
+          booking.renter.phone,
+          booking.id,
+          daysOverdue,
+          3,
+          booking.renter.name,
+          booking.listing.title
+        );
         await prisma.booking.update({
           where: { id: booking.id },
           data: { overdueReminder3SentAt: now }
@@ -124,7 +148,14 @@ export async function sendEscalatingOverdueReminders() {
       }
       // Day 7 Reminder (7+ days)
       else if (daysOverdue >= 7 && !booking.overdueReminder7SentAt) {
-        await sendOverdueReminder(booking.renter.phone, booking.id, daysOverdue, 7);
+        await sendOverdueReminder(
+          booking.renter.phone,
+          booking.id,
+          daysOverdue,
+          7,
+          booking.renter.name,
+          booking.listing.title
+        );
         await prisma.booking.update({
           where: { id: booking.id },
           data: { overdueReminder7SentAt: now }

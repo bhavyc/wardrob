@@ -19,6 +19,9 @@ type Product = {
   baselineImages?: string[];
   category?: string;
   Lister: { shopName: string; };
+  isAvailableNow?: boolean;
+  nextAvailableDate?: string;
+  availabilityBadge?: string;
 };
 
 function CatalogContent() {
@@ -26,19 +29,25 @@ function CatalogContent() {
   const searchParams = useSearchParams();
   const qParam = searchParams.get('q') || '';
   const catParam = searchParams.get('category') || 'All';
+  const eventDateParam = searchParams.get('eventDate') || '';
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>(catParam);
   const [searchQuery, setSearchQuery] = useState(qParam);
+  const [selectedEventDate, setSelectedEventDate] = useState<string>(eventDateParam);
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
-        const res = await fetch('/api/products');
+        const params = new URLSearchParams();
+        if (selectedEventDate) params.set('eventDate', selectedEventDate);
+        const url = `/api/products${params.toString() ? `?${params.toString()}` : ''}`;
+        const res = await fetch(url);
         if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
           const data = await res.json();
           if (data.success && data.products) {
@@ -52,7 +61,7 @@ function CatalogContent() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [selectedEventDate]);
 
   useEffect(() => {
     setSelectedCategory(catParam);
@@ -62,15 +71,10 @@ function CatalogContent() {
 
   const [categorySearch, setCategorySearch] = useState('');
 
-  // Extract all categories dynamically from products combined with curated list
-  const defaultPresetCategories = ['Saree', 'Lehenga', 'Kurti', 'Sharara Set', 'Anarkali Suit', 'Dress', 'Kurta', 'Sherwani', 'Shawl', 'Gown', 'Indo-Western'];
-  
+  // Extract all categories dynamically strictly from backend products
   const uniqueCategories = Array.from(
-    new Set([
-      ...products.map(p => p.category).filter(Boolean) as string[],
-      ...defaultPresetCategories
-    ])
-  );
+    new Set(products.map(p => p.category?.trim()).filter(Boolean) as string[])
+  ).sort();
 
   const categories = ['All', ...uniqueCategories];
 
@@ -156,6 +160,44 @@ function CatalogContent() {
       <main className="cat-main">
         {/* ━━━━━━━━ SIDEBAR (DESKTOP) ━━━━━━━━ */}
         <aside className="cat-sidebar">
+          {/* 📅 Event Date Filter */}
+          <div style={{
+            background: '#FFFFFF', padding: '18px 16px', borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', marginBottom: '16px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink)', margin: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span>📅</span> Event Date
+              </h3>
+              {selectedEventDate && (
+                <button
+                  onClick={() => { setSelectedEventDate(''); setCurrentPage(1); }}
+                  style={{ background: 'none', border: 'none', color: 'var(--accent)', fontSize: '11px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+              Filter outfits guaranteed free for your occasion date:
+            </p>
+            <input
+              type="date"
+              min={new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+              value={selectedEventDate}
+              onChange={(e) => {
+                setSelectedEventDate(e.target.value);
+                setCurrentPage(1);
+              }}
+              style={{
+                width: '100%', padding: '9px 12px', borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)', fontSize: '12px', color: 'var(--ink)',
+                background: 'var(--bg-warm)', outline: 'none', cursor: 'pointer',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+
           <div style={{
             background: '#FFFFFF', padding: '22px 18px', borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)',
@@ -265,15 +307,50 @@ function CatalogContent() {
         <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            marginBottom: '18px',
+            marginBottom: '18px', flexWrap: 'wrap', gap: '10px'
           }}>
-            <span style={{
-              fontSize: '11.5px', color: 'var(--text-muted)',
-              background: 'var(--bg-warm)', padding: '4px 12px',
-              borderRadius: 'var(--radius-full)', fontWeight: 600,
-            }}>
-              {filteredProducts.length} {filteredProducts.length === 1 ? 'piece' : 'pieces'} available
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{
+                fontSize: '11.5px', color: 'var(--text-muted)',
+                background: 'var(--bg-warm)', padding: '4px 12px',
+                borderRadius: 'var(--radius-full)', fontWeight: 600,
+              }}>
+                {filteredProducts.length} {filteredProducts.length === 1 ? 'piece' : 'pieces'} available
+              </span>
+              {selectedEventDate && (
+                <span style={{
+                  fontSize: '11px', padding: '3px 10px', borderRadius: 'var(--radius-full)',
+                  background: 'rgba(212, 86, 122, 0.12)', color: 'var(--accent)', fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', gap: '5px'
+                }}>
+                  📅 For {new Date(selectedEventDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  <button
+                    onClick={() => { setSelectedEventDate(''); setCurrentPage(1); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: 0, fontWeight: 800, fontSize: '12px' }}
+                    title="Clear date filter"
+                  >✕</button>
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label htmlFor="quick-date-input" style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>Event Date:</label>
+              <input
+                id="quick-date-input"
+                type="date"
+                min={new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                value={selectedEventDate}
+                onChange={(e) => {
+                  setSelectedEventDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: '4px 8px', borderRadius: '8px',
+                  border: '1px solid var(--border)', fontSize: '11.5px', color: 'var(--ink)',
+                  background: '#FFFFFF', outline: 'none', cursor: 'pointer'
+                }}
+              />
+            </div>
           </div>
 
           {loading ? (
@@ -329,6 +406,21 @@ function CatalogContent() {
                             {idx % 2 === 0 && (
                               <span className="prod-badge" style={{ position: 'absolute', top: '8px', left: '8px', fontSize: '8px', padding: '3.5px 8px', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.92)', color: 'var(--accent)', fontWeight: 700, zIndex: 2 }}>✨ Verified</span>
                             )}
+                            {/* Next Available Date Badge */}
+                            <div style={{
+                              position: 'absolute', bottom: '8px', left: '8px',
+                              padding: '3px 8px', borderRadius: '6px',
+                              background: p.isAvailableNow !== false ? 'rgba(22, 101, 52, 0.88)' : 'rgba(180, 83, 9, 0.92)',
+                              backdropFilter: 'blur(4px)',
+                              color: '#FFFFFF', fontSize: '9px', fontWeight: 700, letterSpacing: '0.4px',
+                              display: 'flex', alignItems: 'center', gap: '4px', zIndex: 2
+                            }}>
+                              <span style={{
+                                width: '5px', height: '5px', borderRadius: '50%',
+                                background: p.isAvailableNow !== false ? '#4ade80' : '#fde047'
+                              }} />
+                              {p.availabilityBadge || (p.isAvailableNow !== false ? 'Available Now' : 'Check Dates')}
+                            </div>
                             <img
                               src={displayImg}
                               alt={p.title}

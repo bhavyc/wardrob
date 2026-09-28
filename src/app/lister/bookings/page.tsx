@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 import Pagination from '@/components/Pagination';
 import './lister-bookings.css';
@@ -36,15 +37,15 @@ type BookingItem = {
   reviews?: { id: string; rating: number; comment: string; reviewerId: string }[];
 };
 
-const STATUS_MAP: Record<string, { bg: string; color: string; border: string; dot: string; icon: string }> = {
-  PENDING:          { bg: '#FFFBEB', color: '#92400E', border: '#FCD34D', dot: '#F59E0B', icon: '⏳' },
-  CONFIRMED:        { bg: '#EFF6FF', color: '#1E40AF', border: '#93C5FD', dot: '#3B82F6', icon: '✅' },
-  AT_HUB_PRE:       { bg: '#F3E8FF', color: '#6B21A8', border: '#D8B4FE', dot: '#A855F7', icon: '🏢' },
-  OUT_FOR_DELIVERY: { bg: '#F5F3FF', color: '#5B21B6', border: '#C4B5FD', dot: '#8B5CF6', icon: '🚚' },
-  IN_USE:           { bg: '#ECFDF5', color: '#065F46', border: '#6EE7B7', dot: '#10B981', icon: '👗' },
-  RETURNED_TO_HUB:  { bg: '#FDF2F8', color: '#9D174D', border: '#FBCFE8', dot: '#EC4899', icon: '🏢' },
-  COMPLETED:        { bg: '#F0FDF4', color: '#166534', border: '#86EFAC', dot: '#22C55E', icon: '🎉' },
-  CANCELLED:        { bg: '#FEF2F2', color: '#991B1B', border: '#FECACA', dot: '#EF4444', icon: '❌' },
+const STATUS_MAP: Record<string, { bg: string; color: string; border: string; dot: string; icon: string; label: string }> = {
+  PENDING:          { bg: '#FFFBEB', color: '#92400E', border: '#FCD34D', dot: '#F59E0B', icon: '⏳', label: 'PENDING' },
+  CONFIRMED:        { bg: '#EFF6FF', color: '#1E40AF', border: '#93C5FD', dot: '#3B82F6', icon: '✅', label: 'CONFIRMED' },
+  AT_HUB_PRE:       { bg: '#F3E8FF', color: '#6B21A8', border: '#D8B4FE', dot: '#A855F7', icon: '🏢', label: 'PICKUP PENDING' },
+  OUT_FOR_DELIVERY: { bg: '#F5F3FF', color: '#5B21B6', border: '#C4B5FD', dot: '#8B5CF6', icon: '🚚', label: 'OUT FOR DELIVERY' },
+  IN_USE:           { bg: '#ECFDF5', color: '#065F46', border: '#6EE7B7', dot: '#10B981', icon: '👗', label: 'IN USE' },
+  RETURNED_TO_HUB:  { bg: '#FDF2F8', color: '#9D174D', border: '#FBCFE8', dot: '#EC4899', icon: '🏢', label: 'RETURNED TO HUB' },
+  COMPLETED:        { bg: '#F0FDF4', color: '#166534', border: '#86EFAC', dot: '#22C55E', icon: '🎉', label: 'COMPLETED' },
+  CANCELLED:        { bg: '#FEF2F2', color: '#991B1B', border: '#FECACA', dot: '#EF4444', icon: '❌', label: 'CANCELLED' },
 };
 
 export default function ListerBookingsPage() {
@@ -53,50 +54,10 @@ export default function ListerBookingsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  const [selectedBooking, setSelectedBooking] = useState<BookingItem | null>(null);
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const [courierName, setCourierName] = useState('');
   const [updating, setUpdating] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const [ratingBookingId, setRatingBookingId] = useState<string | null>(null);
-  const [ratingValue, setRatingValue] = useState(5);
-  const [ratingComment, setRatingComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
-
-  const [authUserId, setAuthUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/auth/session').then(res => res.json()).then(data => {
-      if (data.success && data.user) setAuthUserId(data.user.id);
-    }).catch(console.error);
-  }, []);
-
-  const handleRatingSubmit = async (bookingId: string) => {
-    try {
-      const res = await fetch(`/api/reviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId, rating: ratingValue, comment: ratingComment })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Review submitted successfully.');
-        setRatingBookingId(null);
-        setRatingValue(5);
-        setRatingComment('');
-        fetchBookings();
-      } else {
-        alert(data.error || 'Failed to submit review.');
-      }
-    } catch (e) {
-      alert('An error occurred.');
-    }
-  };
-
   const fetchBookings = async () => {
     try {
       const res = await fetch('/api/lister/bookings');
@@ -115,38 +76,22 @@ export default function ListerBookingsPage() {
 
   useEffect(() => { fetchBookings(); }, []);
 
-  const openUpdate = (booking: BookingItem) => {
-    setSelectedBooking(booking);
-    setTrackingNumber('');
-    setCourierName('');
-    setError(''); setSuccess('');
-  };
-
-  const handleDispatchToHub = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedBooking) return;
-    setUpdating(true); setError(''); setSuccess('');
+  const handleMarkPacked = async (bookingId: string) => {
+    setUpdating(true);
     try {
-      const res = await fetch('/api/lister/bookings/status', {
+      const res = await fetch('/api/shipments/pickup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: selectedBooking.id, 
-          status: selectedBooking.status, // We leave status as CONFIRMED, hub handles AT_HUB
-          trackingNumber,
-          courierName,
-        }),
+        body: JSON.stringify({ bookingId }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSuccess('Item successfully dispatched to Hub.');
-        setSelectedBooking(null);
         await fetchBookings();
       } else {
-        setError(data.error || 'Failed to dispatch.');
+        alert(data.error || 'Failed to request pickup.');
       }
     } catch {
-      setError('Connection error.');
+      alert('Connection error.');
     } finally {
       setUpdating(false);
     }
@@ -227,54 +172,98 @@ export default function ListerBookingsPage() {
               const isExpanded = expandedId === item.id;
               const listerToHubShipment = item.shipments?.find(s => s.leg === 'LISTER_TO_HUB');
               const isAtHub = item.listing?.status === 'AT_HUB';
-              const needsDispatch = item.status === 'CONFIRMED' && !listerToHubShipment && !isAtHub;
+              const hasTracking = !!(listerToHubShipment?.trackingNumber || listerToHubShipment?.courierName);
+              const needsDispatch = item.status === 'CONFIRMED' && !hasTracking && !isAtHub;
               
               return (
                 <div key={item.id} className="order-card">
-                  <div className="order-card-top" onClick={() => setExpandedId(isExpanded ? null : item.id)}>
-                    {/* Thumbnail */}
-                    <div className="order-thumb">
-                      {item.listing?.baselineImages?.[0]
-                        ? <img src={item.listing.baselineImages[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : '👗'
-                      }
-                    </div>
-                    {/* Info */}
-                    <div>
-                      <div className="order-prod-title">{item.listing?.title || 'Unknown Listing'}</div>
-                      <div className="order-prod-meta">
-                        <span className="order-meta-chip">Renter: <strong>{item.renter?.name}</strong></span>
-                        <span className="order-meta-chip" style={{ color: '#2C5E43', fontWeight: 700 }}>
-                          Rent: ₹{(item.rentAmount).toLocaleString('en-IN')}
-                        </span>
+                  <div className="order-card-top">
+                    {/* Main Thumbnail + Info - Click to open dedicated page */}
+                    <Link
+                      href={`/lister/bookings/${item.id}`}
+                      className="order-card-main"
+                      style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                    >
+                      <div className="order-thumb">
+                        {item.listing?.baselineImages?.[0]
+                          ? <img src={item.listing.baselineImages[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : '👗'
+                        }
                       </div>
-                    </div>
-                    {/* Right */}
+                      <div className="order-prod-info">
+                        <div className="order-prod-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>{item.listing?.title || 'Unknown Listing'}</span>
+                          <span style={{ fontSize: 11, color: '#D4567A', fontWeight: 600 }}>#{item.id.slice(0, 6).toUpperCase()}</span>
+                        </div>
+                        <div className="order-prod-meta">
+                          <span className="order-meta-chip">Renter: <strong>{item.renter?.name}</strong></span>
+                          <span className="order-meta-chip" style={{ color: '#2C5E43', fontWeight: 700 }}>
+                            Rent: ₹{(item.rentAmount).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+
+                    {/* Right / Bottom Action Bar */}
                     <div className="order-right">
                       <span className="status-pill" style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}>
                         <span className="status-dot" style={{ background: cfg.dot }} />
-                        {item.status}
+                        {cfg.label || item.status}
                       </span>
+
+                      <Link
+                        href={`/lister/bookings/${item.id}`}
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: '#2C5E43',
+                          background: 'rgba(44,94,67,0.08)',
+                          padding: '7px 12px',
+                          borderRadius: 8,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        View Details →
+                      </Link>
+
                       {needsDispatch && (
                         <button
                           className="update-btn"
-                          onClick={e => { e.stopPropagation(); openUpdate(item); }}
+                          onClick={e => { e.stopPropagation(); handleMarkPacked(item.id); }}
+                          disabled={updating}
+                          style={{ background: '#2C5E43', color: '#FFF' }}
                         >
-                          Dispatch to Hub →
+                          📦 Mark Packed for Pickup
                         </button>
                       )}
-                      {item.status === 'CONFIRMED' && isAtHub && (
-                        <div style={{ background: '#F8FAF8', padding: '6px 10px', borderRadius: 6, fontSize: 10, color: '#2C5E43', border: '1px solid #DDE4DF' }}>
-                          🏢 Hub dispatching
+                      {item.status === 'AT_HUB_PRE' && !isAtHub && (
+                        <div style={{ background: '#F3E8FF', padding: '6px 12px', borderRadius: 8, fontSize: 11, color: '#6B21A8', fontWeight: 600, border: '1px solid #D8B4FE' }}>
+                          ✓ Packed • Awaiting Hub Courier
                         </div>
                       )}
-                      <svg
-                        width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="#AEC0B4" strokeWidth="2"
-                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+                      {isAtHub && item.status !== 'COMPLETED' && (
+                        <div style={{ background: '#F0FDF4', padding: '6px 12px', borderRadius: 8, fontSize: 11, color: '#166534', fontWeight: 600, border: '1px solid #86EFAC' }}>
+                          🏢 Received & Inspected at Hub
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                        title="Toggle quick preview"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
                       >
-                        <path d="M6 9L12 15 18 9" />
-                      </svg>
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none"
+                          stroke="#AEC0B4" strokeWidth="2"
+                          style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+                        >
+                          <path d="M6 9L12 15 18 9" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
 
@@ -282,10 +271,20 @@ export default function ListerBookingsPage() {
                   {isExpanded && (
                     <div className="order-expanded">
                       <div className="exp-section">
-                        <span className="exp-label">Event Details</span>
+                        <span className="exp-label">Schedule & Rental Period</span>
                         <div className="exp-value">
-                          Expected Hub Delivery: <strong>{new Date(item.startDate).toLocaleDateString()}</strong><br />
-                          Return Pickup: <strong>{new Date(item.endDate).toLocaleDateString()}</strong><br />
+                          {(() => {
+                            const delDate = new Date(item.startDate);
+                            const evDate = new Date(delDate);
+                            evDate.setDate(evDate.getDate() + 2);
+                            return (
+                              <>
+                                Customer Event Date: <strong>{evDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong><br />
+                                Hub Delivery to Renter: <strong>{delDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</strong><br />
+                                Return Pickup Date: <strong>{new Date(item.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</strong><br />
+                              </>
+                            );
+                          })()}
                           Renter Phone: {item.renter?.phone || 'N/A'}
                         </div>
                       </div>
@@ -300,71 +299,21 @@ export default function ListerBookingsPage() {
                         </div>
                       </div>
                       
-                      {item.status === 'COMPLETED' && (
-                        <div className="exp-section" style={{ width: '100%', borderTop: '1px solid #EBEBEB', marginTop: '16px', paddingTop: '16px' }}>
-                          {(() => {
-                            const submittedReview = item.reviews?.find(r => r.reviewerId === authUserId);
-                            if (submittedReview) {
-                              return (
-                                <div>
-                                  <span className="exp-label">Your Rating for Renter</span>
-                                  <div style={{ color: '#059669', fontWeight: 600, fontSize: '16px' }}>
-                                    {Array(submittedReview.rating).fill('★').join('')}
-                                  </div>
-                                  {submittedReview.comment && <p style={{ fontSize: '13px', color: '#74897C', marginTop: '4px' }}>"{submittedReview.comment}"</p>}
-                                </div>
-                              );
-                            }
 
-                            const isRating = ratingBookingId === item.id;
-                            if (isRating) {
-                              return (
-                                <div>
-                                  <span className="exp-label">Rate Renter</span>
-                                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                                    {[1,2,3,4,5].map(star => (
-                                      <button 
-                                        key={star} 
-                                        onClick={() => setRatingValue(star)} 
-                                        style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: star <= ratingValue ? '#F59E0B' : '#E5E7EB' }}
-                                      >
-                                        ★
-                                      </button>
-                                    ))}
-                                  </div>
-                                  <textarea 
-                                    placeholder="Add an optional comment..." 
-                                    value={ratingComment} 
-                                    onChange={e => setRatingComment(e.target.value)} 
-                                    style={{ width: '100%', padding: '8px', border: '1px solid #DDE4DF', borderRadius: '4px', fontSize: '12px', marginBottom: '8px', minHeight: '60px' }}
-                                  />
-                                  <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button onClick={() => handleRatingSubmit(item.id)} style={{ background: '#2C5E43', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>Submit</button>
-                                    <button onClick={() => { setRatingBookingId(null); setRatingValue(5); setRatingComment(''); }} style={{ background: '#fff', color: '#163625', border: '1px solid #DDE4DF', padding: '6px 16px', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>Cancel</button>
-                                  </div>
-                                </div>
-                              );
-                            }
-
-                            return (
-                              <button 
-                                onClick={() => setRatingBookingId(item.id)} 
-                                style={{ background: '#2C5E43', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}
-                              >
-                                Rate Renter
-                              </button>
-                            );
-                          })()}
-                        </div>
-                      )}
                     </div>
                   )}
 
                   {/* Tracking bar if dispatched to Hub */}
                   {listerToHubShipment && (
                     <div className="tracking-bar">
-                      <span><span className="tracking-label">Dispatched to Hub via:</span> {listerToHubShipment.courierName}</span>
-                      <span><span className="tracking-label">Tracking:</span> <code style={{ fontFamily: 'monospace', fontWeight: 700 }}>{listerToHubShipment.trackingNumber}</code></span>
+                      {listerToHubShipment.trackingNumber ? (
+                        <>
+                          <span><span className="tracking-label">Dispatched to Hub via:</span> {listerToHubShipment.courierName || 'Carrier'}</span>
+                          <span><span className="tracking-label">Tracking:</span> <code style={{ fontFamily: 'monospace', fontWeight: 700 }}>{listerToHubShipment.trackingNumber}</code></span>
+                        </>
+                      ) : (
+                        <span><span className="tracking-label">Hub Pickup Pending:</span> Hub operations team is coordinating courier collection from your address.</span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -381,43 +330,6 @@ export default function ListerBookingsPage() {
             onPageChange={setCurrentPage}
           />
         </>
-      )}
-
-      {/* Dispatch to Hub Modal */}
-      {selectedBooking && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setSelectedBooking(null); }}>
-          <div className="modal-box">
-            <div className="modal-top">
-              <h2 className="modal-title">Dispatch to WARDROB Hub</h2>
-              <p className="modal-desc">
-                Log the tracking details for <strong>{selectedBooking.listing?.title}</strong> so the Hub expects it.
-              </p>
-            </div>
-            <div className="modal-body">
-              {error && <div className="alert-banner alert-error" style={{ margin: 0 }}><span>⚠</span>{error}</div>}
-              <form onSubmit={handleDispatchToHub} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label className="field-lbl">Courier / Carrier Name *</label>
-                  <input className="field-inp" type="text" required value={courierName} onChange={e => setCourierName(e.target.value)} placeholder="e.g. Delhivery, DHL, BlueDart" />
-                </div>
-                <div>
-                  <label className="field-lbl">Tracking Number *</label>
-                  <input className="field-inp" type="text" required value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} placeholder="e.g. DEL123456789IN" style={{ fontFamily: 'monospace' }} />
-                </div>
-                <div className="modal-actions">
-                  <button type="button" className="cancel-btn" onClick={() => setSelectedBooking(null)}>Cancel</button>
-                  <button
-                    type="submit"
-                    className="confirm-btn"
-                    disabled={updating || !trackingNumber || !courierName}
-                  >
-                    {updating ? <><div className="mini-spin" />Saving…</> : 'Confirm Dispatch'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
       )}
     </>
   );

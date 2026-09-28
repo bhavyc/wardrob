@@ -26,7 +26,6 @@ async function seedProducts() {
           shopName: 'Wardrob Exclusives',
           status: 'APPROVED',
           registrationFeePaid: true,
-          referralCode: 'WARDROB_EXCLUSIVE',
         },
       });
     }

@@ -17,6 +17,7 @@ type Booking = {
   listing?: { title: string; baselineImages: string[]; lister?: { shopName: string; }; };
   shipments: Shipment[]; damageReports: DamageReport[];
   reviews?: { id: string; rating: number; comment: string; reviewerId: string }[];
+  refund?: { id: string; amount: number; status: string; gateway: string; gatewayRefundId: string | null } | null;
 };
 
 type UserProfile = { id: string; name: string; email: string; phone: string; role: string; walletBalance: number; };
@@ -41,9 +42,7 @@ export default function CustomerProfile() {
   const [disputeBookingId, setDisputeBookingId] = useState<string | null>(null);
   const [disputeReason, setDisputeReason] = useState('');
 
-  const [ratingBookingId, setRatingBookingId] = useState<string | null>(null);
-  const [ratingValue, setRatingValue] = useState(5);
-  const [ratingComment, setRatingComment] = useState('');
+
 
   const handleCopyId = (id: string) => {
     navigator.clipboard.writeText(id);
@@ -75,39 +74,6 @@ export default function CustomerProfile() {
     }
   };
 
-  const handleRatingSubmit = async (bookingId: string) => {
-    try {
-      const res = await fetch(`/api/reviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId, rating: ratingValue, comment: ratingComment })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Review submitted successfully.');
-        setRatingBookingId(null);
-        setRatingValue(5);
-        setRatingComment('');
-        const bRes = await fetch('/api/user/bookings');
-        if (bRes.ok) {
-          const bData = await bRes.json();
-          if (bData.success) setBookings(bData.bookings);
-        }
-      } else {
-        if (data.error?.includes('already submitted')) {
-          setRatingBookingId(null);
-          const bRes = await fetch('/api/user/bookings');
-          if (bRes.ok) {
-            const bData = await bRes.json();
-            if (bData.success) setBookings(bData.bookings);
-          }
-        }
-        alert(data.error || 'Failed to submit review.');
-      }
-    } catch (e) {
-      alert('An error occurred.');
-    }
-  };
 
   const handleDisputeSubmit = async (bookingId: string) => {
     if (!disputeReason.trim()) return alert('Please enter a reason for the dispute.');
@@ -243,52 +209,43 @@ export default function CustomerProfile() {
         {/* ━━━ LEFT PROFILE DOSSIER SIDEBAR ━━━ */}
         <aside className="prof-sidebar-card">
           {/* Avatar & User Details */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{
-              width: '46px', height: '46px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #1E1E2D 0%, #3B3B4F 100%)',
-              color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(30, 30, 45, 0.12)', flexShrink: 0
-            }}>
+          <div className="prof-user-strip">
+            <div className="prof-avatar">
               {initials}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 700, color: 'var(--ink)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div className="prof-user-details">
+              <h2 className="prof-user-name">
                 {profile.name}
               </h2>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '1px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <p className="prof-user-email">
                 {profile.email}
               </p>
             </div>
           </div>
 
           {/* Quick Stat Tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '16px', background: '#FAF7F2', padding: '8px 10px', borderRadius: '12px', border: '1px solid rgba(226, 214, 206, 0.7)' }}>
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ fontSize: '8.5px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}>Reservations</span>
-              <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '16px', color: 'var(--ink)' }}>{counts.all}</strong>
+          <div className="prof-quick-stats">
+            <div className="prof-stat-tile">
+              <span className="prof-stat-label">Reservations</span>
+              <strong className="prof-stat-val">{counts.all}</strong>
             </div>
-            <div style={{ textAlign: 'center', borderLeft: '1px solid rgba(226, 214, 206, 0.8)' }}>
-              <span style={{ fontSize: '8.5px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block' }}>Active</span>
-              <strong style={{ fontFamily: 'var(--font-serif)', fontSize: '16px', color: 'var(--accent)' }}>{counts.active}</strong>
+            <div className="prof-stat-tile prof-stat-tile-active">
+              <span className="prof-stat-label">Active</span>
+              <strong className="prof-stat-val prof-stat-val-accent">{counts.active}</strong>
             </div>
           </div>
             
-          {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid rgba(226, 214, 206, 0.8)', paddingTop: '14px' }}>
+          {/* Navigation Tabs */}
+          <nav className="prof-nav-tabs">
             <button 
               onClick={() => setActiveTab('rentals')}
               className={`prof-nav-btn ${activeTab === 'rentals' ? 'active' : ''}`}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="prof-nav-btn-left">
                 <span>👗</span>
                 <span>Rentals Archive</span>
               </span>
-              <span style={{
-                background: activeTab === 'rentals' ? 'rgba(255,255,255,0.2)' : 'rgba(30, 30, 45, 0.06)',
-                padding: '2px 7px', borderRadius: '999px', fontSize: '10px'
-              }}>
+              <span className="prof-nav-badge">
                 {counts.all}
               </span>
             </button>
@@ -297,14 +254,11 @@ export default function CustomerProfile() {
               onClick={() => setActiveTab('wallet')}
               className={`prof-nav-btn ${activeTab === 'wallet' ? 'active' : ''}`}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="prof-nav-btn-left">
                 <span>💳</span>
                 <span>Vault Guarantee</span>
               </span>
-              <span style={{
-                background: activeTab === 'wallet' ? 'rgba(255,255,255,0.2)' : 'rgba(30, 30, 45, 0.06)',
-                padding: '2px 7px', borderRadius: '999px', fontSize: '10px'
-              }}>
+              <span className="prof-nav-badge">
                 ₹{Number(profile.walletBalance).toLocaleString('en-IN')}
               </span>
             </button>
@@ -312,13 +266,13 @@ export default function CustomerProfile() {
         </aside>
 
         {/* ━━━ RIGHT CONTENT AREA ━━━ */}
-        <div style={{ width: '100%', minWidth: 0 }}>
+        <div className="prof-content-area">
           {activeTab === 'rentals' ? (
             <div>
               {/* Header Luxury Banner */}
               <div className="prof-header-card">
                 <div className="prof-header-top">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div className="prof-header-title-wrap">
                     <h1 className="prof-page-title">Rentals Archive</h1>
                     <span className="prof-res-badge">{counts.all} {counts.all === 1 ? 'Dossier' : 'Dossiers'}</span>
                   </div>
@@ -484,12 +438,35 @@ export default function CustomerProfile() {
                                 </button>
                               </div>
 
-                              <div className="prof-meta-chip">
-                                <span className="prof-meta-label">Event</span>
-                                <strong className="prof-meta-val">
-                                  {new Date(b.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-                                </strong>
-                              </div>
+                              {(() => {
+                                const deliveryDate = new Date(b.startDate);
+                                const returnDate = new Date(b.endDate);
+                                const eventDate = new Date(returnDate);
+                                eventDate.setDate(eventDate.getDate() - 2);
+
+                                return (
+                                  <>
+                                    <div className="prof-meta-chip">
+                                      <span className="prof-meta-label">Event</span>
+                                      <strong className="prof-meta-val">
+                                        {eventDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                      </strong>
+                                    </div>
+                                    <div className="prof-meta-chip">
+                                      <span className="prof-meta-label">Delivery By</span>
+                                      <strong className="prof-meta-val">
+                                        {deliveryDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                      </strong>
+                                    </div>
+                                    <div className="prof-meta-chip">
+                                      <span className="prof-meta-label">Return</span>
+                                      <strong className="prof-meta-val">
+                                        {returnDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                      </strong>
+                                    </div>
+                                  </>
+                                );
+                              })()}
 
                               <div className="prof-meta-chip" style={{ background: 'rgba(212, 86, 122, 0.06)', borderColor: 'rgba(212, 86, 122, 0.2)' }}>
                                 <span className="prof-meta-label" style={{ color: '#D4567A' }}>Package</span>
@@ -499,20 +476,70 @@ export default function CustomerProfile() {
                           </div>
                         </div>
 
-                        {/* 3. Tracking Banner (if active) */}
-                        {b.shipments && b.shipments.length > 0 && (
-                          <div className="prof-tracking-banner">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span>🚚</span>
-                              <span>
-                                <strong>{b.shipments[0].courierName || 'Courier'}</strong> #{b.shipments[0].trackingNumber || 'Assigned'}
+                        {/* 3. Tracking Banner (Dynamic Active Stage Shipment) */}
+                        {(() => {
+                          const activeShipment = (() => {
+                            if (!b.shipments || b.shipments.length === 0) return null;
+                            if (b.status === 'OUT_FOR_DELIVERY') {
+                              return b.shipments.find((s: any) => s.leg === 'HUB_TO_RENTER') || b.shipments[b.shipments.length - 1];
+                            }
+                            if (b.status === 'RETURNED_TO_HUB') {
+                              return b.shipments.find((s: any) => s.leg === 'RENTER_TO_HUB') || b.shipments[b.shipments.length - 1];
+                            }
+                            if (b.status === 'IN_USE') {
+                              return b.shipments.find((s: any) => s.leg === 'HUB_TO_RENTER') || b.shipments[b.shipments.length - 1];
+                            }
+                            if (b.status === 'CONFIRMED' || b.status === 'AT_HUB_PRE') {
+                              return b.shipments.find((s: any) => s.leg === 'LISTER_TO_HUB') || b.shipments[0];
+                            }
+                            return b.shipments.find((s: any) => s.status !== 'DELIVERED') || b.shipments[b.shipments.length - 1];
+                          })();
+
+                          if (!activeShipment) return null;
+
+                          const legLabel = (() => {
+                            switch (activeShipment.leg) {
+                              case 'LISTER_TO_HUB': return 'Lister ➔ Central Hub (QC Intake)';
+                              case 'HUB_TO_RENTER': return 'Central Hub ➔ Delivering to You';
+                              case 'RENTER_TO_HUB': return 'Return Pickup ➔ Central Hub';
+                              case 'HUB_TO_LISTER': return 'Central Hub ➔ Return to Lister';
+                              default: return 'Courier Logistics';
+                            }
+                          })();
+
+                          const statusTheme = (() => {
+                            switch (activeShipment.status) {
+                              case 'DELIVERED':
+                                return { color: '#059669', bg: '#ECFDF5', border: 'rgba(16, 185, 129, 0.25)' };
+                              case 'IN_TRANSIT':
+                              case 'PICKED_UP':
+                                return { color: '#2563EB', bg: '#EFF6FF', border: 'rgba(37, 99, 235, 0.25)' };
+                              case 'PENDING':
+                                return { color: '#D97706', bg: '#FEF3C7', border: 'rgba(217, 119, 6, 0.25)' };
+                              default:
+                                return { color: '#DC2626', bg: '#FEF2F2', border: 'rgba(220, 38, 38, 0.25)' };
+                            }
+                          })();
+
+                          return (
+                            <div className="prof-tracking-banner" style={{ background: statusTheme.bg, borderColor: statusTheme.border }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '15px' }}>🚚</span>
+                                <div>
+                                  <div style={{ fontSize: '10px', color: '#64748B', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    {legLabel}
+                                  </div>
+                                  <span style={{ fontSize: '12px', color: '#0F172A', fontWeight: 700 }}>
+                                    {activeShipment.courierName || 'Courier Partner'} {activeShipment.trackingNumber ? `#${activeShipment.trackingNumber}` : '(Handover in Progress)'}
+                                  </span>
+                                </div>
+                              </div>
+                              <span style={{ fontSize: '9.5px', fontWeight: 800, color: statusTheme.color, background: 'rgba(255,255,255,0.9)', padding: '3px 8px', borderRadius: '4px', textTransform: 'uppercase', border: `1px solid ${statusTheme.border}` }}>
+                                {activeShipment.status?.replace('_', ' ')}
                               </span>
                             </div>
-                            <span style={{ fontSize: '9.5px', fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
-                              {b.shipments[0].status}
-                            </span>
-                          </div>
-                        )}
+                          );
+                        })()}
 
                         {/* 4. Action Button for Early Return */}
                         {b.status === 'IN_USE' && (
@@ -553,71 +580,25 @@ export default function CustomerProfile() {
                                   <span>-₹{b.lateReturnPenalty.toLocaleString('en-IN')}</span>
                                 </div>
                               )}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--ink)', borderTop: '1px solid rgba(226, 214, 206, 0.8)', paddingTop: '6px', marginTop: '3px' }}>
-                                <span>Refunded to Vault Wallet</span>
-                                <span style={{ color: '#059669', fontSize: '12.5px' }}>
-                                  ₹{(b.securityDeposit - b.lateReturnPenalty - (b.damageReports?.reduce((sum, dr) => sum + Number(dr.deductionAmount), 0) || 0)).toLocaleString('en-IN')}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontWeight: 700, color: 'var(--ink)', borderTop: '1px solid rgba(226, 214, 206, 0.8)', paddingTop: '6px', marginTop: '3px' }}>
+                                <div>
+                                  <span>
+                                    {b.refund?.gateway === 'RAZORPAY'
+                                      ? 'Refunded via Razorpay (Original Source)'
+                                      : 'Refunded to Vault Wallet'}
+                                  </span>
+                                  {b.refund?.gatewayRefundId && (
+                                    <div style={{ fontSize: '10px', color: '#64748B', fontWeight: 500, marginTop: '2px', fontFamily: 'monospace' }}>
+                                      Refund ID: {b.refund.gatewayRefundId}
+                                    </div>
+                                  )}
+                                </div>
+                                <span style={{ color: '#059669', fontSize: '13px' }}>
+                                  ₹{(b.refund ? Number(b.refund.amount) : Math.max(0, b.securityDeposit - b.lateReturnPenalty - (b.damageReports?.reduce((sum, dr) => sum + Number(dr.deductionAmount), 0) || 0))).toLocaleString('en-IN')}
                                 </span>
                               </div>
                             </div>
                             
-                            {/* Renter Rating Flow */}
-                            {(() => {
-                              const submittedReview = b.reviews?.find(r => r.reviewerId === profile?.id) || (b.reviews && b.reviews.length > 0 ? b.reviews[0] : null);
-                              if (submittedReview) {
-                                return (
-                                  <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(226, 214, 206, 0.8)' }}>
-                                    <h4 style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px', color: 'var(--text-muted)' }}>Your Experience Rating</h4>
-                                    <div style={{ color: '#F59E0B', fontWeight: 700, fontSize: '12px' }}>
-                                      {Array(submittedReview.rating).fill('★').join('')}
-                                    </div>
-                                    {submittedReview.comment && <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', marginTop: '2px', fontStyle: 'italic' }}>"{submittedReview.comment}"</p>}
-                                  </div>
-                                );
-                              }
-
-                              const isRating = ratingBookingId === b.id;
-                              if (isRating) {
-                                return (
-                                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(226, 214, 206, 0.8)' }}>
-                                    <h4 style={{ fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px', color: 'var(--ink)' }}>Rate Atelier & Outfit</h4>
-                                    <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
-                                      {[1,2,3,4,5].map(star => (
-                                        <button 
-                                          key={star} 
-                                          onClick={() => setRatingValue(star)} 
-                                          style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: star <= ratingValue ? '#F59E0B' : '#E2D6CE', padding: 0 }}
-                                        >
-                                          ★
-                                        </button>
-                                      ))}
-                                    </div>
-                                    <textarea 
-                                      placeholder="Add an optional review for the atelier..." 
-                                      value={ratingComment} 
-                                      onChange={e => setRatingComment(e.target.value)} 
-                                      style={{ width: '100%', padding: '6px 8px', border: '1px solid rgba(226, 214, 206, 0.9)', borderRadius: '6px', fontSize: '11.5px', marginBottom: '6px', minHeight: '44px', outline: 'none' }}
-                                    />
-                                    <div style={{ display: 'flex', gap: '6px' }}>
-                                      <button onClick={() => handleRatingSubmit(b.id)} style={{ background: '#1E1E2D', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '999px', fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}>Submit</button>
-                                      <button onClick={() => { setRatingBookingId(null); setRatingValue(5); setRatingComment(''); }} style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid rgba(226, 214, 206, 0.9)', padding: '6px 12px', borderRadius: '999px', fontSize: '9.5px', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer' }}>Cancel</button>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(226, 214, 206, 0.8)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>How was the fit?</span>
-                                  <button 
-                                    onClick={() => setRatingBookingId(b.id)} 
-                                    style={{ background: '#1E1E2D', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '999px', fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', cursor: 'pointer' }}
-                                  >
-                                    ★ Rate Atelier
-                                  </button>
-                                </div>
-                              );
-                            })()}
                             
                             {/* Renter Dispute Flow */}
                             {(() => {
@@ -692,43 +673,41 @@ export default function CustomerProfile() {
             </div>
           ) : (
             /* ━━━ PLATFORM WALLET TAB ━━━ */
-            <div style={{ background: '#FFFFFF', borderRadius: '18px', padding: '30px 24px', border: '1px solid rgba(226, 214, 206, 0.85)', boxShadow: '0 8px 24px rgba(30, 30, 45, 0.03)' }}>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '24px', fontWeight: 700, color: 'var(--ink)', marginBottom: '4px' }}>
+            <div className="prof-vault-card">
+              <h2 className="prof-vault-title">
                 Vault Guarantee Ledger
               </h2>
-              <p style={{ fontSize: '12.5px', color: 'var(--ink-secondary)', marginBottom: '24px' }}>
+              <p className="prof-vault-subtitle">
                 Transparent balance management for rental security deposit returns and platform credits.
               </p>
               
-              <div style={{ borderTop: '1px solid rgba(226, 214, 206, 0.8)', borderBottom: '1px solid rgba(226, 214, 206, 0.8)', padding: '24px 0', marginBottom: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
-                  <div>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                      Available Vault Capital
-                    </span>
-                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: '38px', fontWeight: 700, color: '#059669', lineHeight: 1 }}>
-                      ₹{Number(profile.walletBalance).toLocaleString('en-IN')}
-                    </div>
+              <div className="prof-vault-metrics-row">
+                <div className="prof-vault-metric">
+                  <span className="prof-vault-metric-label">
+                    Available Vault Capital
+                  </span>
+                  <div className="prof-vault-metric-val">
+                    ₹{Number(profile.walletBalance).toLocaleString('en-IN')}
                   </div>
-                  
-                  <div style={{ width: '1px', height: '44px', background: 'rgba(226, 214, 206, 0.8)' }} />
-                  
-                  <div>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                      Linked Registered Phone
-                    </span>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
-                      {profile.phone}
-                    </div>
+                </div>
+                
+                <div className="prof-vault-divider" />
+                
+                <div className="prof-vault-metric">
+                  <span className="prof-vault-metric-label">
+                    Linked Registered Phone
+                  </span>
+                  <div className="prof-vault-phone-val">
+                    {profile.phone}
                   </div>
                 </div>
               </div>
 
-              <div>
-                <h4 style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px', color: 'var(--ink)' }}>
+              <div className="prof-vault-rules">
+                <h4 className="prof-vault-rules-title">
                   Platform Usage & Guarantee Rules
                 </h4>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.55, maxWidth: '580px', margin: 0 }}>
+                <p className="prof-vault-rules-desc">
                   This vault wallet securely holds your security deposit refunds and cancellation credits. 
                   Balances are automatically applied toward your next haute couture rental checkout without any manual transfer steps.
                 </p>

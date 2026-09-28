@@ -18,6 +18,10 @@ type BookingInfo = {
     name: string;
   };
   damageReports?: {
+    id?: string;
+    inspectionType?: string;
+    grade?: string;
+    deductionAmount?: number | string;
     dispute?: { status: string } | null;
   }[];
 };
@@ -28,6 +32,7 @@ type Payout = {
   commissionPaid: string;
   status: 'PENDING' | 'COMPLETED';
   batchRef: string | null;
+  walletBalanceIncluded?: string | number;
   createdAt: string;
   booking: BookingInfo;
 };
@@ -60,23 +65,13 @@ export default function ListerPayoutsPage() {
   const [error, setError] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const [referralInfo, setReferralInfo] = useState<{
-    code: string;
-    count: number;
-    walletBalance: number;
-  }>({ code: '', count: 0, walletBalance: 0 });
-
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
   const fetchPayoutsData = async () => {
     try {
-      const [res, profRes] = await Promise.all([
-        fetch('/api/lister/payouts'),
-        fetch('/api/lister/profile')
-      ]);
-
+      const res = await fetch('/api/lister/payouts');
       const data = await res.json();
       if (res.ok && data.success) {
         setStats({
@@ -89,17 +84,6 @@ export default function ListerPayoutsPage() {
         setPayouts(data.payouts || []);
       } else {
         setError(data.error || 'Failed to load financial records.');
-      }
-
-      if (profRes.ok) {
-        const pData = await profRes.json();
-        if (pData.success && pData.profile) {
-          setReferralInfo({
-            code: pData.profile.referralCode || 'N/A',
-            count: pData.profile._count?.referralsMade || 0,
-            walletBalance: Number(pData.profile.user?.walletBalance || 0),
-          });
-        }
       }
     } catch {
       setError('Connection error. Please try again.');
@@ -158,32 +142,6 @@ export default function ListerPayoutsPage() {
         </div>
       ) : (
         <>
-          <div style={{ background: '#FFFFFF', border: '1px solid rgba(44,94,67,0.12)', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                🎁
-              </div>
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#74897C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Lister Referral Code</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: '#166534', fontFamily: 'monospace', letterSpacing: '0.08em', marginTop: '2px' }}>
-                  {referralInfo.code}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', color: '#74897C', textTransform: 'uppercase', fontWeight: 600 }}>Successful Referrals</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, color: '#0D1A14', marginTop: '2px' }}>{referralInfo.count} Listers</div>
-              </div>
-              <div style={{ height: '32px', width: '1px', background: 'rgba(44,94,67,0.1)' }} />
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', color: '#74897C', textTransform: 'uppercase', fontWeight: 600 }}>Wallet Credit Balance</div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: '#2C5E43', marginTop: '2px' }}>₹{referralInfo.walletBalance.toLocaleString('en-IN')}</div>
-              </div>
-            </div>
-          </div>
-
           <div className="stats-grid">
             <div className="payouts-card">
               <div className="w-icon-circle" style={{ background: '#EEF2EF', color: '#2C5E43' }}>💼</div>
@@ -226,69 +184,81 @@ export default function ListerPayoutsPage() {
                 <span>Net Transfer</span>
                 <span>Platform Commission</span>
                 <span>Payout Status</span>
-                <span>Rental Detail</span>
+                <span>Breakdown</span>
               </div>
 
               {paginatedPayouts.map((p) => {
                 const isExpanded = expandedId === p.id;
                 const isCompleted = p.status === 'COMPLETED';
+                const hasOpenDispute = p.booking?.damageReports?.some(dr => dr.dispute?.status === 'OPEN');
+
+                const statusPill = hasOpenDispute ? (
+                  <span 
+                    className="status-pill" 
+                    style={{ background: '#FEF2F2', color: '#991B1B', borderColor: '#FCA5A5' }}
+                  >
+                    <span className="status-dot" style={{ background: '#EF4444' }} />
+                    ON HOLD
+                  </span>
+                ) : (
+                  <span 
+                    className="status-pill" 
+                    style={{
+                      background: isCompleted ? '#ECFDF5' : '#FFFBEB',
+                      color: isCompleted ? '#065F46' : '#92400E',
+                      borderColor: isCompleted ? '#6EE7B7' : '#FCD34D',
+                    }}
+                  >
+                    <span 
+                      className="status-dot" 
+                      style={{ background: isCompleted ? '#10B981' : '#F59E0B' }} 
+                    />
+                    {p.status}
+                  </span>
+                );
+
                 return (
                   <div key={p.id} className="ledger-row-wrap">
                     <div className="ledger-row" onClick={() => setExpandedId(isExpanded ? null : p.id)}>
-                      <div className="ledger-id-txt" style={{ fontFamily: 'monospace' }}>
-                        {p.batchRef || `BATCH-${p.id.slice(0, 8).toUpperCase()}`}
+                      <div className="ledger-col-id">
+                        <span className="ledger-id-txt" style={{ fontFamily: 'monospace' }}>
+                          {p.batchRef || `BATCH-${p.id.slice(0, 8).toUpperCase()}`}
+                        </span>
+                        <div className="ledger-mobile-status">
+                          {statusPill}
+                        </div>
                       </div>
-                      <div className="ledger-date-txt">
-                        {new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </div>
-                      <div className="ledger-amt-txt">
-                        ₹{Number(p.amount).toLocaleString('en-IN')}
-                      </div>
-                      <div className="ledger-com-txt" style={{ color: '#EF4444' }}>
-                        -₹{Number(p.commissionPaid).toLocaleString('en-IN')}
-                      </div>
-                      <div>
-                        {(() => {
-                          const hasOpenDispute = p.booking?.damageReports?.some(dr => dr.dispute?.status === 'OPEN');
-                          
-                          if (hasOpenDispute) {
-                            return (
-                              <span 
-                                className="status-pill" 
-                                style={{
-                                  background: '#FEF2F2',
-                                  color: '#991B1B',
-                                  borderColor: '#FCA5A5',
-                                }}
-                              >
-                                <span className="status-dot" style={{ background: '#EF4444' }} />
-                                ON HOLD - UNDER REVIEW
-                              </span>
-                            );
-                          }
 
-                          return (
-                            <span 
-                              className="status-pill" 
-                              style={{
-                                background: isCompleted ? '#ECFDF5' : '#FFFBEB',
-                                color: isCompleted ? '#065F46' : '#92400E',
-                                borderColor: isCompleted ? '#6EE7B7' : '#FCD34D',
-                              }}
-                            >
-                              <span 
-                                className="status-dot" 
-                                style={{ background: isCompleted ? '#10B981' : '#F59E0B' }} 
-                              />
-                              {p.status}
-                            </span>
-                          );
-                        })()}
+                      <div className="ledger-col-date">
+                        <span className="ledger-mobile-lbl">Initiated On</span>
+                        <span className="ledger-date-txt">
+                          {new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+
+                      <div className="ledger-col-amt">
+                        <span className="ledger-mobile-lbl">Net Transfer</span>
+                        <span className="ledger-amt-txt">
+                          ₹{Number(p.amount).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div className="ledger-col-com">
+                        <span className="ledger-mobile-lbl">Commission</span>
+                        <span className="ledger-com-txt" style={{ color: '#DC2626' }}>
+                          -₹{Number(p.commissionPaid).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div className="ledger-col-status">
+                        {statusPill}
+                      </div>
+
+                      <div className="ledger-col-toggle">
+                        <span className="ledger-view-label">{isExpanded ? 'Hide Breakdown' : 'View Breakdown'}</span>
                         <svg
                           width="16" height="16" viewBox="0 0 24 24" fill="none"
-                          stroke="#AEC0B4" strokeWidth="2"
+                          stroke="#2C5E43" strokeWidth="2.5"
                           style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
                         >
                           <path d="M6 9L12 15 18 9" />
@@ -296,50 +266,97 @@ export default function ListerPayoutsPage() {
                       </div>
                     </div>
 
-                    {isExpanded && p.booking && (
-                      <div style={{
-                        marginTop: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                        padding: '24px', fontFamily: 'var(--font-sans)', fontSize: '13px', animation: 'riseReveal 0.3s ease both'
-                      }}>
-                        <h4 style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px', color: 'var(--accent)' }}>
-                          Boutique Settlement Receipt
-                        </h4>
-                        
-                        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
-                          <div style={{ width: '60px', height: '80px', overflow: 'hidden', border: '1px solid var(--border)' }}>
-                            <img src={p.booking.listing.baselineImages?.[0] || 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=150'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                          <div>
-                            <strong style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>{p.booking.listing.title}</strong>
-                            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Rented by: {p.booking.renter.name}</span>
-                          </div>
-                        </div>
+                    {isExpanded && p.booking && (() => {
+                      const grossRent = Number(p.booking.rentAmount || 0);
+                      const totalComm = Number(p.commissionPaid || 0);
+                      const extFeeTotal = Number(p.booking.extensionFee || 0);
+                      const listerExtShare = Math.round(extFeeTotal * 0.50);
+                      const adminExtComm = Math.round(extFeeTotal * 0.50);
+                      const adminRentComm = Math.max(0, totalComm - adminExtComm);
+                      const listerBaseRent = Math.max(0, grossRent - adminRentComm);
+                      const walletBonus = Number(p.walletBalanceIncluded || 0);
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Gross Rent Earned</span>
-                            <span>₹{Number(p.booking.rentAmount).toLocaleString('en-IN')}</span>
+                      // Calculate Damage Compensation
+                      let damageComp = (p.booking.damageReports || [])
+                        .filter(d => d.inspectionType === 'POST_RETURN' || Number(d.deductionAmount) > 0)
+                        .reduce((sum, d) => sum + Number(d.deductionAmount || 0), 0);
+
+                      // Fallback if compensation was directly credited into payout amount
+                      const expectedBaseTotal = listerBaseRent + listerExtShare + walletBonus;
+                      if (damageComp === 0 && Number(p.amount) > expectedBaseTotal) {
+                        damageComp = Number(p.amount) - expectedBaseTotal;
+                      }
+
+                      return (
+                        <div className="settlement-receipt-card">
+                          <div className="receipt-header-row">
+                            <h4 className="receipt-badge-title">
+                              Boutique Settlement Receipt
+                            </h4>
+                            <span className="receipt-ref-code">
+                              Ref: {p.batchRef || `SETTLE-${p.id.slice(0, 8).toUpperCase()}`}
+                            </span>
                           </div>
-                          {Number(p.booking.extensionFee) > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ color: 'var(--text-muted)' }}>Extension Fee Added</span>
-                              <span>₹{Number(p.booking.extensionFee).toLocaleString('en-IN')}</span>
+                          
+                          <div className="receipt-item-preview">
+                            <div className="receipt-item-thumb">
+                              <img src={p.booking.listing.baselineImages?.[0] || 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=150'} alt="" />
                             </div>
-                          )}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--alert)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Platform Commission (35%)</span>
-                            <span>-₹{Number(p.commissionPaid).toLocaleString('en-IN')}</span>
+                            <div className="receipt-item-meta">
+                              <strong className="receipt-item-name">{p.booking.listing.title}</strong>
+                              <span className="receipt-renter-name">Rented by: {p.booking.renter.name}</span>
+                              <div className="receipt-duration-txt">
+                                Duration: {new Date(p.booking.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} – {new Date(p.booking.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderTop: '1px dashed var(--border)', paddingTop: '8px', marginTop: '4px' }}>
-                            <span>Net Bank Deposit</span>
-                            <span style={{ color: 'var(--accent)' }}>₹{Number(p.amount).toLocaleString('en-IN')}</span>
-                          </div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', borderTop: '1px solid var(--border)', paddingTop: '8px' }}>
-                            Settled via IMPS to Account: *******{bankDetails.bankAccountNo.slice(-4) || 'XXXX'} | IFSC: {bankDetails.bankIfsc || 'N/A'}
+
+                          <div className="receipt-lines-wrap">
+                            <div className="receipt-line-row">
+                              <span className="lbl">Gross Rent Earned</span>
+                              <span className="val" style={{ fontWeight: 600 }}>₹{grossRent.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="receipt-line-row" style={{ color: '#DC2626' }}>
+                              <span className="lbl">Platform Commission (35% · min ₹2k floor)</span>
+                              <span className="val">-₹{adminRentComm.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="receipt-base-share-row">
+                              <span>Base Rent Share (Lister 65%)</span>
+                              <span style={{ fontWeight: 600, color: 'var(--ink)' }}>₹{listerBaseRent.toLocaleString('en-IN')}</span>
+                            </div>
+
+                            {extFeeTotal > 0 && (
+                              <div className="receipt-line-row" style={{ color: '#059669' }}>
+                                <span className="lbl">Rental Extension Share (50% of ₹{extFeeTotal.toLocaleString('en-IN')})</span>
+                                <span className="val" style={{ fontWeight: 700 }}>+₹{listerExtShare.toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+
+                            {damageComp > 0 && (
+                              <div className="receipt-highlight-pill" style={{ color: '#D97706', background: 'rgba(217, 119, 6, 0.08)' }}>
+                                <span>🛡️ Damage / Assessment Compensation (100% to Lister)</span>
+                                <span style={{ fontWeight: 700 }}>+₹{damageComp.toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+
+                            {walletBonus > 0 && (
+                              <div className="receipt-highlight-pill" style={{ color: '#059669', background: 'rgba(5, 150, 105, 0.08)' }}>
+                                <span>💰 Wallet Credit (Clubbed)</span>
+                                <span style={{ fontWeight: 700 }}>+₹{walletBonus.toLocaleString('en-IN')}</span>
+                              </div>
+                            )}
+
+                            <div className="receipt-deposit-total">
+                              <span>Net Bank Deposit</span>
+                              <span className="receipt-deposit-val">₹{Number(p.amount).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className="receipt-bank-footer">
+                              Settled via IMPS to Account: *******{bankDetails.bankAccountNo.slice(-4) || 'XXXX'} | IFSC: {bankDetails.bankIfsc || 'N/A'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 );
               })}

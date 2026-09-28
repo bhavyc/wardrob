@@ -23,19 +23,64 @@ export async function POST(request: Request) {
       );
     }
 
+    const listerProfile = await prisma.listerProfile.findUnique({
+      where: { userId: authUser.userId },
+    });
+
+    if (!listerProfile) {
+      return NextResponse.json(
+        { success: false, error: 'Lister profile not found.' },
+        { status: 404 }
+      );
+    }
+
+    if (!listerProfile.registrationFeePaid) {
+      return NextResponse.json(
+        { success: false, error: 'Please pay the ₹500 onboarding activation fee before submitting KYC details.' },
+        { status: 400 }
+      );
+    }
+
+    if (listerProfile.status === 'PENDING' && listerProfile.aadhaarNumber) {
+      return NextResponse.json(
+        { success: false, error: 'Your KYC documents are already submitted and under review. Updates are locked.' },
+        { status: 400 }
+      );
+    }
+
+    if (listerProfile.status === 'APPROVED') {
+      return NextResponse.json(
+        { success: false, error: 'Your KYC has already been verified and approved.' },
+        { status: 400 }
+      );
+    }
+
     const encryptedAadhaar = encryptString(aadhaarNumber.trim());
     const encryptedPan = encryptString(panNumber.trim().toUpperCase());
     const encryptedBank = encryptString(bankAccountNo.trim());
 
-    const updatedProfile = await prisma.listerProfile.update({
-      where: { userId: authUser.userId },
-      data: {
-        aadhaarNumber: encryptedAadhaar,
-        panNumber: encryptedPan,
-        bankAccountNo: encryptedBank,
-        bankIfsc: bankIfsc.trim().toUpperCase(),
-        status: 'PENDING',
-      },
+    const updatedProfile = await prisma.$transaction(async (tx) => {
+      const profile = await tx.listerProfile.update({
+        where: { userId: authUser.userId },
+        data: {
+          aadhaarNumber: encryptedAadhaar,
+          panNumber: encryptedPan,
+          bankAccountNo: encryptedBank,
+          bankIfsc: bankIfsc.trim().toUpperCase(),
+          status: 'PENDING',
+        },
+      });
+
+      await tx.user.update({
+        where: { id: authUser.userId },
+        data: {
+          aadhaarNumber: encryptedAadhaar,
+          panNumber: encryptedPan,
+          idVerificationStatus: 'PENDING',
+        }
+      });
+
+      return profile;
     });
 
     return NextResponse.json({

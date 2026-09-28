@@ -44,6 +44,8 @@ export default function ListerlistingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+
   const fetchlistings = async () => {
     try {
       const res = await fetch('/api/lister/listings');
@@ -82,63 +84,95 @@ export default function ListerlistingsPage() {
     }
   };
 
-  const totalPages = Math.ceil(listings.length / ITEMS_PER_PAGE);
-  const paginatedlistings = listings.slice(
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    if (currentStatus === 'RENTED' || currentStatus === 'AT_HUB') {
+      alert(`Cannot change status of an outfit that is currently ${currentStatus === 'RENTED' ? 'rented' : 'at the hub'}.`);
+      return;
+    }
+    const newStatus = currentStatus === 'UNLISTED' ? 'AVAILABLE' : 'UNLISTED';
+    if (!confirm(`Are you sure you want to change status to ${newStatus}?`)) return;
+    
+    try {
+      const res = await fetch(`/api/lister/listings/${id}/status`, { 
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        fetchlistings();
+      } else {
+        alert(data.error || 'Failed to update status');
+      }
+    } catch (e) {
+      alert('Network error while updating status.');
+    }
+  };
+
+  const filteredListings = listings.filter(item => {
+    if (filterStatus === 'ALL') return true;
+    return item.status === filterStatus;
+  });
+
+  const totalPages = Math.ceil(filteredListings.length / ITEMS_PER_PAGE);
+  const paginatedlistings = filteredListings.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
-  const startIdx = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-  const endIdx = Math.min(currentPage * ITEMS_PER_PAGE, listings.length);
 
   return (
     <>
       {/* Header */}
       <div className="prod-header">
-        <div>
-          <h1 className="prod-h1">Your Listed Items</h1>
-          <p className="prod-subtitle">Manage your wardrobe items available for rent</p>
+        <div className="prod-header-text">
+          <h1 className="prod-h1">Wardrobe Listings</h1>
+          <p className="prod-subtitle">Manage pieces available for rental</p>
         </div>
         {!loading && (
           !registrationFeePaid ? (
-            <Link href="/lister/kyc" className="add-btn-link" style={{ background: '#D97706', borderColor: '#D97706', boxShadow: '0 2px 10px rgba(217,119,6,0.2)' }}>
-              <span>💳</span> Pay ₹500 Fee to Unlock Listing
+            <Link href="/lister/kyc" className="add-btn-link add-btn-warning">
+              <span>💳</span> Pay ₹500
             </Link>
           ) : listerStatus !== 'APPROVED' ? (
-            <Link href="/lister/kyc" className="add-btn-link" style={{ background: '#2563EB', borderColor: '#2563EB' }}>
-              <span>⏳</span> KYC Verification Required
+            <Link href="/lister/kyc" className="add-btn-link add-btn-pending">
+              <span>⏳</span> KYC Required
             </Link>
           ) : (
             <Link href="/lister/listings/add" className="add-btn-link">
-              <span style={{ fontSize: 16 }}>+</span> List New Item
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add Outfit</span>
             </Link>
           )
         )}
       </div>
 
-      {/* Stats row */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(44,94,67,0.08)', color: '#2C5E43' }}>🧥</div>
-          <div>
-            <div className="stat-num">{loading ? '—' : listings.length}</div>
-            <div className="stat-lbl">Total Items Listed</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: '#ECFDF5', color: '#059669' }}>💸</div>
-          <div>
-            <div className="stat-num">{loading ? '—' : listings.filter(l => l.status === 'RENTED').length}</div>
-            <div className="stat-lbl">Currently Rented Out</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: '#EFF6FF', color: '#1D4ED8' }}>📦</div>
-          <div>
-            <div className="stat-num">{loading ? '—' : listings.filter(l => l.status === 'AT_HUB').length}</div>
-            <div className="stat-lbl">At Hub (Cleaning)</div>
-          </div>
-        </div>
+      {/* Interactive Luxury Filter Pills */}
+      <div className="stats-pills-row">
+        <button 
+          className={`stat-pill-btn ${filterStatus === 'ALL' ? 'active' : ''}`}
+          onClick={() => { setFilterStatus('ALL'); setCurrentPage(1); }}
+        >
+          All <span className="stat-pill-count">{listings.length}</span>
+        </button>
+        <button 
+          className={`stat-pill-btn ${filterStatus === 'AVAILABLE' ? 'active' : ''}`}
+          onClick={() => { setFilterStatus('AVAILABLE'); setCurrentPage(1); }}
+        >
+          Available <span className="stat-pill-count">{listings.filter(l => l.status === 'AVAILABLE').length}</span>
+        </button>
+        <button 
+          className={`stat-pill-btn ${filterStatus === 'RENTED' ? 'active' : ''}`}
+          onClick={() => { setFilterStatus('RENTED'); setCurrentPage(1); }}
+        >
+          Rented <span className="stat-pill-count">{listings.filter(l => l.status === 'RENTED').length}</span>
+        </button>
+        <button 
+          className={`stat-pill-btn ${filterStatus === 'AT_HUB' ? 'active' : ''}`}
+          onClick={() => { setFilterStatus('AT_HUB'); setCurrentPage(1); }}
+        >
+          At Hub <span className="stat-pill-count">{listings.filter(l => l.status === 'AT_HUB').length}</span>
+        </button>
       </div>
 
       {/* Alert info */}
@@ -176,126 +210,150 @@ export default function ListerlistingsPage() {
         </div>
       )}
 
-      {/* Product List Table */}
+      {/* Product List */}
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}>
           <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2.5px solid #DDE4DF', borderTopColor: '#2C5E43', animation: 'spin 0.7s linear infinite' }} />
         </div>
-      ) : listings.length === 0 ? (
-        !registrationFeePaid ? (
-          <div className="empty-state" style={{ borderColor: 'rgba(217,119,6,0.35)', background: '#FFFDF9' }}>
-            <div className="empty-emoji">🔒</div>
-            <h3 className="empty-title" style={{ color: '#92400E' }}>Registration Fee Required</h3>
-            <p className="empty-desc" style={{ maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.6 }}>
-              A mandatory one-time registration fee of <strong>₹500</strong> is required before listing wardrobe pieces. Complete payment and submit KYC to unlock your boutique workspace.
-            </p>
-            <Link href="/lister/kyc" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content', background: '#D97706', borderColor: '#D97706' }}>
-              Pay ₹500 & Proceed to KYC →
-            </Link>
-          </div>
-        ) : listerStatus !== 'APPROVED' ? (
-          <div className="empty-state" style={{ borderColor: 'rgba(37,99,235,0.3)', background: '#F8FAFF' }}>
-            <div className="empty-emoji">⏳</div>
-            <h3 className="empty-title" style={{ color: '#1E40AF' }}>
-              {listerStatus === 'REJECTED' ? 'KYC Verification Rejected' : 'KYC Under Review'}
-            </h3>
-            <p className="empty-desc" style={{ maxWidth: '440px', margin: '0 auto 20px', lineHeight: 1.6 }}>
-              {listerStatus === 'REJECTED'
-                ? 'Your verification documents were rejected. Please re-submit valid government ID in KYC settings.'
-                : 'Your ₹500 registration fee is confirmed. Once our compliance team approves your identity documents, item listing will be activated.'}
-            </p>
-            <Link href="/lister/kyc" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content', background: '#2563EB', borderColor: '#2563EB' }}>
-              Check KYC Status →
-            </Link>
-          </div>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-emoji">👕</div>
-            <h3 className="empty-title">No items listed yet</h3>
-            <p className="empty-desc">Earn money by renting out your premium wardrobe pieces.</p>
+      ) : filteredListings.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-emoji">👗</div>
+          <h3 className="empty-title">
+            {filterStatus === 'ALL' ? 'No items listed yet' : `No items ${filterStatus.toLowerCase()}`}
+          </h3>
+          <p className="empty-desc">
+            {filterStatus === 'ALL' 
+              ? 'Earn revenue by listing your luxury wardrobe pieces for rent.'
+              : 'Try selecting a different filter above.'}
+          </p>
+          {filterStatus === 'ALL' && (
             <Link href="/lister/listings/add" className="add-btn-link" style={{ margin: '0 auto', maxWidth: 'fit-content' }}>
               + List Your First Item
             </Link>
-          </div>
-        )
+          )}
+        </div>
       ) : (
-        <div className="prod-table-wrap">
-          <div className="prod-table-head">
-            <span>Photo</span>
-            <span>Item Details</span>
-            <span>Package Rent</span>
-            <span>Security Dep.</span>
-            <span>Status</span>
-            <span>Toggle</span>
-          </div>
+        <div className="listings-container">
           {paginatedlistings.map(listing => {
             const cfg = STATUS_CONFIG[listing.status] || STATUS_CONFIG.UNLISTED;
             const isExpanded = expandedId === listing.id;
             return (
-              <div key={listing.id} className="prod-row-wrapper">
-                {/* Row Summary */}
-                <div className="prod-row" onClick={() => setExpandedId(isExpanded ? null : listing.id)}>
-                  <div className="prod-thumb">
-                    {listing.baselineImages?.[0]
-                      ? <img src={listing.baselineImages[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : '👗'
-                    }
-                  </div>
-                  <div>
-                    <div className="prod-title-main">{listing.title}</div>
-                    <div className="prod-title-sub">
-                      <span className="collection-badge">{listing.category}</span>
-                      <span className="size-chip">{listing.size}</span>
-                      <span style={{ fontSize: '10px', marginLeft: '6px' }}>• {listing.condition}</span>
+              <div key={listing.id} className="listing-card">
+                {/* Main Card */}
+                <div className="listing-card-body" onClick={() => setExpandedId(isExpanded ? null : listing.id)}>
+                  {/* Left: Thumbnail Media */}
+                  <div className="listing-card-media">
+                    {listing.baselineImages?.[0] ? (
+                      <img 
+                        src={listing.baselineImages[0]} 
+                        alt={listing.title}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.listing-card-media-fallback') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      className="listing-card-media-fallback"
+                      style={{ display: listing.baselineImages?.[0] ? 'none' : 'flex' }}
+                    >
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.5">
+                        <path d="M12 2a3 3 0 0 0-3 3c0 .8.3 1.5.8 2.1L3 13v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6l-6.8-5.9c.5-.6.8-1.3.8-2.1a3 3 0 0 0-3-3z"/>
+                      </svg>
                     </div>
                   </div>
-                  <div className="price-text">₹{Number(listing.rentalPrice).toLocaleString('en-IN')}</div>
-                  <div className="price-text" style={{ color: '#74897C', fontWeight: 500 }}>₹{Number(listing.securityDeposit).toLocaleString('en-IN')}</div>
-                  <div>
-                    <span className="status-pill" style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}>
-                      <span className="status-dot" style={{ background: cfg.dot }} />
-                      {cfg.label}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <svg
-                      width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke="#AEC0B4" strokeWidth="2"
-                      style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
-                    >
-                      <path d="M6 9L12 15 18 9" />
-                    </svg>
+
+                  {/* Right: Info Column */}
+                  <div className="listing-card-content">
+                    {/* Top: Status Badge & Chevron */}
+                    <div className="listing-card-header-row">
+                      <span className="status-pill" style={{ background: cfg.bg, color: cfg.color, borderColor: cfg.border }}>
+                        <span className="status-dot" style={{ background: cfg.dot }} />
+                        {cfg.label}
+                      </span>
+                      <div className="listing-card-chevron">
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none"
+                          stroke="#94A3B8" strokeWidth="2.5"
+                          style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s ease' }}
+                        >
+                          <path d="M6 9L12 15 18 9" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="listing-card-title">{listing.title}</h3>
+
+                    {/* Meta: Category • Size • Condition */}
+                    <div className="listing-card-meta">
+                      <span className="meta-category">{listing.category}</span>
+                      <span className="meta-dot">•</span>
+                      <span>Size {listing.size}</span>
+                      <span className="meta-dot">•</span>
+                      <span>{listing.condition}</span>
+                    </div>
+
+                    {/* Price Row */}
+                    <div className="listing-card-price-row">
+                      <div className="listing-price-main">
+                        <span className="listing-price-val">₹{Number(listing.rentalPrice).toLocaleString('en-IN')}</span>
+                        <span className="listing-price-sub">/ 4 days</span>
+                      </div>
+                      <div className="listing-deposit-tag">
+                        Dep: ₹{Number(listing.securityDeposit).toLocaleString('en-IN')}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Row Expanded attributes */}
+                {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="prod-expand-panel">
+                  <div className="listing-card-expanded">
                     <div className="exp-section">
-                      <span className="exp-label">Item Description & History</span>
+                      <span className="exp-label">Description & Details</span>
                       <p className="exp-value">{listing.description || 'No description provided.'}</p>
                     </div>
-                    <div className="exp-section">
-                      <span className="exp-label">Total Rental Bookings</span>
-                      <p className="exp-value" style={{ fontWeight: 700 }}>{listing._count?.bookings || 0} Bookings</p>
+                    <div className="exp-stats-row">
+                      <div className="exp-stat-box">
+                        <span className="exp-label">Total Bookings</span>
+                        <span className="exp-stat-num">{listing._count?.bookings || 0} Bookings</span>
+                      </div>
+                      <div className="exp-stat-box">
+                        <span className="exp-label">Security Deposit</span>
+                        <span className="exp-stat-num">₹{Number(listing.securityDeposit).toLocaleString('en-IN')}</span>
+                      </div>
                     </div>
-                    {listing.status === 'AT_HUB' && (
-                      <div className="exp-section" style={{ borderLeft: '1px solid rgba(0,0,0,0.1)', paddingLeft: '24px' }}>
-                        <span className="exp-label" style={{ color: '#92400E' }}>Hub Storage Option</span>
+
+                    {/* Actions */}
+                    <div className="exp-actions">
+                      {listing.status === 'AVAILABLE' || listing.status === 'UNLISTED' ? (
+                        <button 
+                          onClick={() => handleToggleStatus(listing.id, listing.status)}
+                          className="btn-status-toggle"
+                          style={{
+                            background: listing.status === 'AVAILABLE' ? '#FEF2F2' : '#ECFDF5', 
+                            color: listing.status === 'AVAILABLE' ? '#991B1B' : '#065F46',
+                            borderColor: listing.status === 'AVAILABLE' ? '#FCA5A5' : '#6EE7B7', 
+                          }}
+                        >
+                          {listing.status === 'AVAILABLE' ? '🔒 Unlist Item' : '✨ Publish Item'}
+                        </button>
+                      ) : (
+                        <div className="exp-status-hint">
+                          Status cannot be toggled while item is {listing.status.toLowerCase()}.
+                        </div>
+                      )}
+                      {listing.status === 'AT_HUB' && (
                         <button 
                           onClick={() => handleWithdraw(listing.id)}
-                          style={{
-                            marginTop: '8px', padding: '10px 16px', background: '#FFFBEB', color: '#92400E',
-                            border: '1px solid #FCD34D', borderRadius: '8px', fontSize: '11px', fontWeight: 600,
-                            letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s',
-                          }}
-                          onMouseOver={(e) => e.currentTarget.style.background = '#FEF3C7'}
-                          onMouseOut={(e) => e.currentTarget.style.background = '#FFFBEB'}
+                          className="btn-withdraw"
                         >
-                          Withdraw Item (Leg 4)
+                          Withdraw Item from Hub
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -305,7 +363,7 @@ export default function ListerlistingsPage() {
           {/* Pagination Controls */}
           <Pagination
             currentPage={currentPage}
-            totalItems={listings.length}
+            totalItems={filteredListings.length}
             itemsPerPage={ITEMS_PER_PAGE}
             onPageChange={setCurrentPage}
           />

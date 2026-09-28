@@ -1,0 +1,700 @@
+/* Luxury Admin Renter Refunds & Approvals Styles */
+
+@keyframes admFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.adm-refunds-page {
+  padding-bottom: 48px;
+  animation: admFadeIn 0.3s ease-out;
+}
+
+/* Entity Separation Switcher Tabs */
+.adm-entity-nav-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .adm-entity-nav-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+.adm-entity-tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.adm-entity-tab:hover {
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+}
+
+.adm-entity-tab.active {
+  border-color: #C5A880;
+  background: linear-gradient(135deg, rgba(197, 168, 128, 0.09) 0%, rgba(255, 255, 255, 1) 100%);
+  box-shadow: 0 4px 12px rgba(197, 168, 128, 0.12);
+}
+
+.adm-entity-tab-icon {
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F1F5F9;
+  flex-shrink: 0;
+}
+
+.adm-entity-tab.active .adm-entity-tab-icon {
+  background: rgba(197, 168, 128, 0.2);
+}
+
+.adm-entity-tab-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.adm-entity-tab-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.adm-entity-tab-sub {
+  font-size: 11.5px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.adm-entity-tab-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.adm-entity-tab-tag.renter {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.adm-entity-tab-tag.lister {
+  background: #F0FDF4;
+  color: #16A34A;
+}
+
+.adm-entity-desk-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border-left: 4px solid;
+}
+
+.adm-entity-desk-banner.renter {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: #2563EB;
+  color: #1E3A8A;
+}
+
+.adm-entity-desk-banner.lister {
+  background: rgba(22, 163, 74, 0.06);
+  border-color: #16A34A;
+  color: #14532D;
+}
+
+/* Page Header */
+.adm-refunds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.adm-refunds-title-group h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adm-refunds-title-group p {
+  font-size: 13.5px;
+  color: #64748B;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.adm-toggle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.adm-toggle-badge.active {
+  background: #FEF3C7;
+  color: #B45309;
+  border: 1px solid #FDE68A;
+}
+
+.adm-toggle-badge.inactive {
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.adm-refresh-btn {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adm-refresh-btn:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+/* Metrics Grid */
+.adm-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.adm-metric-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 22px 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.adm-metric-card.pending {
+  border-top: 4px solid #F59E0B;
+}
+
+.adm-metric-card.completed {
+  border-top: 4px solid #10B981;
+}
+
+.adm-metric-card.disputes {
+  border-top: 4px solid #EF4444;
+}
+
+.adm-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.adm-metric-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adm-metric-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adm-metric-card.pending .adm-metric-icon-badge {
+  background: #FFFBEB;
+  color: #D97706;
+}
+
+.adm-metric-card.completed .adm-metric-icon-badge {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.adm-metric-card.disputes .adm-metric-icon-badge {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.adm-metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-family: inherit;
+}
+
+.adm-metric-subtext {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Controls Bar (Filter Tabs & Search) */
+.adm-controls-card {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.adm-filter-pills {
+  display: flex;
+  gap: 6px;
+  background: #F1F5F9;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.adm-filter-pill {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #64748B;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.adm-filter-pill.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.adm-pill-count {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: #E2E8F0;
+  color: #334155;
+}
+
+.adm-filter-pill.active .adm-pill-count {
+  background: #0F172A;
+  color: #FFFFFF;
+}
+
+.adm-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 8px 14px;
+  width: 320px;
+  max-width: 100%;
+}
+
+.adm-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #0F172A;
+  width: 100%;
+}
+
+/* Refunds Table / List */
+.adm-table-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+}
+
+.adm-table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.adm-refunds-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.adm-refunds-table th {
+  background: #F8FAFC;
+  padding: 14px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748B;
+  border-bottom: 1px solid #E2E8F0;
+  white-space: nowrap;
+}
+
+.adm-refunds-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #F1F5F9;
+  font-size: 13px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.adm-refunds-table tr:last-child td {
+  border-bottom: none;
+}
+
+.adm-refunds-table tr:hover td {
+  background: #FAFBFC;
+}
+
+.adm-renter-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-renter-name {
+  font-weight: 700;
+  color: #0F172A;
+  font-size: 13.5px;
+}
+
+.adm-renter-sub {
+  font-size: 11.5px;
+  color: #64748B;
+}
+
+.adm-booking-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-booking-code {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0F172A;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.adm-item-title {
+  font-size: 12px;
+  color: #64748B;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-amount-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-refund-amount {
+  font-size: 16px;
+  font-weight: 800;
+  color: #059669;
+  letter-spacing: -0.02em;
+}
+
+.adm-original-deposit {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.adm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.adm-badge.pending {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.adm-badge.completed {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #BBF7D0;
+}
+
+.adm-badge.dispute {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+  margin-top: 4px;
+}
+
+.adm-action-btn {
+  background: #0F172A;
+  color: #F8FAFC;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.adm-action-btn:hover {
+  background: #1E293B;
+  border-color: #64748B;
+  transform: translateY(-1px);
+}
+
+.adm-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Modal Styles */
+.adm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+  animation: admFadeIn 0.2s ease-out;
+}
+
+.adm-modal-card {
+  background: #FFFFFF;
+  border-radius: 20px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+}
+
+.adm-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.adm-modal-header h3 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.adm-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 18px;
+}
+
+.adm-modal-body {
+  padding: 24px;
+}
+
+.adm-modal-breakdown {
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  padding: 16px;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adm-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #475569;
+}
+
+.adm-breakdown-row.total {
+  border-top: 1px dashed #CBD5E1;
+  padding-top: 10px;
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.adm-breakdown-row.total .highlight {
+  color: #059669;
+  font-size: 17px;
+}
+
+.adm-modal-footer {
+  padding: 18px 24px;
+  border-top: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: #FAFAFA;
+}
+
+.adm-btn-cancel {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #475569;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adm-btn-confirm {
+  background: #059669;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+
+.adm-btn-confirm:hover {
+  background: #047857;
+}
+
+.adm-btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.adm-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  color: #FFFFFF;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: admFadeIn 0.2s ease-out;
+}
+
+.adm-toast.success {
+  background: #059669;
+}
+
+.adm-toast.error {
+  background: #DC2626;
+}

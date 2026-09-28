@@ -12,7 +12,6 @@ async function cleanDatabase() {
   await prisma.shipment.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.listing.deleteMany();
-  await prisma.referral.deleteMany();
   await prisma.registrationPayment.deleteMany();
   await prisma.listerProfile.deleteMany();
   await prisma.session.deleteMany();
@@ -41,14 +40,14 @@ async function seedFullSystem() {
       data: { name: 'Ananya Sharma', email: 'ananya@lister.com', phone: '9999900001', role: 'LISTER', walletBalance: 200, passwordHash: defaultPassword }
     });
     const listerProfile1 = await prisma.listerProfile.create({
-      data: { userId: listerUser1.id, shopName: 'Ananya Exclusives', status: 'APPROVED', registrationFeePaid: true, referralCode: 'ANANYA100', bankAccountNo: '111122223333', bankIfsc: 'HDFC0001' }
+      data: { userId: listerUser1.id, shopName: 'Ananya Exclusives', status: 'APPROVED', registrationFeePaid: true, bankAccountNo: '111122223333', bankIfsc: 'HDFC0001' }
     });
 
     const listerUser2 = await prisma.user.create({
       data: { name: 'Rohan Mehra', email: 'rohan@lister.com', phone: '9999900002', role: 'LISTER', passwordHash: defaultPassword }
     });
     const listerProfile2 = await prisma.listerProfile.create({
-      data: { userId: listerUser2.id, shopName: 'Rohan Couture', status: 'APPROVED', registrationFeePaid: true, referralCode: 'ROHAN200', referredByCode: 'ANANYA100', bankAccountNo: '444455556666', bankIfsc: 'ICIC0002' }
+      data: { userId: listerUser2.id, shopName: 'Rohan Couture', status: 'APPROVED', registrationFeePaid: true, bankAccountNo: '444455556666', bankIfsc: 'ICIC0002' }
     });
 
     // Renters

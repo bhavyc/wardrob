@@ -26,6 +26,14 @@ export default function AdminPartnersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
+  // Password reset state
+  const [selectedPartnerForPassword, setSelectedPartnerForPassword] = useState<PartnerItem | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
   const fetchPartners = async () => {
     setLoading(true);
     try {
@@ -44,6 +52,57 @@ export default function AdminPartnersPage() {
   useEffect(() => {
     fetchPartners();
   }, []);
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPartnerForPassword) return;
+
+    if (!newPassword || !confirmPassword) {
+      setPasswordError('Please fill in both password fields.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setUpdatingPassword(true);
+    setPasswordError(null);
+
+    try {
+      const res = await fetch('/api/admin/partners', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partnerId: selectedPartnerForPassword.id,
+          password: newPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setToast(`Password updated successfully for ${selectedPartnerForPassword.name}!`);
+        setSelectedPartnerForPassword(null);
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setPasswordError(data.error || 'Failed to update password.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setPasswordError(err.message || 'An error occurred while updating password.');
+    } finally {
+      setUpdatingPassword(false);
+      setTimeout(() => setToast(null), 3500);
+    }
+  };
+
 
   const handleCreatePartner = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +153,7 @@ export default function AdminPartnersPage() {
       )}
 
       {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: '#0F172A', margin: 0 }}>
             Hub & Cleaning Partners
@@ -149,6 +208,7 @@ export default function AdminPartnersPage() {
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Phone / WhatsApp</th>
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Role & Verification</th>
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Added On</th>
+                  <th style={{ padding: '14px 18px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,6 +235,35 @@ export default function AdminPartnersPage() {
                     </td>
                     <td style={{ padding: '14px 18px', color: '#94A3B8' }}>
                       {new Date(p.createdAt).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPartnerForPassword(p);
+                          setNewPassword('');
+                          setConfirmPassword('');
+                          setPasswordError(null);
+                          setShowPassword(false);
+                        }}
+                        style={{
+                          background: '#F8FAFC',
+                          color: '#0F172A',
+                          border: '1px solid #CBD5E1',
+                          padding: '6px 12px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        }}
+                        title="Change Hub Partner Password"
+                      >
+                        🔑 Change Password
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -311,6 +400,178 @@ export default function AdminPartnersPage() {
           </div>
         </div>
       )}
+
+      {/* Change Password Modal */}
+      {selectedPartnerForPassword && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              background: '#FFF',
+              borderRadius: 12,
+              padding: 24,
+              maxWidth: 440,
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#0F172A' }}>
+                  🔑 Change Hub Password
+                </h3>
+                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>
+                  Update credentials for this hub partner account
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPartnerForPassword(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: 18,
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  padding: 4,
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Partner Details Card */}
+            <div
+              style={{
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: 8,
+                padding: '12px 14px',
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>
+                🧼 {selectedPartnerForPassword.name}
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
+                Login Email: <strong style={{ color: '#334155' }}>{selectedPartnerForPassword.email}</strong>
+              </div>
+            </div>
+
+            {passwordError && (
+              <div
+                style={{
+                  background: '#FEF2F2',
+                  border: '1px solid #FCA5A5',
+                  color: '#B91C1C',
+                  borderRadius: 6,
+                  padding: '8px 12px',
+                  fontSize: 12,
+                  marginBottom: 14,
+                  fontWeight: 500,
+                }}
+              >
+                ⚠️ {passwordError}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdatePassword}>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: '#334155' }}>
+                    New Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#475569',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {showPassword ? '👁️ Hide' : '👁️ Show'}
+                  </button>
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Minimum 6 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#334155', marginBottom: 4 }}>
+                  Confirm New Password
+                </label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13, boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPartnerForPassword(null)}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#F1F5F9',
+                    color: '#475569',
+                    border: 'none',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingPassword}
+                  style={{
+                    padding: '8px 18px',
+                    background: '#0F172A',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    opacity: updatingPassword ? 0.7 : 1,
+                  }}
+                >
+                  {updatingPassword ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

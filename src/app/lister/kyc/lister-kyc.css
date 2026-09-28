@@ -72,6 +72,16 @@
     gap: 4px;
   }
 }
+@media (max-width: 600px) {
+  .status-banner {
+    padding: 20px 16px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  .kyc-h1 {
+    font-size: 26px;
+  }
+}
 .status-banner-icon {
   width: 52px;
   height: 52px;

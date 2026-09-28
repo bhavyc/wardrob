@@ -124,6 +124,9 @@ model User {
   sessions       Session[]
   renterBookings Booking[]      @relation("RenterBookings")
   refunds        Refund[]
+  mobileCaptureSessions MobileCaptureSession[]
+  listerMobileCaptureSessions ListerMobileCaptureSession[]
+  notifications  Notification[]
 }
 
 model ListerProfile {
@@ -139,16 +142,13 @@ model ListerProfile {
   status             ListerStatus @default(PENDING)
   commissionOverride Decimal?     @db.Decimal(5, 2)
   registrationFeePaid Boolean     @default(false)
-  referralCode       String?      @unique
-  referredByCode     String?
+  referralCode       String?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
   listings             Listing[]
   payouts              Payout[]
   registrationPayments RegistrationPayment[]
-  referralsMade        Referral[]            @relation("ReferrerLister")
-  referralReceived     Referral?             @relation("ReferredLister")
 }
 
 enum RegistrationPaymentStatus {
@@ -157,10 +157,7 @@ enum RegistrationPaymentStatus {
   FAILED
 }
 
-enum ReferralStatus {
-  PENDING
-  CREDITED
-}
+
 
 model RegistrationPayment {
   id                String                    @id @default(uuid())
@@ -174,17 +171,7 @@ model RegistrationPayment {
   updatedAt         DateTime                  @updatedAt
 }
 
-model Referral {
-  id               String         @id @default(uuid())
-  referrerId       String
-  referrer         ListerProfile  @relation("ReferrerLister", fields: [referrerId], references: [id], onDelete: Cascade)
-  referredListerId String         @unique
-  referredLister   ListerProfile  @relation("ReferredLister", fields: [referredListerId], references: [id], onDelete: Cascade)
-  rewardAmount     Decimal        @default(200.00) @db.Decimal(10, 2)
-  status           ReferralStatus @default(PENDING)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-}
+
 
 model Listing {
   id              String        @id @default(uuid())
@@ -244,6 +231,13 @@ model Booking {
   overdueReminder3SentAt DateTime?
   overdueReminder7SentAt DateTime?
 
+  shippingAddress   String?
+  city              String?
+  state             String?
+  pincode           String?
+  contactPhone      String?
+  contactName       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -252,6 +246,7 @@ model Booking {
   damageReports DamageReport[]
   payout        Payout?
   refund        Refund?
+  mobileCaptureSessions MobileCaptureSession[]
 }
 
 model Shipment {
@@ -360,16 +355,6 @@ model DuplicatePhotoHash {
   @@unique([hashValue, contextId])
 }
 
-model Coupon {
-  id            String    @id @default(uuid())
-  code          String    @unique
-  discountType  String // e.g. "PERCENTAGE", "FLAT"
-  discountValue Decimal   @db.Decimal(10, 2)
-  minOrderValue Decimal?  @db.Decimal(10, 2)
-  expiresAt     DateTime?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-}
 
 model Refund {
   id              String       @id @default(uuid())
@@ -384,3 +369,51 @@ model Refund {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 }
+
+enum MobileCaptureSessionStatus {
+  ACTIVE
+  EXPIRED
+  COMPLETED
+}
+
+model MobileCaptureSession {
+  id        String                     @id @default(uuid())
+  token     String                     @unique
+  userId    String
+  user      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId String
+  booking   Booking                    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status    MobileCaptureSessionStatus @default(ACTIVE)
+  photos    String[]
+  expiresAt DateTime
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+}
+
+model ListerMobileCaptureSession {
+  id        String                     @id @default(uuid())
+  token     String                     @unique
+  userId    String
+  user      User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    MobileCaptureSessionStatus @default(ACTIVE)
+  photos    String[]
+  expiresAt DateTime
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // ORDER_CONFIRMED, DEPOSIT_REFUNDED, NEW_BOOKING, PAYOUT_DISPATCHED, KYC_STATUS
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+

@@ -96,14 +96,20 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check if user is lister and their profile is PENDING
+    // Check if user is lister and their profile is REJECTED or SUSPENDED
     if (user.role === 'LISTER') {
       const listerProfile = await prisma.listerProfile.findUnique({
         where: { userId: user.id },
       });
-      if (listerProfile && listerProfile.status === 'PENDING') {
+      if (listerProfile && listerProfile.status === 'REJECTED') {
         return NextResponse.json(
-          { success: false, error: 'Account under review' },
+          { success: false, error: 'Your atelier account has been rejected. Please contact support.' },
+          { status: 403 }
+        );
+      }
+      if (listerProfile && (listerProfile.status as string) === 'SUSPENDED') {
+        return NextResponse.json(
+          { success: false, error: 'Your atelier account has been suspended. Please contact support.' },
           { status: 403 }
         );
       }

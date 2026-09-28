@@ -21,22 +21,41 @@ export async function GET(request: Request) {
         status: { in: ['CONFIRMED', 'AT_HUB_PRE'] },
       },
       include: {
-        listing: true,
+        listing: {
+          include: {
+            lister: {
+              include: {
+                user: { select: { name: true, phone: true } },
+              },
+            },
+          },
+        },
         renter: { select: { name: true, phone: true } },
         shipments: true,
+        damageReports: true,
       },
       orderBy: { startDate: 'asc' },
     });
 
     const intakeBookings = preDispatchBookingsRaw.filter(b => {
-      // Needs intake if it's arriving from Lister
-      if (b.listing.status !== 'AT_HUB') return true; 
-      return false;
+      // Needs Stage 1: Lister Intake if intake QC & barcode tagging hasn't been logged yet
+      const hasIntake = b.damageReports?.some(d => d.inspectionType === 'LISTER_TO_HUB_INTAKE');
+      return !hasIntake;
     });
 
     const preDispatchBookings = preDispatchBookingsRaw.filter(b => {
-      // Ready for pre-dispatch if it's already AT_HUB (intake complete)
-      if (b.listing.status === 'AT_HUB') return true;
+      // Ready for Stage 2: Pre-Dispatch only AFTER intake QC has been completed
+      const hasIntake = b.damageReports?.some(d => d.inspectionType === 'LISTER_TO_HUB_INTAKE');
+      const hasPreDispatch = b.damageReports?.some(d => d.inspectionType === 'PRE_DISPATCH');
+
+      if (hasIntake && !hasPreDispatch) return true;
+
+      // Existing warehouse inventory item fallback (already tagged, at hub, no incoming lister shipment)
+      const hasListerShipment = b.shipments?.some(s => s.leg === 'LISTER_TO_HUB');
+      if (!hasListerShipment && b.listing.sku && b.listing.status === 'AT_HUB' && !hasPreDispatch) {
+        return true;
+      }
+
       return false;
     });
 
@@ -46,8 +65,17 @@ export async function GET(request: Request) {
         status: { in: ['IN_USE', 'RETURNED_TO_HUB'] },
       },
       include: {
-        listing: true,
+        listing: {
+          include: {
+            lister: {
+              include: {
+                user: { select: { name: true, phone: true } },
+              },
+            },
+          },
+        },
         renter: { select: { name: true, phone: true } },
+        shipments: true,
       },
       orderBy: { endDate: 'asc' },
     });
@@ -72,7 +100,15 @@ export async function GET(request: Request) {
       include: {
         booking: {
           include: {
-            listing: true,
+            listing: {
+              include: {
+                lister: {
+                  include: {
+                    user: { select: { name: true, phone: true } },
+                  },
+                },
+              },
+            },
             renter: { select: { name: true, phone: true } },
           }
         }

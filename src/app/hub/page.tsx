@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Pagination from '@/components/Pagination';
 import './hub-dashboard.css';
 
 export default function HubDashboard() {
@@ -11,6 +12,8 @@ export default function HubDashboard() {
   const [error, setError] = useState('');
   const [stats, setStats] = useState({ intake: 0, dispatch: 0, return: 0 });
   const [returnsDue, setReturnsDue] = useState<any[]>([]);
+  const [returnPage, setReturnPage] = useState(1);
+  const RETURNS_PER_PAGE = 4;
 
   useEffect(() => {
     async function loadStats() {
@@ -108,21 +111,50 @@ export default function HubDashboard() {
             </div>
 
             <div className="panel-card">
-              <div className="panel-title">
-                Returns Due Today <span>{returnsDue.length}</span>
+              <div className="panel-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Returns Due Today <span style={{ background: '#0F172A', color: '#FFF', padding: '2px 8px', borderRadius: '999px', fontSize: '11px', marginLeft: '6px' }}>{returnsDue.length}</span></span>
+                {returnsDue.length > 0 && (
+                  <Link href="/hub/inspections?stage=POST_RETURN" style={{ fontSize: '12px', color: '#2563EB', textDecoration: 'none', fontWeight: 600 }}>
+                    Process in QC &rarr;
+                  </Link>
+                )}
               </div>
               {returnsDue.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px 0', color: '#94A3B8', fontSize: 13 }}>
                   No returns expected today.
                 </div>
               ) : (
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {returnsDue.map(b => (
-                    <div key={b.id} className="return-item">
-                      <strong>{b.listing.title}</strong>
-                      <span>{b.renter.name} &bull; 📞 {b.renter.phone || 'N/A'}</span>
+                <div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {returnsDue
+                      .slice((returnPage - 1) * RETURNS_PER_PAGE, returnPage * RETURNS_PER_PAGE)
+                      .map(b => (
+                        <div key={b.id} className="return-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: 0 }}>
+                          <div>
+                            <strong>{b.listing?.title || 'Garment'}</strong>
+                            <span>{b.renter?.name || 'Renter'} &bull; 📞 {b.renter?.phone || 'N/A'}</span>
+                          </div>
+                          <Link
+                            href={`/hub/inspections?stage=POST_RETURN&sku=${encodeURIComponent(b.listing?.sku || '')}`}
+                            className="action-btn"
+                            style={{ padding: '6px 12px', fontSize: '12px', background: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A' }}
+                          >
+                            Inspect
+                          </Link>
+                        </div>
+                      ))}
+                  </div>
+
+                  {returnsDue.length > RETURNS_PER_PAGE && (
+                    <div style={{ marginTop: 14 }}>
+                      <Pagination
+                        currentPage={returnPage}
+                        totalItems={returnsDue.length}
+                        itemsPerPage={RETURNS_PER_PAGE}
+                        onPageChange={setReturnPage}
+                      />
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>

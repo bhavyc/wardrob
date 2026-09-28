@@ -48,18 +48,16 @@ function CheckoutContent() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
   
   const [eventDate, setEventDate] = useState(qEventDate);
   const [extensionDays, setExtensionDays] = useState(qExtensionDays);
   
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [couponError, setCouponError] = useState('');
-  const [couponLoading, setCouponLoading] = useState(false);
-
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState('');
+  const [useWallet, setUseWallet] = useState(true);
 
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -91,7 +89,16 @@ function CheckoutContent() {
         if (sRes.ok) {
           const sData = await sRes.json();
           if (sData.success && sData.user) {
-            setSession(sData.user);
+            // Strict 1-role enforcement: only RENTER accounts can rent.
+            if (sData.user.role !== 'RENTER') {
+              setError(
+                `Your account is registered as a ${sData.user.role.replace('_', ' ')}. Only Renter accounts can access the checkout. Please log in with a Renter account or register a new one.`
+              );
+            } else {
+              setSession(sData.user);
+              if (sData.user.name) setContactName(sData.user.name);
+              if (sData.user.phone) setContactPhone(sData.user.phone);
+            }
           } else {
             setShowAuthModal(true);
           }
@@ -107,29 +114,6 @@ function CheckoutContent() {
     loadData();
   }, [productId, router, size, color, qEventDate, qExtensionDays]);
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim() || !product) return;
-    setCouponLoading(true);
-    setCouponError('');
-    try {
-      const res = await fetch('/api/coupons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode.trim(), orderValue: product.price }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setAppliedCoupon(data.coupon);
-      } else {
-        setCouponError(data.error || 'Invalid or expired promo code.');
-        setAppliedCoupon(null);
-      }
-    } catch {
-      setCouponError('Error verifying promo code.');
-    } finally {
-      setCouponLoading(false);
-    }
-  };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +122,28 @@ function CheckoutContent() {
       setShowAuthModal(true);
       return;
     }
+    const cName = (contactName || session?.name || '').trim();
+    const cPhone = (contactPhone || session?.phone || '').trim();
+    const sAddr = shippingAddress.trim();
+    const cCity = city.trim();
+    const cState = state.trim();
+    const cPin = pincode.trim();
+
+    if (!cName || !cPhone || !sAddr || !cCity || !cState || !cPin) {
+      setError('All fields are mandatory: Recipient Name, Mobile, Street Address, City, State, and Pincode.');
+      return;
+    }
+
+    if (cPhone.replace(/\D/g, '').length < 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (cPin.replace(/\D/g, '').length !== 6) {
+      setError('Please enter a valid 6-digit Indian PIN code.');
+      return;
+    }
+
     setCheckoutLoading(true);
     setError('');
 
@@ -148,16 +154,29 @@ function CheckoutContent() {
         body: JSON.stringify({
           productId: product.id,
           size, color,
-          shippingAddress, city, state, pincode,
+          shippingAddress: sAddr,
+          city: cCity,
+          state: cState,
+          pincode: cPin,
+          contactName: cName,
+          contactPhone: cPhone,
           eventDate, extensionDays,
           paymentType: 'PREPAID',
-          couponCode: appliedCoupon ? appliedCoupon.code : null,
+          useWallet,
         }),
       });
 
       const orderData = await orderRes.json();
       if (!orderRes.ok || !orderData.success) {
         throw new Error(orderData.error || 'Booking generation failed.');
+      }
+
+      // 100% Wallet Payment: Instant Confirmation without Gateway
+      if (orderData.isWalletFullPayment) {
+        const confirmedId = orderData.bookingId || orderData.orderId || `WRD-${Date.now().toString(36).toUpperCase()}`;
+        setPlacedOrderId(confirmedId);
+        setCheckoutSuccess(true);
+        return;
       }
 
       const options = {
@@ -178,7 +197,6 @@ function CheckoutContent() {
               productId: product.id,
               eventDate,
               extensionDays,
-              couponCode: appliedCoupon ? appliedCoupon.code : null,
             }),
           });
           const verData = await verRes.json();
@@ -328,15 +346,11 @@ function CheckoutContent() {
   const basePrice = Number(product.price) || 0;
   const deposit = Number(product.securityDeposit) || 3000;
   const extensionFee = extensionDays > 0 ? (basePrice * 0.25 * extensionDays) : 0;
-  let discount = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.discountType === 'PERCENTAGE') {
-      discount = (basePrice + extensionFee) * (appliedCoupon.discountValue / 100);
-    } else {
-      discount = appliedCoupon.discountValue;
-    }
-  }
-  const totalAmount = basePrice + deposit + extensionFee - discount;
+  const rentalCharge = basePrice + extensionFee;
+  const grossTotal = Math.max(1, Math.round(rentalCharge + deposit));
+  const userWalletBalance = Number(session?.walletBalance || 0);
+  const walletDeduction = (useWallet && userWalletBalance > 0) ? Math.min(userWalletBalance, grossTotal) : 0;
+  const finalPayable = Math.max(0, grossTotal - walletDeduction);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
@@ -353,23 +367,34 @@ function CheckoutContent() {
             <div className="checkout-section-box" style={{ marginBottom: '48px' }}>
               <h3 style={{ fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '20px', color: 'var(--text-muted)' }}>Shipping Destination</h3>
               
+              <div className="checkout-addr-grid" style={{ marginBottom: '18px' }}>
+                <div>
+                  <label style={labelStyle}>Recipient Name *</label>
+                  <input required value={contactName} onChange={e => setContactName(e.target.value)} className="checkout-field-input" placeholder="Full Name (Required)" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Contact Mobile * (10 digits)</label>
+                  <input required type="tel" maxLength={10} value={contactPhone} onChange={e => setContactPhone(e.target.value)} className="checkout-field-input" placeholder="10-digit mobile (Required)" />
+                </div>
+              </div>
+
               <div style={{ marginBottom: '18px' }}>
-                <label style={labelStyle}>Street Address</label>
-                <input required value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} className="checkout-field-input" placeholder="Suite, Flat, or Street Landmark" />
+                <label style={labelStyle}>Street Address *</label>
+                <input required value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} className="checkout-field-input" placeholder="Suite, Flat, or Street Landmark (Required)" />
               </div>
               
               <div className="checkout-addr-grid">
                 <div>
-                  <label style={labelStyle}>City</label>
-                  <input required value={city} onChange={e => setCity(e.target.value)} className="checkout-field-input" placeholder="Delhi" />
+                  <label style={labelStyle}>City *</label>
+                  <input required value={city} onChange={e => setCity(e.target.value)} className="checkout-field-input" placeholder="e.g. Delhi" />
                 </div>
                 <div>
-                  <label style={labelStyle}>State</label>
-                  <input required value={state} onChange={e => setState(e.target.value)} className="checkout-field-input" placeholder="Delhi NCR" />
+                  <label style={labelStyle}>State *</label>
+                  <input required value={state} onChange={e => setState(e.target.value)} className="checkout-field-input" placeholder="e.g. Delhi NCR" />
                 </div>
                 <div>
-                  <label style={labelStyle}>Pincode</label>
-                  <input required value={pincode} onChange={e => setPincode(e.target.value)} className="checkout-field-input" placeholder="110001" />
+                  <label style={labelStyle}>Pincode * (6 digits)</label>
+                  <input required maxLength={6} value={pincode} onChange={e => setPincode(e.target.value)} className="checkout-field-input" placeholder="e.g. 110001" />
                 </div>
               </div>
             </div>
@@ -402,7 +427,11 @@ function CheckoutContent() {
               }}
               className={!checkoutLoading ? "hover-lift" : ""}
             >
-              {checkoutLoading ? 'Preparing Gateway…' : `Authorize & Reserve · ₹${totalAmount.toLocaleString('en-IN')}`}
+              {checkoutLoading 
+                ? 'Processing Reservation…' 
+                : finalPayable === 0 
+                  ? 'Confirm Reservation with Wallet (₹0 Due)' 
+                  : `Authorize & Reserve · ₹${finalPayable.toLocaleString('en-IN')}`}
             </button>
           </form>
         </div>
@@ -426,28 +455,53 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Promo */}
-            <div style={{ marginBottom: '32px' }}>
-              <label style={labelStyle}>Promo Code</label>
-              <div style={{ display: 'flex' }}>
-                <input 
-                  value={couponCode} 
-                  onChange={e => setCouponCode(e.target.value)} 
-                  placeholder="ENTER CODE" 
-                  style={{ flex: 1, padding: '14px', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', background: 'transparent', borderRight: 'none' }} 
-                />
-                <button 
-                  type="button" 
-                  onClick={handleApplyCoupon} 
-                  disabled={couponLoading} 
-                  style={{ padding: '0 24px', background: 'var(--bg-warm)', color: 'var(--ink)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', border: '1px solid var(--border)', borderLeft: 'none', cursor: 'pointer', transition: 'var(--transition-smooth)' }}
-                >
-                  Apply
-                </button>
+            {/* Wallet Balance Auto-Deduction Card */}
+            {session && userWalletBalance > 0 && (
+              <div style={{
+                marginBottom: '24px',
+                padding: '16px 18px',
+                background: useWallet ? '#F0FDF4' : 'var(--bg-warm)',
+                border: useWallet ? '1px solid #86EFAC' : '1px solid var(--border)',
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: useWallet ? '#166534' : 'var(--ink)' }}>
+                      Wardrob Wallet
+                    </span>
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      background: useWallet ? '#DCFCE7' : 'rgba(0,0,0,0.06)',
+                      color: useWallet ? '#15803D' : 'var(--text-muted)',
+                      padding: '2px 8px',
+                      borderRadius: '99px'
+                    }}>
+                      Balance: ₹{userWalletBalance.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: '4px 0 0 0' }}>
+                    {useWallet
+                      ? (walletDeduction >= grossTotal 
+                          ? 'Full order covered by wallet credit' 
+                          : `₹${walletDeduction.toLocaleString('en-IN')} auto-deducted from balance`)
+                      : 'Apply available balance to reduce order total'}
+                  </p>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    checked={useWallet}
+                    onChange={(e) => setUseWallet(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#166534', cursor: 'pointer' }}
+                  />
+                </label>
               </div>
-              {couponError && <div style={{ fontSize: '11px', color: 'var(--alert)', marginTop: '8px' }}>{couponError}</div>}
-              {appliedCoupon && <div style={{ fontSize: '11px', color: 'var(--success)', marginTop: '8px' }}>Promo code applied.</div>}
-            </div>
+            )}
 
             {/* Breakdown */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '13px', marginBottom: '32px', paddingBottom: '32px', borderBottom: '1px solid var(--border)' }}>
@@ -472,17 +526,26 @@ function CheckoutContent() {
                 </span>
               </div>
 
-              {discount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
-                  <span>Promo Discount</span>
-                  <span>-₹{discount.toLocaleString('en-IN')}</span>
+              {walletDeduction > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#15803D', fontWeight: 600 }}>
+                  <span>Wallet Credit Applied</span>
+                  <span>-₹{walletDeduction.toLocaleString('en-IN')}</span>
                 </div>
               )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', color: 'var(--ink)' }}>
-              <span style={{ fontSize: '14px', fontWeight: 500 }}>Total Due</span>
-              <span style={{ fontFamily: 'var(--font-serif)', fontSize: '28px', fontWeight: 600, lineHeight: 1 }}>₹{totalAmount.toLocaleString('en-IN')}</span>
+              <div>
+                <span style={{ fontSize: '14px', fontWeight: 500, display: 'block' }}>Total Due</span>
+                {walletDeduction > 0 && (
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                    ₹{grossTotal.toLocaleString('en-IN')}
+                  </span>
+                )}
+              </div>
+              <span style={{ fontFamily: 'var(--font-serif)', fontSize: '28px', fontWeight: 600, lineHeight: 1 }}>
+                ₹{finalPayable.toLocaleString('en-IN')}
+              </span>
             </div>
           </div>
         </div>

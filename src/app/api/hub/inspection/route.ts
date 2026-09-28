@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { sendNotification } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized. Hub access required.' }, { status: 403 });
     }
 
-    const { bookingId, inspectionType, grade, deductionAmount = 0, evidencePhotos = [], isItemComplete = true, missingPartsDescription = '', shelfLocation = '' } = await request.json();
+    const { bookingId, inspectionType, grade, deductionAmount = 0, evidencePhotos = [], isItemComplete = true, missingPartsDescription = '' } = await request.json();
 
     if (!bookingId || !inspectionType) {
       return NextResponse.json({ success: false, error: 'Missing bookingId or inspectionType' }, { status: 400 });
@@ -25,6 +26,14 @@ export async function POST(request: Request) {
     }
 
     if (inspectionType === 'LISTER_TO_HUB_INTAKE') {
+      // Strictly enforce minimum 3 intake baseline photos before generating barcode tag
+      if (!Array.isArray(evidencePhotos) || evidencePhotos.length < 3) {
+        return NextResponse.json({
+          success: false,
+          error: 'At least 3 intake photos (Front, Back, Detail/Tag) are required as baseline inspection records before generating a barcode tag.'
+        }, { status: 400 });
+      }
+
       // 1. Log intake photos
       await prisma.damageReport.create({
         data: {
@@ -43,8 +52,7 @@ export async function POST(request: Request) {
         where: { id: booking.listingId },
         data: { 
           status: 'AT_HUB',
-          sku: generatedSku,
-          ...(shelfLocation && { shelfLocation: shelfLocation.trim() })
+          sku: generatedSku
         }
       });
 
@@ -59,6 +67,12 @@ export async function POST(request: Request) {
         });
       }
 
+      // Mark any active mobile capture sessions for this booking as completed
+      await prisma.mobileCaptureSession.updateMany({
+        where: { bookingId, status: 'ACTIVE' },
+        data: { status: 'COMPLETED' }
+      });
+
       return NextResponse.json({ 
         success: true, 
         message: 'Intake inspection logged. Item is now AT_HUB.',
@@ -67,6 +81,14 @@ export async function POST(request: Request) {
     }
 
     if (inspectionType === 'PRE_DISPATCH') {
+      // Strictly enforce minimum 3 pre-dispatch condition photos before courier handoff
+      if (!Array.isArray(evidencePhotos) || evidencePhotos.length < 3) {
+        return NextResponse.json({
+          success: false,
+          error: 'At least 3 pre-dispatch photos (Garment Front, Back, Packaging/Tag) are required to certify garment condition before shipping.'
+        }, { status: 400 });
+      }
+
       // Create baseline inspection
       await prisma.damageReport.create({
         data: {
@@ -77,14 +99,10 @@ export async function POST(request: Request) {
         }
       });
 
-      // Update Booking status to OUT_FOR_DELIVERY, clear shelfLocation as it leaves the Hub
+      // Update Booking status to OUT_FOR_DELIVERY
       await prisma.booking.update({
         where: { id: bookingId },
         data: { status: 'OUT_FOR_DELIVERY' }
-      });
-      await prisma.listing.update({
-        where: { id: booking.listingId },
-        data: { shelfLocation: null }
       });
 
       // Create Leg 2 Shipment (HUB_TO_RENTER) so Hub Admin can track and deliver it
@@ -104,6 +122,12 @@ export async function POST(request: Request) {
           status: 'SANITIZED',
           dispatchedAt: new Date()
         }
+      });
+
+      // Mark any active mobile capture sessions for this booking as completed
+      await prisma.mobileCaptureSession.updateMany({
+        where: { bookingId, status: 'ACTIVE' },
+        data: { status: 'COMPLETED' }
       });
 
       return NextResponse.json({ success: true, message: 'Pre-dispatch inspection logged. Item ready for renter.' });
@@ -141,9 +165,12 @@ export async function POST(request: Request) {
         lateFee = lateDays * 250;
       }
 
-      // If Grade C, evidence is mandatory
-      if (grade === 'C_MAJOR' && evidencePhotos.length === 0) {
-        return NextResponse.json({ success: false, error: 'Evidence photos are mandatory for Grade C deductions' }, { status: 400 });
+      // Minimum 3 evidence photos strictly mandatory for post-return quality verification
+      if (!Array.isArray(evidencePhotos) || evidencePhotos.length < 3) {
+        return NextResponse.json({
+          success: false,
+          error: 'At least 3 return inspection photos (Front, Back, Detail/Condition) are mandatory for post-return quality check.'
+        }, { status: 400 });
       }
       
       if (!isItemComplete && !missingPartsDescription) {
@@ -171,40 +198,45 @@ export async function POST(request: Request) {
 
       const refundAmount = maxDeduction - finalDeduction;
 
-      // 1. Pre-flight write
-      if (refundAmount > 0) {
-        await prisma.booking.update({
-          where: { id: bookingId },
-          data: { refundInitiatedAt: new Date() }
-        });
-      }
+      const requireManualApproval = process.env.REQUIRE_MANUAL_REFUND_APPROVAL !== 'false';
 
-      // 2. Execute external Razorpay refund
       let refundSuccess = false;
-      let gatewayRefundId = null;
+      let gatewayRefundId: string | null = null;
+      let finalListerPayout = 0;
 
-      if (refundAmount > 0 && booking.razorpayPaymentId) {
-        try {
-          if (!process.env.RAZORPAY_KEY_SECRET) {
-            throw new Error('RAZORPAY_KEY_SECRET is not configured');
+      if (!requireManualApproval) {
+        // 1. Pre-flight write
+        if (refundAmount > 0) {
+          await prisma.booking.update({
+            where: { id: bookingId },
+            data: { refundInitiatedAt: new Date() }
+          });
+        }
+
+        // 2. Execute external Razorpay refund
+        if (refundAmount > 0 && booking.razorpayPaymentId) {
+          try {
+            if (!process.env.RAZORPAY_KEY_SECRET) {
+              throw new Error('RAZORPAY_KEY_SECRET is not configured');
+            }
+            const Razorpay = require('razorpay');
+            const razorpay = new Razorpay({
+              key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+              key_secret: process.env.RAZORPAY_KEY_SECRET,
+            });
+            
+            const rzpResult = await razorpay.payments.refund(booking.razorpayPaymentId, {
+              amount: refundAmount * 100, // in paise
+              receipt: booking.id, // for tracking/reconciliation only
+              notes: { bookingId: booking.id }
+            });
+            
+            refundSuccess = true;
+            gatewayRefundId = rzpResult?.id || null;
+            console.log(`Razorpay refund successful for ${refundAmount}`);
+          } catch (rzpErr: any) {
+            console.error('Razorpay refund failed during Hub Inspection:', rzpErr);
           }
-          const Razorpay = require('razorpay');
-          const razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET,
-          });
-          
-          const rzpResult = await razorpay.payments.refund(booking.razorpayPaymentId, {
-            amount: refundAmount * 100, // in paise
-            receipt: booking.id, // for tracking/reconciliation only
-            notes: { bookingId: booking.id }
-          });
-          
-          refundSuccess = true;
-          gatewayRefundId = rzpResult?.id || null;
-          console.log(`Razorpay refund successful for ${refundAmount}`);
-        } catch (rzpErr: any) {
-          console.error('Razorpay refund failed during Hub Inspection:', rzpErr);
         }
       }
 
@@ -230,8 +262,7 @@ export async function POST(request: Request) {
           await tx.listing.update({
             where: { id: booking.listingId },
             data: { 
-              status: newListingStatus,
-              ...(shelfLocation && { shelfLocation: shelfLocation.trim() })
+              status: newListingStatus
             }
           });
 
@@ -277,7 +308,7 @@ export async function POST(request: Request) {
           
           // 3. Final Admin Commission & Lister Payout (Damages/Deductions go 100% to Lister)
           const commission = adminRentCommission + adminExtensionCommission;
-          const finalListerPayout = listerRentShare + listerExtensionShare + totalRequestedDeduction;
+          finalListerPayout = listerRentShare + listerExtensionShare + totalRequestedDeduction;
 
           await tx.payout.create({
             data: {
@@ -296,60 +327,76 @@ export async function POST(request: Request) {
               status: 'COMPLETED',
               actualReturnDate,
               lateReturnPenalty: lateFee,
-              refundInitiatedAt: refundAmount > 0 ? new Date() : null // Update to final if needed
+              // When manual approval is required, refundInitiatedAt remains null until Admin approves!
+              refundInitiatedAt: (!requireManualApproval && refundAmount > 0 && refundSuccess) ? new Date() : null
             }
           });
 
           // Reconcile refund state in DB post-gateway call ATOMICALLY
           if (refundAmount > 0) {
-            if (!refundSuccess && booking.razorpayPaymentId) {
-              // Auto-generate dispute for admin to manually process failed refund (or append note if already disputed)
-              const existingDispute = await tx.dispute.findUnique({
-                where: { damageReportId: report.id }
+            if (requireManualApproval) {
+              // MANUAL APPROVAL FLOW: Create PENDING Refund record for Admin review. Razorpay has NOT been called yet.
+              await tx.refund.create({
+                data: {
+                  bookingId: booking.id,
+                  userId: booking.renterId,
+                  amount: refundAmount,
+                  status: 'PENDING',
+                  gateway: booking.razorpayPaymentId ? 'RAZORPAY' : 'WALLET',
+                  gatewayRefundId: null
+                }
               });
-
-              if (existingDispute) {
-                await tx.dispute.update({
-                  where: { id: existingDispute.id },
-                  data: {
-                    adminNotes: existingDispute.adminNotes
-                      ? `${existingDispute.adminNotes} | CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
-                      : `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
-                  }
+            } else {
+              // AUTOMATIC REFUND FLOW
+              if (!refundSuccess && booking.razorpayPaymentId) {
+                // Auto-generate dispute for admin to manually process failed refund (or append note if already disputed)
+                const existingDispute = await tx.dispute.findUnique({
+                  where: { damageReportId: report.id }
                 });
-              } else {
-                await tx.dispute.create({
-                  data: {
-                    damageReportId: report.id,
-                    status: 'OPEN',
-                    adminNotes: `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
-                  }
+
+                if (existingDispute) {
+                  await tx.dispute.update({
+                    where: { id: existingDispute.id },
+                    data: {
+                      adminNotes: existingDispute.adminNotes
+                        ? `${existingDispute.adminNotes} | CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
+                        : `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
+                    }
+                  });
+                } else {
+                  await tx.dispute.create({
+                    data: {
+                      damageReportId: report.id,
+                      status: 'OPEN',
+                      adminNotes: `CRITICAL: Razorpay refund failed for ₹${refundAmount}. Manual refund required.`
+                    }
+                  });
+                }
+
+                // Fallback to wallet balance if Razorpay refund fails
+                await tx.user.update({
+                  where: { id: booking.renterId },
+                  data: { walletBalance: { increment: refundAmount } }
+                });
+              } else if (!booking.razorpayPaymentId) {
+                // Non-gateway fallback: deposit credited to wallet
+                await tx.user.update({
+                  where: { id: booking.renterId },
+                  data: { walletBalance: { increment: refundAmount } }
                 });
               }
 
-              // Fallback to wallet balance if Razorpay refund fails
-              await tx.user.update({
-                where: { id: booking.renterId },
-                data: { walletBalance: { increment: refundAmount } }
-              });
-            } else if (!booking.razorpayPaymentId) {
-              // Non-gateway fallback: deposit credited to wallet
-              await tx.user.update({
-                where: { id: booking.renterId },
-                data: { walletBalance: { increment: refundAmount } }
+              await tx.refund.create({
+                data: {
+                  bookingId: booking.id,
+                  userId: booking.renterId,
+                  amount: refundAmount,
+                  status: 'COMPLETED',
+                  gateway: refundSuccess ? 'RAZORPAY' : 'WALLET',
+                  gatewayRefundId: gatewayRefundId
+                }
               });
             }
-
-            await tx.refund.create({
-              data: {
-                bookingId: booking.id,
-                userId: booking.renterId,
-                amount: refundAmount,
-                status: refundSuccess ? 'COMPLETED' : 'PENDING',
-                gateway: refundSuccess ? 'RAZORPAY' : 'WALLET',
-                gatewayRefundId: gatewayRefundId
-              }
-            });
           }
         });
       } catch (txError) {
@@ -358,6 +405,39 @@ export async function POST(request: Request) {
           console.error(`CRITICAL FAILURE: Razorpay refund ${gatewayRefundId} succeeded but DB transaction failed! Manual reconciliation needed for Booking ${bookingId}`);
         }
         throw txError;
+      }
+
+      // Mark any active mobile capture sessions for this booking as completed
+      await prisma.mobileCaptureSession.updateMany({
+        where: { bookingId, status: 'ACTIVE' },
+        data: { status: 'COMPLETED' }
+      });
+
+      // Dispatch Notifications
+      // 1. Renter: Security Deposit Refunded (if auto-refunded)
+      if (refundAmount > 0 && !requireManualApproval && refundSuccess) {
+        await sendNotification({
+          userId: booking.renterId,
+          title: 'Security Deposit Refunded',
+          message: `Security deposit of ₹${refundAmount.toLocaleString('en-IN')} has been refunded to your original payment method.`,
+          type: 'DEPOSIT_REFUNDED',
+          linkUrl: `/profile`,
+        });
+      }
+
+      // 2. Lister: Payout Processed
+      const lister = await prisma.listerProfile.findUnique({
+        where: { id: booking.listing.listerProfileId },
+        select: { userId: true },
+      });
+      if (lister) {
+        await sendNotification({
+          userId: lister.userId,
+          title: 'Payout Processed',
+          message: `Your payout of ₹${finalListerPayout.toLocaleString('en-IN')} has been credited for rental of "${booking.listing.title}".`,
+          type: 'PAYOUT_DISPATCHED',
+          linkUrl: `/lister/payouts`,
+        });
       }
 
       return NextResponse.json({ 
@@ -372,6 +452,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Hub Inspection API Error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

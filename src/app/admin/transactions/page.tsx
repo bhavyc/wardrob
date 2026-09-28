@@ -315,7 +315,7 @@ export default function AdminTransactionsPage() {
               {formatCurrency(summary.totalPlatformCommission)}
             </div>
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
-              Commission (20%) + ₹500 Lister studio fees
+              Commission (35% · min ₹2k) + Lister studio fees
             </div>
           </div>
 
@@ -551,13 +551,13 @@ export default function AdminTransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedTransactions.map((tx) => {
+                {paginatedTransactions.map((tx, idx) => {
                   const isInflow = tx.direction === 'INFLOW';
                   const isRefund = tx.direction === 'REFUND';
 
                   return (
                     <tr
-                      key={tx.id}
+                      key={`${tx.id}-${tx.rawId || idx}`}
                       style={{
                         borderBottom: '1px solid #F1F5F9',
                         transition: 'background 0.15s ease',
@@ -961,7 +961,7 @@ export default function AdminTransactionsPage() {
 
                   {activeTxn.breakdown.platformCommission !== undefined && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #F1F5F9', background: '#FFFBEB' }}>
-                      <span style={{ color: '#B45309', fontWeight: 600 }}>Platform Commission (20% Cut):</span>
+                      <span style={{ color: '#B45309', fontWeight: 600 }}>Platform Commission (35% · min ₹2k):</span>
                       <span style={{ fontWeight: 700, color: '#B45309' }}>{formatCurrency(activeTxn.breakdown.platformCommission)}</span>
                     </div>
                   )}

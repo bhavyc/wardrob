@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 
+
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;

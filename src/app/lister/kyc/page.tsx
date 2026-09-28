@@ -124,6 +124,7 @@ export default function ListerKycPage() {
             if (verifyRes.ok && verifyData.success) {
               setRegistrationFeePaid(true);
               setShowPaymentSuccessModal(true);
+              window.dispatchEvent(new Event('lister-updated'));
             } else {
               setError(verifyData.error || 'Payment verification failed.');
             }
@@ -169,6 +170,7 @@ export default function ListerKycPage() {
         setHasSubmittedDocs(true);
         setListerStatus('PENDING');
         setIsVerified(false);
+        window.dispatchEvent(new Event('lister-updated'));
       } else {
         setError(data.error || 'Failed to submit KYC details.');
       }
@@ -502,6 +504,12 @@ export default function ListerKycPage() {
                       placeholder="SBIN0001234"
                     />
                   </div>
+                </div>
+                <div style={{ marginTop: '16px', padding: '12px 14px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '16px', lineHeight: 1 }}>⚠️</span>
+                  <p style={{ fontSize: '12px', color: '#92400E', margin: 0, lineHeight: 1.5 }}>
+                    <strong>Important:</strong> Please double-check your bank account number and IFSC code. If incorrect details are provided, payouts may be transferred to the wrong account and Wardrob will not be held responsible for the loss of funds.
+                  </p>
                 </div>
               </div>
 

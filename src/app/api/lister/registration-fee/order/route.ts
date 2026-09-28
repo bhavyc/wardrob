@@ -3,10 +3,16 @@ import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import Razorpay from 'razorpay';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SHuZT9fDb8rLhx',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'VtB5uZJ9bLh8oqEZhNlFE5GF',
-});
+function getRazorpayInstance() {
+  const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    throw new Error('FATAL: Razorpay API credentials are not configured.');
+  }
+
+  return new Razorpay({ key_id: keyId, key_secret: keySecret });
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,6 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Registration fee has already been paid.' }, { status: 400 });
     }
 
+    const razorpay = getRazorpayInstance();
     const registrationFeeAmount = 500; // ₹500 non-refundable
 
     const razorpayOrder = await razorpay.orders.create({
@@ -44,6 +51,8 @@ export async function POST(request: Request) {
       },
     });
 
+    const publicRazorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+
     return NextResponse.json({
       success: true,
       amount: registrationFeeAmount,
@@ -51,7 +60,7 @@ export async function POST(request: Request) {
         orderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
         currency: razorpayOrder.currency,
-        keyId: process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_SHuZT9fDb8rLhx',
+        keyId: publicRazorpayKey,
       },
     });
   } catch (error: any) {

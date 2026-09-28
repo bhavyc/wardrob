@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LiveCameraCapture from '@/components/LiveCameraCapture';
+import { QRCodeSVG } from 'qrcode.react';
 import './lister-add-listing.css';
 
 export default function AddListingPage() {
@@ -32,11 +33,15 @@ export default function AddListingPage() {
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'];
   const [isMobile, setIsMobile] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(true);
-  const [registrationFeePaid, setRegistrationFeePaid] = useState(true);
-  const [listerStatus, setListerStatus] = useState('APPROVED');
+  const [registrationFeePaid, setRegistrationFeePaid] = useState(false);
+  const [listerStatus, setListerStatus] = useState('PENDING');
+
+  const [mobileSessionToken, setMobileSessionToken] = useState<string | null>(null);
+  const [qrCaptureUrl, setQrCaptureUrl] = useState<string | null>(null);
+  const [pollingActive, setPollingActive] = useState(false);
 
   useEffect(() => {
-    const mobileCheck = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || process.env.NODE_ENV === 'development';
+    const mobileCheck = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsMobile(mobileCheck);
 
     async function verifyEligibility() {
@@ -54,6 +59,41 @@ export default function AddListingPage() {
     }
     verifyEligibility();
   }, []);
+
+  const generateMobileSession = async () => {
+    try {
+      const res = await fetch('/api/lister/mobile-capture/session', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMobileSessionToken(data.token);
+        setQrCaptureUrl(data.captureUrl);
+        setPollingActive(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (pollingActive && mobileSessionToken) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/lister/mobile-capture/${mobileSessionToken}/photos`);
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (data.photos && data.photos.length > imageUrls.length) {
+              setImageUrls(data.photos);
+            }
+            if (data.status === 'COMPLETED' || data.status === 'EXPIRED') {
+              setPollingActive(false);
+            }
+          }
+        } catch (e) {}
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [pollingActive, mobileSessionToken, imageUrls.length]);
 
   const handleCapture = async (blob: Blob, base64: string) => {
     if (imageUrls.length >= 4) {
@@ -222,14 +262,6 @@ export default function AddListingPage() {
               </Link>
             </div>
           </div>
-        ) : !isMobile ? (
-          <div className="form-card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
-            <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '28px', color: '#163625', marginBottom: '12px' }}>Mobile Device Required</h2>
-            <p style={{ fontSize: '14px', color: '#74897C', maxWidth: '400px', margin: '0 auto', lineHeight: 1.5 }}>
-              Please open this page on your mobile phone to add photos. High-quality live capture requires a mobile camera.
-            </p>
-          </div>
         ) : (
           <div className="form-card">
             {success ? (
@@ -311,7 +343,7 @@ export default function AddListingPage() {
                 <div>
                   <label className="field-lbl">Event Package Rent (₹) *</label>
                   <input className="field-inp" type="number" required min="5000" value={rentalPrice} onChange={e => setRentalPrice(e.target.value)} placeholder="e.g. 5000" />
-                  <p style={{ fontSize: '11px', color: '#74897C', marginTop: '6px' }}>Flat 4-day event price (Minimum ₹5000). WARDROB takes a 35% commission.</p>
+                  <p style={{ fontSize: '11px', color: '#74897C', marginTop: '6px' }}>Flat 4-day event price (Minimum ₹5,000). Platform commission is 35% (or min ₹2,000 floor).</p>
                 </div>
                 <div>
                   <label className="field-lbl">Security Deposit (₹) *</label>
@@ -328,13 +360,43 @@ export default function AddListingPage() {
                   Please use your device's camera to capture photos of the item. Gallery uploads are disabled to prevent stock photo fraud.
                 </p>
                 
-                {imageUrls.length < 4 ? (
-                  <LiveCameraCapture 
-                    onCapture={handleCapture}
-                    buttonText="Open Camera & Capture"
-                  />
+                {!isMobile ? (
+                  qrCaptureUrl ? (
+                    <div style={{ textAlign: 'center', padding: '20px', background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', marginTop: '16px' }}>
+                      <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#163625', marginBottom: '16px' }}>
+                        Scan QR with your phone to upload photos
+                      </p>
+                      <QRCodeSVG value={qrCaptureUrl} size={180} />
+                      <p style={{ fontSize: '12px', color: '#74897C', marginTop: '16px' }}>
+                        Photos captured on your phone will appear here live.
+                      </p>
+                      {pollingActive && (
+                        <p style={{ fontSize: '12px', color: '#2C5E43', marginTop: '8px', fontWeight: 'bold' }}>
+                          <span style={{ display: 'inline-block', width: 8, height: 8, background: '#10B981', borderRadius: '50%', marginRight: 6, animation: 'pulse 2s infinite' }} />
+                          Waiting for photos...
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '30px', background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', marginTop: '16px' }}>
+                      <div style={{ fontSize: '32px', marginBottom: '12px' }}>📱</div>
+                      <p style={{ fontSize: '14px', color: '#3D5347', marginBottom: '16px' }}>
+                        You are on a desktop. Live capture requires a mobile camera.
+                      </p>
+                      <button type="button" onClick={generateMobileSession} style={{ padding: '12px 24px', background: '#2C5E43', color: '#FFF', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                        Generate Mobile QR Code
+                      </button>
+                    </div>
+                  )
                 ) : (
-                  <p style={{ color: '#2C5E43', fontWeight: 'bold' }}>✓ Maximum 4 photos uploaded.</p>
+                  imageUrls.length < 4 ? (
+                    <LiveCameraCapture 
+                      onCapture={handleCapture}
+                      buttonText="Open Camera & Capture"
+                    />
+                  ) : (
+                    <p style={{ color: '#2C5E43', fontWeight: 'bold' }}>✓ Maximum 4 photos uploaded.</p>
+                  )
                 )}
                 
                 {uploading && <p style={{ fontSize: '13px', color: '#2C5E43', marginTop: '12px' }}>Uploading photo...</p>}

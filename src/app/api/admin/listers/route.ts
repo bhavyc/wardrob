@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { sendNotification } from '@/lib/notifications';
 
 import { decryptString } from '@/lib/encryption';
 
@@ -58,11 +59,27 @@ export async function PATCH(request: Request) {
       include: { user: true },
     });
 
-    // If approved, also mark user as idVerified
+    // If approved, also mark user as idVerified and dispatch notification
     if (status === 'APPROVED') {
       await prisma.user.update({
         where: { id: updated.userId },
         data: { idVerified: true },
+      });
+
+      await sendNotification({
+        userId: updated.userId,
+        title: 'KYC Verified',
+        message: 'Your Lister KYC verification has been approved. You are now authorized to catalogue outfits and receive payouts.',
+        type: 'KYC_STATUS',
+        linkUrl: `/lister/kyc`,
+      });
+    } else if (status === 'REJECTED') {
+      await sendNotification({
+        userId: updated.userId,
+        title: 'KYC Update',
+        message: 'Your Lister KYC verification could not be verified. Please review your details and resubmit.',
+        type: 'KYC_STATUS',
+        linkUrl: `/lister/kyc`,
       });
     }
 

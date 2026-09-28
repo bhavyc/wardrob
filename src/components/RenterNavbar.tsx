@@ -57,7 +57,7 @@ export default function RenterNavbar() {
         <span className="rn-top-strip-secondary" style={{ opacity: 0.35 }}>•</span>
         <div className="rn-top-strip-item rn-top-strip-secondary">
           <span style={{ color: '#C5A880', fontSize: '10px' }}>✨</span>
-          <span>60°C Ozone Sterilized &amp; Hub Inspected Couture</span>
+          <span>Ozone Sanitized &amp; Hub Inspected Couture</span>
         </div>
       </div>
 
@@ -85,7 +85,15 @@ export default function RenterNavbar() {
           <div className="rn-left">
             <Link href="/catalog" className="rn-link">Collection</Link>
             <Link href="/categories" className="rn-link">Categories</Link>
-            <Link href="/lister/login" className="rn-link">List &amp; Earn</Link>
+            {session?.role === 'LISTER' ? (
+              <Link href="/lister/listings" className="rn-link" style={{ color: 'var(--accent)', fontWeight: 600 }}>Lister Studio ↗</Link>
+            ) : session?.role === 'HUB_PARTNER' ? (
+              <Link href="/hub" className="rn-link" style={{ color: 'var(--accent)', fontWeight: 600 }}>Hub Portal ↗</Link>
+            ) : session?.role === 'ADMIN' ? (
+              <Link href="/admin" className="rn-link" style={{ color: 'var(--accent)', fontWeight: 600 }}>Admin Panel ↗</Link>
+            ) : (
+              <Link href="/lister/login" className="rn-link">List &amp; Earn</Link>
+            )}
           </div>
 
           {/* Center — Brand */}
@@ -114,12 +122,9 @@ export default function RenterNavbar() {
             )}
             {session ? (
               <>
-                {session.role === 'ADMIN' && (
-                  <Link href="/admin" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.04em' }}>Admin</Link>
-                )}
                 <Link href="/profile" style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink-secondary)', letterSpacing: '0.04em', textDecoration: 'none' }}>Account</Link>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--success)', background: 'rgba(13, 148, 136, 0.08)', padding: '6px 14px', borderRadius: 'var(--radius-full)', letterSpacing: '0.02em' }}>
-                  ₹{Number(session.walletBalance).toLocaleString('en-IN')}
+                  ₹{Number(session.walletBalance || 0).toLocaleString('en-IN')}
                 </span>
                 <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500, color: 'var(--text-muted)' }}>Logout</button>
               </>
@@ -168,14 +173,12 @@ export default function RenterNavbar() {
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
               <input
-                type="search"
-                placeholder="Search couture, lehengas, sarees…"
+                placeholder="Search bridal, sherwanis…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{
-                  width: '100%', border: 'none', background: 'transparent',
-                  outline: 'none', fontSize: '12px', color: 'var(--ink)',
-                  padding: '2px 0',
+                  border: 'none', background: 'transparent', outline: 'none',
+                  fontSize: '12px', width: '100%', color: 'var(--ink)', fontFamily: 'var(--font-sans)',
                 }}
               />
             </div>
@@ -185,12 +188,12 @@ export default function RenterNavbar() {
             <div className="rn-mobile-wallet-card">
               <div>
                 <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
-                  {session.name || 'Member'}
+                  {session.role === 'LISTER' ? '✦ Lister Partner' : session.role === 'HUB_PARTNER' ? '🚚 Hub Staff' : session.role === 'ADMIN' ? '🛡️ Admin' : (session.name || 'Member')}
                 </p>
-                <p style={{ fontSize: '12px', color: 'var(--ink-secondary)' }}>{session.email}</p>
+                <p style={{ fontSize: '12px', color: 'var(--ink-secondary)' }}>{session.name || session.email}</p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>Balance</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block' }}>Wallet</span>
                 <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--success)' }}>
                   ₹{Number(session.walletBalance || 0).toLocaleString('en-IN')}
                 </span>
@@ -225,10 +228,23 @@ export default function RenterNavbar() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h16M4 12h16M4 18h7" /></svg>
               Browse Categories
             </Link>
-            <Link href="/lister/login" className="rn-mobile-link" onClick={() => setMobileMenuOpen(false)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
-              Lister Studio (Earn)
-            </Link>
+
+            {session?.role === 'LISTER' ? (
+              <Link href="/lister/listings" className="rn-mobile-link" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+                Switch to Lister Studio ↗
+              </Link>
+            ) : session?.role === 'HUB_PARTNER' ? (
+              <Link href="/hub" className="rn-mobile-link" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                Open Hub Portal ↗
+              </Link>
+            ) : (
+              <Link href="/lister/login" className="rn-mobile-link" onClick={() => setMobileMenuOpen(false)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+                Lister Studio (Earn)
+              </Link>
+            )}
 
             <div className="rn-mobile-divider" />
 

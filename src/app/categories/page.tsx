@@ -14,41 +14,37 @@ export default function CategoriesPage() {
     fetch('/api/products')
       .then(r => r.ok && r.headers.get('content-type')?.includes('application/json') ? r.json() : null)
       .then(d => {
-        if (d?.success && d?.products) {
-          const predefinedCategories: Record<string, { name: string; img: string; emoji: string }> = {
-            'Lehenga': { name: 'Bridal Lehengas', img: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&q=80&w=800', emoji: '👑' },
-            'Saree': { name: 'Banarasi Sarees', img: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800', emoji: '✨' },
-            'Kurta': { name: 'Sherwanis & Sets', img: 'https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?auto=format&fit=crop&q=80&w=800', emoji: '🤵' },
-            'Shawl': { name: 'Pashmina Archives', img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=800', emoji: '🧣' },
-            'Sharara': { name: 'Sharara & Anarkali', img: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&q=80&w=800', emoji: '🪷' },
-            'Dupatta': { name: 'Festive Dupattas', img: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&q=80&w=800', emoji: '🌟' },
-            'IndoWestern': { name: 'Indo-Western', img: 'https://images.unsplash.com/photo-1536766820879-059fec98ec0a?auto=format&fit=crop&q=80&w=800', emoji: '💎' },
-            'Gown': { name: 'Cocktail Gowns', img: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800', emoji: '🥂' },
-          };
-
-          const groupedCategories: Record<string, { name: string; val: string; img: string; emoji: string }> = {};
+        if (d?.success && Array.isArray(d?.products)) {
+          // Group categories strictly from real backend database products
+          const grouped: Record<string, { name: string; val: string; count: number; img: string; minPrice: number }> = {};
 
           d.products.forEach((p: any) => {
             if (!p.category) return;
-            const catName = p.category;
-            if (!groupedCategories[catName]) {
-              const predefined = predefinedCategories[catName];
-              groupedCategories[catName] = {
-                name: predefined ? predefined.name : catName,
-                val: catName,
-                img: predefined ? predefined.img : (p.images && p.images.length > 0 ? p.images[0] : 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&q=80&w=800'),
-                emoji: predefined ? predefined.emoji : '✨'
+            const cat = p.category.trim();
+            const pImg = (p.images && p.images.length > 0 && p.images[0]) ||
+              (p.baselineImages && p.baselineImages.length > 0 && p.baselineImages[0]) || '';
+            const pPrice = Number(p.rentalPrice) || 0;
+
+            if (!grouped[cat]) {
+              grouped[cat] = {
+                name: cat,
+                val: cat,
+                count: 1,
+                img: pImg,
+                minPrice: pPrice,
               };
+            } else {
+              grouped[cat].count += 1;
+              if (pPrice > 0 && (grouped[cat].minPrice === 0 || pPrice < grouped[cat].minPrice)) {
+                grouped[cat].minPrice = pPrice;
+              }
+              if (!grouped[cat].img && pImg) {
+                grouped[cat].img = pImg;
+              }
             }
           });
 
-          let dynamicCategories = Object.values(groupedCategories);
-
-          if (dynamicCategories.length === 0) {
-            dynamicCategories = ['Lehenga', 'Saree', 'Kurta', 'Shawl'].map(val => ({ ...predefinedCategories[val], val }));
-          }
-
-          setCategories(dynamicCategories);
+          setCategories(Object.values(grouped));
         }
       })
       .catch(() => {})
@@ -69,17 +65,29 @@ export default function CategoriesPage() {
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '42px', fontWeight: 700, color: 'var(--ink)', marginBottom: '12px' }}>
             All Categories
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Discover our complete curated collection by style and occasion.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Browse verified designer silhouettes available for 4-day rentals.</p>
         </div>
 
         {loading ? (
           <div style={{ padding: '80px 0', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>Loading categories...</div>
+        ) : categories.length === 0 ? (
+          <div style={{ padding: '80px 0', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>No categories currently active.</div>
         ) : (
           <div className="cat-pg-grid">
             {categories.map(cat => (
-              <Link key={cat.val} href={`/catalog?category=${cat.val}`} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
+              <Link key={cat.val} href={`/catalog?category=${encodeURIComponent(cat.val)}`} className="hover-scale-img" style={{ display: 'block', textDecoration: 'none', color: 'inherit', minWidth: 0, height: '100%' }}>
                 <div className="cat-card-inner">
-                  <img src={cat.img} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {cat.img ? (
+                    <img
+                      src={cat.img}
+                      alt={cat.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', background: '#1E1E2D', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF' }}>
+                      {cat.name}
+                    </div>
+                  )}
                   {/* Top Right Arrow Badge */}
                   <div style={{
                     position: 'absolute', top: '10px', right: '10px',
@@ -97,11 +105,16 @@ export default function CategoriesPage() {
                     padding: '16px 14px', color: '#FFFFFF',
                   }}>
                     <span style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#E0D4CC', marginBottom: '3px' }}>
-                      {cat.emoji} COUTURE
+                      {cat.count} {cat.count === 1 ? 'Piece' : 'Pieces'} Available
                     </span>
-                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '17px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.25, margin: 0 }}>
+                    <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '18px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.25, margin: 0 }}>
                       {cat.name}
                     </h3>
+                    {cat.minPrice > 0 && (
+                      <span style={{ fontSize: '11px', color: '#C5A880', marginTop: '3px', fontWeight: 600 }}>
+                        From ₹{cat.minPrice.toLocaleString('en-IN')} / 4d
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>

@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'This payment transaction has already been claimed or credited.' }, { status: 400 });
     }
 
-    // Atomic transaction for payment completion + referral reward trigger
+    // Atomic transaction for payment completion
     await prisma.$transaction(async (tx) => {
       // 1. Mark payment record COMPLETED
       await tx.registrationPayment.update({
@@ -106,40 +106,6 @@ export async function POST(request: Request) {
         data: { registrationFeePaid: true }
       });
 
-      // 3. Process Referral Reward if referred by another Lister
-      if (listerProfile.referredByCode) {
-        const referrerProfile = await tx.listerProfile.findUnique({
-          where: { referralCode: listerProfile.referredByCode }
-        });
-
-        // Ensure valid referrer and prevent self-referral
-        if (referrerProfile && referrerProfile.id !== listerProfile.id) {
-          // Check if referral record already exists for this referred lister
-          const existingReferral = await tx.referral.findUnique({
-            where: { referredListerId: listerProfile.id }
-          });
-
-          if (!existingReferral) {
-            // Create referral record
-            await tx.referral.create({
-              data: {
-                referrerId: referrerProfile.id,
-                referredListerId: listerProfile.id,
-                rewardAmount: 200.00,
-                status: 'CREDITED'
-              }
-            });
-
-            // Credit referrer's wallet by ₹200
-            await tx.user.update({
-              where: { id: referrerProfile.userId },
-              data: {
-                walletBalance: { increment: 200.00 }
-              }
-            });
-          }
-        }
-      }
     });
 
     return NextResponse.json({

@@ -30,7 +30,17 @@ export async function POST(request: Request) {
       }
     });
 
-    const body = await request.json();
+    let body: any = {};
+    try {
+      const text = await request.text();
+      if (!text) {
+        return NextResponse.json({ success: false, error: 'Empty request payload.' }, { status: 400 });
+      }
+      body = JSON.parse(text);
+    } catch (err) {
+      console.error("JSON Parse error:", err);
+      return NextResponse.json({ success: false, error: 'Invalid JSON payload.' }, { status: 400 });
+    }
     const { name, email, phone, password, confirmPassword, aadhaarNumber, panNumber } = body;
 
     // Validate required fields

@@ -38,7 +38,11 @@ export async function getAuthUser(req?: Request): Promise<AuthUser | null> {
 
     const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as AuthUser;
 
-    // If token includes a sessionId, verify it exists and is still valid in the database
+    if (!decoded.userId) {
+      return null;
+    }
+
+    // Verify session existence & revocation if sessionId is present (or strictly required in production)
     if (decoded.sessionId) {
       const activeSession = await prisma.session.findFirst({
         where: {
@@ -49,6 +53,22 @@ export async function getAuthUser(req?: Request): Promise<AuthUser | null> {
       if (!activeSession) {
         return null;
       }
+    } else if (process.env.NODE_ENV === 'production') {
+      return null;
+    }
+
+    // Verify user still exists and account is not locked
+    const userStatus = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, lockedUntil: true }
+    });
+
+    if (!userStatus) {
+      return null;
+    }
+
+    if (userStatus.lockedUntil && new Date(userStatus.lockedUntil) > new Date()) {
+      return null;
     }
 
     return decoded;

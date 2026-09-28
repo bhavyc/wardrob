@@ -35,9 +35,23 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
+    // Disintermediation & Privacy Protection:
+    // Strip Renter's private home delivery address & phone from the Lister's view.
+    // Lister only coordinates Leg 1 (ship to Central Hub), while Hub handles Renter delivery.
+    const sanitizedBookings = bookings.map(b => ({
+      ...b,
+      shippingAddress: null,
+      city: null,
+      state: null,
+      pincode: null,
+      contactPhone: null,
+      contactName: null,
+      renter: b.renter ? { id: b.renter.id, name: b.renter.name } : null,
+    }));
+
     return NextResponse.json({
       success: true,
-      bookings,
+      bookings: sanitizedBookings,
     });
   } catch (error: any) {
     console.error('API Lister Bookings GET Error:', error);

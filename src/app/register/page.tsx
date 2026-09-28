@@ -40,10 +40,18 @@ function RegisterForm() {
     setError('');
 
     try {
+      const payload = {
+        ...formData,
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
+        password: formData.password.trim(),
+        confirmPassword: formData.confirmPassword.trim(),
+      };
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
@@ -64,8 +72,8 @@ function RegisterForm() {
     formData.name.trim().length >= 2 &&
     formData.email.trim() !== '' &&
     formData.phone.trim().length === 10 &&
-    formData.password.length >= 8 &&
-    formData.confirmPassword === formData.password &&
+    formData.password.trim().length >= 8 &&
+    formData.confirmPassword.trim() === formData.password.trim() &&
     formData.aadhaarNumber.length === 12 &&
     formData.panNumber.length === 10;
 
@@ -257,7 +265,12 @@ function RegisterForm() {
                 <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
                   {/* Aadhaar Number */}
                   <div style={{ flex: 1 }}>
-                    <label style={labelStyle} htmlFor="reg-aadhaar">Aadhaar Number (12 digits)</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="reg-aadhaar">Aadhaar (12 digits)</label>
+                      <span style={{ fontSize: '10.5px', color: formData.aadhaarNumber.length === 12 ? '#059669' : 'var(--text-muted)', fontWeight: 600 }}>
+                        {formData.aadhaarNumber.length}/12
+                      </span>
+                    </div>
                     <input
                       id="reg-aadhaar"
                       name="aadhaarNumber"
@@ -267,15 +280,28 @@ function RegisterForm() {
                       maxLength={12}
                       value={formData.aadhaarNumber}
                       onChange={handleChange}
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        borderColor: formData.aadhaarNumber.length > 0 && formData.aadhaarNumber.length !== 12 ? '#EF4444' : undefined,
+                      }}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
                     />
+                    {formData.aadhaarNumber.length > 0 && formData.aadhaarNumber.length !== 12 && (
+                      <p style={{ fontSize: '11px', color: '#EF4444', margin: '4px 0 0 0' }}>
+                        Must be exactly 12 digits (add {12 - formData.aadhaarNumber.length} more)
+                      </p>
+                    )}
                   </div>
 
                   {/* PAN Number */}
                   <div style={{ flex: 1 }}>
-                    <label style={labelStyle} htmlFor="reg-pan">PAN Card Number</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{ ...labelStyle, marginBottom: 0 }} htmlFor="reg-pan">PAN (10 chars)</label>
+                      <span style={{ fontSize: '10.5px', color: formData.panNumber.length === 10 ? '#059669' : 'var(--text-muted)', fontWeight: 600 }}>
+                        {formData.panNumber.length}/10
+                      </span>
+                    </div>
                     <input
                       id="reg-pan"
                       name="panNumber"
@@ -285,10 +311,18 @@ function RegisterForm() {
                       maxLength={10}
                       value={formData.panNumber}
                       onChange={handleChange}
-                      style={inputStyle}
+                      style={{
+                        ...inputStyle,
+                        borderColor: formData.panNumber.length > 0 && formData.panNumber.length !== 10 ? '#EF4444' : undefined,
+                      }}
                       onFocus={handleFocus}
                       onBlur={handleBlur}
                     />
+                    {formData.panNumber.length > 0 && formData.panNumber.length !== 10 && (
+                      <p style={{ fontSize: '11px', color: '#EF4444', margin: '4px 0 0 0' }}>
+                        Must be exactly 10 characters
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -411,7 +445,7 @@ function RegisterForm() {
                       )}
                     </button>
                   </div>
-                  {formData.confirmPassword && formData.confirmPassword !== formData.password && (
+                  {formData.confirmPassword && formData.confirmPassword.trim() !== formData.password.trim() && (
                     <p style={{ fontSize: '12px', color: '#EF4444', marginTop: '6px' }}>
                       Passwords do not match.
                     </p>

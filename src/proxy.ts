@@ -23,12 +23,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Bypass auth for public onboarding/login endpoints
+  // Bypass auth for public onboarding/login endpoints and token-based mobile camera capture
   if (
     pathname.startsWith('/lister/register') ||
     pathname.startsWith('/lister/login') ||
+    pathname.startsWith('/lister/mobile-capture') ||
+    pathname.startsWith('/api/lister/mobile-capture') ||
     pathname.startsWith('/admin/login') ||
     pathname.startsWith('/hub/login') ||
+    pathname.startsWith('/hub/mobile-capture') ||
+    pathname.startsWith('/api/hub/mobile-capture') ||
     pathname === '/api/lister/register' ||
     pathname === '/api/lister/login'
   ) {
@@ -51,7 +55,7 @@ export async function proxy(request: NextRequest) {
     }
     if (isHubPath) {
       return NextResponse.redirect(new URL('/hub/login', request.url));
-    }
+    } 
     if (isListerPath) {
       return NextResponse.redirect(new URL('/lister/login', request.url));
     }

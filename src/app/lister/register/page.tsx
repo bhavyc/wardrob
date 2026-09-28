@@ -27,7 +27,6 @@ export default function ListerRegisterPage() {
   // Step 2
   const [shopName, setShopName] = useState('');
   const [bio, setBio] = useState('');
-  const [referralCodeInput, setReferralCodeInput] = useState('');
 
   const handleLogout = async () => {
     setLoading(true);
@@ -82,7 +81,6 @@ export default function ListerRegisterPage() {
           password,
           shopName,
           bio,
-          referralCode: referralCodeInput,
         }),
       });
 
@@ -269,19 +267,6 @@ export default function ListerRegisterPage() {
                             placeholder="Describe your style, favorite brands, and what makes your wardrobe unique to renters..."
                           />
                           <div className="reg-hint">This appears on your public profile visible to renters</div>
-                        </div>
-                      </div>
-                      <div className="reg-grid-1">
-                        <div className="reg-field">
-                          <label className="reg-lbl">Referral Code (Optional)</label>
-                          <input
-                            className="reg-inp"
-                            type="text"
-                            value={referralCodeInput}
-                            onChange={e => setReferralCodeInput(e.target.value.toUpperCase())}
-                            placeholder="e.g. REF123456"
-                          />
-                          <div className="reg-hint">Have a referral code from an existing Lister? Enter it to link accounts.</div>
                         </div>
                       </div>
                       <div className="reg-btn-row">

@@ -10,15 +10,6 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET = process.env.JWT_SECRET;
 
-function generateReferralCode(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = 'REF';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
-
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
@@ -45,28 +36,20 @@ export async function POST(request: Request) {
       }
     });
 
-    const body = await request.json();
+    let body: any = {};
+    try {
+      const text = await request.text();
+      if (!text) {
+        return NextResponse.json({ success: false, error: 'Empty request payload.' }, { status: 400 });
+      }
+      body = JSON.parse(text);
+    } catch (err) {
+      console.error("JSON Parse error:", err);
+      return NextResponse.json({ success: false, error: 'Invalid JSON payload.' }, { status: 400 });
+    }
     const authUser = await getAuthUser(request);
 
-    const { name, email, phone, password, shopName, bio, referralCode: inputReferralCode } = body;
-
-    let referredByCodeClean: string | null = null;
-
-    if (inputReferralCode && inputReferralCode.trim().length > 0) {
-      const codeToSearch = inputReferralCode.trim().toUpperCase();
-      const referrerExists = await prisma.listerProfile.findUnique({
-        where: { referralCode: codeToSearch }
-      });
-
-      if (!referrerExists) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid referral code provided.' },
-          { status: 400 }
-        );
-      }
-
-      referredByCodeClean = codeToSearch;
-    }
+    const { name, email, phone, password, shopName, bio } = body;
 
     let userId: string;
 
@@ -97,12 +80,6 @@ export async function POST(request: Request) {
         );
       }
 
-      let newRefCode = generateReferralCode();
-      // Ensure unique referral code
-      while (await prisma.listerProfile.findUnique({ where: { referralCode: newRefCode } })) {
-        newRefCode = generateReferralCode();
-      }
-
       await prisma.$transaction([
         prisma.user.update({
           where: { id: userId },
@@ -113,8 +90,6 @@ export async function POST(request: Request) {
             userId,
             shopName: shopName.trim(),
             bio: bio ? bio.trim() : null,
-            referralCode: newRefCode,
-            referredByCode: referredByCodeClean,
             registrationFeePaid: false,
             status: 'PENDING',
           },
@@ -150,11 +125,6 @@ export async function POST(request: Request) {
         );
       }
 
-      let newRefCode = generateReferralCode();
-      while (await prisma.listerProfile.findUnique({ where: { referralCode: newRefCode } })) {
-        newRefCode = generateReferralCode();
-      }
-
       const newUser = await prisma.user.create({
         data: {
           name: name.trim(),
@@ -166,8 +136,6 @@ export async function POST(request: Request) {
             create: {
               shopName: shopName.trim(),
               bio: bio ? bio.trim() : null,
-              referralCode: newRefCode,
-              referredByCode: referredByCodeClean,
               registrationFeePaid: false,
               status: 'PENDING',
             },
@@ -199,6 +167,15 @@ export async function POST(request: Request) {
 
       const response = NextResponse.json({
         success: true,
+        token,
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+          role: newUser.role,
+          idVerified: newUser.idVerified,
+        },
         message: 'Registration successful! Proceeding to payment.',
       });
 
