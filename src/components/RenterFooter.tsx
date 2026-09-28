@@ -16,10 +16,10 @@ export default function RenterFooter() {
           </p>
         </div>
 
-        {/* Real Essential Links Only */}
+        {/* Real Essential Links Only - No Hardcoded Collections */}
         <nav className="ft-minimal-nav" aria-label="Footer navigation">
           <Link href="/catalog" className="ft-minimal-link">
-            Explore Collection
+            Explore All Couture
           </Link>
           <Link href="/lister/login" className="ft-minimal-link">
             List Your Outfits
