@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
 import { sendNotification } from '@/lib/notifications';
+import { sendBookingConfirmedWhatsApp } from '@/lib/whatsapp';
 import { POST_RETURN_TURNAROUND_DAYS } from '@/lib/availability';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
     // 2. Fetch the pending reservation created in /api/checkout/razorpay/order
     const existingBooking = await prisma.booking.findFirst({
       where: { razorpayOrderId: razorpay_order_id },
-      include: { listing: true },
+      include: { listing: true, renter: true },
     });
 
     if (!existingBooking) {
@@ -246,6 +247,18 @@ export async function POST(request: Request) {
           type: 'NEW_BOOKING',
           linkUrl: `/lister/bookings`,
         });
+      }
+
+      // Dispatch WhatsApp Confirmation to Renter
+      const renterPhone = existingBooking.renter?.phone;
+      if (renterPhone) {
+        sendBookingConfirmedWhatsApp({
+          phone: renterPhone,
+          bookingId: booking.id,
+          listingTitle: existingBooking.listing.title,
+          renterName: existingBooking.renter.name,
+          eventDate: existingBooking.startDate,
+        }).catch(err => console.error('[WHATSAPP] Booking confirmation failed to send:', err));
       }
     }
 

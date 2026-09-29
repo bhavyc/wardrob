@@ -342,7 +342,7 @@ export default function AdminPartnersPage() {
                 </label>
                 <input
                   type="tel"
-                  placeholder="e.g. 9876543210"
+                  placeholder="Enter 10-digit phone"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #CBD5E1', fontSize: 13 }}

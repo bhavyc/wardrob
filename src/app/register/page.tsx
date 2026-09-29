@@ -247,7 +247,7 @@ function RegisterForm() {
                       type="tel"
                       required
                       autoComplete="tel"
-                      placeholder="9876543210"
+                      placeholder="Enter 10-digit mobile"
                       maxLength={10}
                       value={formData.phone}
                       onChange={e => {

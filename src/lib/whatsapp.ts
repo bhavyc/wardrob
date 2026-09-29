@@ -235,7 +235,7 @@ In accordance with our rental policy, late penalty charges of *₹250 per day* a
 
 Please hand over the garment to our courier partner today to prevent further deposit deductions and account restrictions.
 
-Direct Concierge Helpline: +91-9876543210
+Direct Concierge: support@wardrob.in
 *Wardrob Escrow & Asset Protection*`;
   } else if (level === 7) {
     message = 
@@ -252,7 +252,7 @@ Please be advised that if the garment is not received within the next *48 hours*
 
 Please contact our escalation desk immediately to coordinate the return and avoid formal action.
 
-Escalations: support@wardrob.in | +91-9876543210
+Escalations: support@wardrob.in
 *Wardrob Legal & Compliance Desk*`;
   }
 
@@ -301,6 +301,42 @@ You can monitor the live transit status anytime in your Wardrob Lister Portal.
 
 Best regards,
 *Wardrob Operations & Logistics Desk*`;
+
+  return sendMetaWhatsAppMessage(phone, message);
+}
+
+// ============================================================================
+// 4. Booking-confirmed (To Renter) - When Razorpay Order is Verified
+// ============================================================================
+export async function sendBookingConfirmedWhatsApp({
+  phone,
+  bookingId,
+  listingTitle,
+  renterName = 'Valued Client',
+  eventDate,
+}: {
+  phone: string;
+  bookingId: string;
+  listingTitle: string;
+  renterName?: string;
+  eventDate?: Date | string;
+}): Promise<SendMessageResult> {
+  const shortId = bookingId.substring(0, 8).toUpperCase();
+  const dateFormatted = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Upcoming Event';
+
+  const message = 
+`✨ *Wardrob Archive | Reservation Confirmed*
+
+Dear ${renterName},
+
+Your luxury couture reservation *#${shortId}* for *"${listingTitle}"* is secured for *${dateFormatted}*!
+
+Our luxury concierge team is now preparing the garment for UV sanitization, multi-point inspection, and insured doorstep delivery.
+
+Track your reservation & return status anytime in the Wardrob App.
+
+Best regards,
+*Wardrob Haute Ethnic Archive*`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }

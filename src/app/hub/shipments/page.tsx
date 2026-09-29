@@ -666,7 +666,7 @@ export default function HubShipmentsPage() {
                 <label className="ship-form-lbl">AWB Tracking Number / Driver Phone</label>
                 <input
                   type="text"
-                  placeholder="e.g. PORTER-892182 or Driver 9876543210"
+                  placeholder="e.g. PORTER-892182 or Courier Contact"
                   value={editTracking}
                   onChange={e => setEditTracking(e.target.value)}
                   className="ship-form-input"
