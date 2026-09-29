@@ -22,6 +22,9 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
   const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Register, login, and mobile capture pages bypass the sidebar entirely
   const isPublicPage = pathname?.startsWith('/lister/register') || pathname?.startsWith('/lister/login') || pathname?.startsWith('/lister/mobile-capture');
@@ -69,6 +72,27 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {}
     router.replace('/lister/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await fetch('/api/auth/delete-account', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setShowDeleteModal(false);
+        router.replace('/');
+      } else {
+        setDeleteError(data.error || 'Failed to delete account. Please ensure no outfits are active in rental.');
+      }
+    } catch {
+      setDeleteError('Connection error. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (isPublicPage) return <>{children}</>;
@@ -220,6 +244,20 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
               </svg>
               {!sidebarCollapsed && <span>{loggingOut ? 'Signing out…' : 'Sign Out'}</span>}
             </button>
+            <button
+              className="sd-logout-btn"
+              onClick={() => setShowDeleteModal(true)}
+              style={{ color: '#DC2626', marginTop: '4px' }}
+              title="Delete Partner Account"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+              {!sidebarCollapsed && <span>Delete Account</span>}
+            </button>
           </div>
         </aside>
 
@@ -282,6 +320,112 @@ export default function ListerLayout({ children }: { children: React.ReactNode }
             {children}
           </div>
         </div>
+
+        {/* Delete Account Modal */}
+        {showDeleteModal && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: '#FFFFFF',
+              borderRadius: '20px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              position: 'relative',
+              border: '1px solid #F3F4F6'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                backgroundColor: '#FEE2E2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px auto',
+                color: '#DC2626'
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+
+              <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', textAlign: 'center', margin: '0 0 8px 0' }}>
+                Delete Lister Partner Account?
+              </h3>
+              <p style={{ fontSize: '13px', color: '#6B7280', textAlign: 'center', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+                This action is permanent and cannot be undone. All personal identifying data will be removed or anonymized under DPDP Act 2023. You will not be able to delete your account if you have items currently rented out or in transit.
+              </p>
+
+              {deleteError && (
+                <div style={{
+                  padding: '10px 14px',
+                  background: '#FEE2E2',
+                  border: '1px solid #FCA5A5',
+                  borderRadius: '10px',
+                  color: '#991B1B',
+                  fontSize: '12px',
+                  marginBottom: '16px',
+                  textAlign: 'center'
+                }}>
+                  {deleteError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteModal(false); setDeleteError(''); }}
+                  disabled={deleting}
+                  style={{
+                    flex: 1,
+                    padding: '11px 16px',
+                    borderRadius: '10px',
+                    border: '1px solid #D1D5DB',
+                    background: '#FFFFFF',
+                    color: '#374151',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: deleting ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                  style={{
+                    flex: 1,
+                    padding: '11px 16px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: '#DC2626',
+                    color: '#FFFFFF',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: deleting ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.25)'
+                  }}
+                >
+                  {deleting ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
