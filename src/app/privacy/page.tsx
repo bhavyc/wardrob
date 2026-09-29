@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
               Wardrob Technologies Pvt. Ltd. (&quot;Wardrob&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) operates a luxury peer-to-peer fashion rental marketplace connecting discerning renters, verified garment curators/listers, and centralized sanitization inspection hubs.
             </p>
             <p className="privacy-paragraph">
-              This Privacy Policy applies to our website (<Link href="/" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>wardrob.com</Link>), mobile applications (iOS &amp; Android), mobile capture inspection modules, and automated notifications including transactional WhatsApp updates.
+              This Privacy Policy applies to our website (<Link href="/" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>wardrob.com</Link>), mobile applications (iOS &amp; Android), mobile capture inspection modules, and automated transactional notifications.
             </p>
           </section>
 
@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
               <li>Facilitating rental orders, security deposit management, and return pick-ups.</li>
               <li>Executing 3-leg logistics (Lister to Central Hub, Hub to Renter, Renter back to Hub).</li>
               <li>Conducting garment sanitization, dry-cleaning inspection, and damage dispute resolution.</li>
-              <li>Sending transactional notifications, courier tracking links, and digital receipts via In-App Alerts and official WhatsApp Business Messaging.</li>
+              <li>Sending transactional notifications, courier tracking links, and digital receipts via In-App Alerts and verified email.</li>
               <li>Protecting owners and users against fraud, lost attire, and identity impersonation.</li>
             </ul>
 
@@ -212,8 +212,8 @@ export default function PrivacyPolicyPage() {
               </div>
               <div style={{ fontSize: '13.5px', color: 'var(--ink-secondary, #6E6877)', lineHeight: 1.8 }}>
                 <div><strong>Entity:</strong> Wardrob Technologies Private Limited</div>
-                <div><strong>Email:</strong> <a href="mailto:privacy@wardrob.com" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>privacy@wardrob.com</a></div>
-                <div><strong>WhatsApp Concierge:</strong> +91 7011409941</div>
+                <div><strong>Email:</strong> <a href="mailto:inwardrob@gmail.com" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>inwardrob@gmail.com</a></div>
+                <div><strong>Support &amp; Concierge:</strong> <a href="mailto:inwardrob@gmail.com" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>inwardrob@gmail.com</a></div>
                 <div><strong>Response Window:</strong> All privacy and data erasure inquiries are addressed within 48 business hours.</div>
               </div>
             </div>

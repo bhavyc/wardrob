@@ -50,7 +50,7 @@ export async function sendMetaWhatsAppMessage(
   const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_API_TOKEN;
 
   // --- LIVE META CLOUD API CALL ---
-  if (phoneNumberId && accessToken) {
+  if (phoneNumberId && accessToken && process.env.ENABLE_WHATSAPP !== 'false') {
     try {
       const url = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
       const response = await fetch(url, {
@@ -92,14 +92,8 @@ export async function sendMetaWhatsAppMessage(
     }
   }
 
-  // --- DEV / STUB SIMULATION MODE ---
-  console.log(`\n================== [WHATSAPP META CLOUD API (DEV SIMULATION)] ==================`);
-  console.log(`📱 Recipient Phone: +${normalizedTo} (Raw: ${recipientPhone})`);
-  console.log(`💬 Message Content:\n${messageText}`);
-  console.log(`ℹ️ [Tip] Set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in .env for live Meta delivery.`);
-  console.log(`=================================================================================\n`);
-
-  return { success: true, messageId: `mock_meta_${Date.now()}` };
+  // WhatsApp not configured / disabled
+  return { success: true, messageId: `bypassed_${Date.now()}` };
 }
 
 /**
@@ -221,7 +215,7 @@ Your rental booking *#${shortId}* (${garmentName}) was scheduled for return yest
 
 If the courier was unable to connect with you, please arrange the handover today or contact our support team immediately to prevent automated late fees from applying.
 
-Assistance: support@wardrob.in | Reply to this WhatsApp
+Assistance: inwardrob@gmail.com
 *Wardrob Operations*`;
   } else if (level === 3) {
     message = 
@@ -235,7 +229,7 @@ In accordance with our rental policy, late penalty charges of *₹250 per day* a
 
 Please hand over the garment to our courier partner today to prevent further deposit deductions and account restrictions.
 
-Direct Concierge: support@wardrob.in
+Direct Concierge: inwardrob@gmail.com
 *Wardrob Escrow & Asset Protection*`;
   } else if (level === 7) {
     message = 
@@ -252,7 +246,7 @@ Please be advised that if the garment is not received within the next *48 hours*
 
 Please contact our escalation desk immediately to coordinate the return and avoid formal action.
 
-Escalations: support@wardrob.in
+Escalations: inwardrob@gmail.com
 *Wardrob Legal & Compliance Desk*`;
   }
 

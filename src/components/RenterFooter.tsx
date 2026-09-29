@@ -45,7 +45,7 @@ export default function RenterFooter() {
             links: [
               { label: 'Lend Garments', href: '/lister/login' },
               { label: 'Hub Partner Portal', href: '/hub/login' },
-              { label: 'Concierge Helpdesk', href: 'https://wa.me/917011409941' },
+              { label: 'Partner Support', href: 'mailto:inwardrob@gmail.com' },
             ]
           },
           {
@@ -53,7 +53,7 @@ export default function RenterFooter() {
             links: [
               { label: 'About Wardrob', href: '/' },
               { label: 'How It Works', href: '/#how-it-works' },
-              { label: 'WhatsApp Concierge', href: 'https://wa.me/917011409941' },
+              { label: 'Contact Us', href: 'mailto:inwardrob@gmail.com' },
             ]
           }
         ].map((col, i) => (

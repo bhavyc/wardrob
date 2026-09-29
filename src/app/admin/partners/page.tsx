@@ -205,7 +205,7 @@ export default function AdminPartnersPage() {
                 <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569' }}>
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Partner / Hub Name</th>
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Email Address</th>
-                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Phone / WhatsApp</th>
+                  <th style={{ padding: '14px 18px', fontWeight: 600 }}>Phone Number</th>
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Role & Verification</th>
                   <th style={{ padding: '14px 18px', fontWeight: 600 }}>Added On</th>
                   <th style={{ padding: '14px 18px', fontWeight: 600, textAlign: 'right' }}>Actions</th>
