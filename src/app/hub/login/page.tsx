@@ -75,7 +75,7 @@ export default function HubLogin() {
                 <input
                   type="email" required
                   className="hub-input"
-                  placeholder="hub@wardrob.com"
+                  placeholder="Enter hub partner email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                 />

@@ -63,12 +63,6 @@ function LoginForm() {
     }
   };
 
-  const handleQuickDemo = () => {
-    setEmail('renter@wardrob.com');
-    setPassword('renter123');
-    setError('');
-  };
-
   return (
     <div className="renter-auth-wrapper">
       {/* Back to Home navigation */}
@@ -90,14 +84,6 @@ function LoginForm() {
           <span className="auth-badge-pill">Renter Portal</span>
           <h1 className="auth-title">Welcome Back</h1>
           <p className="auth-subtitle">Sign in to access your curated wardrobe, measurements &amp; active rentals.</p>
-        </div>
-
-        {/* Quick Demo Fill Helper */}
-        <div className="auth-demo-pill">
-          <span>Demo Account: <code>renter@wardrob.com</code></span>
-          <button type="button" onClick={handleQuickDemo} className="auth-demo-action">
-            Auto-Fill
-          </button>
         </div>
 
         {error && (

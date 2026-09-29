@@ -192,18 +192,18 @@ export default function ListerRegisterPage() {
                       <div className="reg-grid-2">
                         <div className="reg-field">
                           <label className="reg-lbl">Full Name</label>
-                          <input className="reg-inp" type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Aditi Sharma" autoFocus />
+                          <input className="reg-inp" type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Enter your full name" autoFocus />
                         </div>
                         <div className="reg-field">
                           <label className="reg-lbl">Email Address</label>
-                          <input className="reg-inp" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="aditi@example.com" />
+                          <input className="reg-inp" type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email address" />
                         </div>
                       </div>
                       <div className="reg-grid-1">
                         <div className="reg-field">
                           <label className="reg-lbl">Phone Number</label>
-                          <input className="reg-inp" type="tel" required value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="98765 43210" maxLength={10} />
-                          <div className="reg-hint">Used for OTP login and buyer communication</div>
+                          <input className="reg-inp" type="tel" required value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter 10-digit mobile number" maxLength={10} />
+                          <div className="reg-hint">Used for OTP login and order communication</div>
                         </div>
                       </div>
                       <div className="reg-grid-1">
@@ -255,7 +255,7 @@ export default function ListerRegisterPage() {
                       <div className="reg-grid-1">
                         <div className="reg-field">
                           <label className="reg-lbl">Public Display Name</label>
-                          <input className="reg-inp" type="text" required value={shopName} onChange={e => setShopName(e.target.value)} placeholder="e.g. Aditi's Wardrobe" autoFocus />
+                          <input className="reg-inp" type="text" required value={shopName} onChange={e => setShopName(e.target.value)} placeholder="Enter boutique or profile name" autoFocus />
                         </div>
                       </div>
                       <div className="reg-grid-1">

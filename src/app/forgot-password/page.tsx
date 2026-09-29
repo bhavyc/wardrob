@@ -44,10 +44,6 @@ export default function ForgotPasswordPage() {
       if (res.ok && data.success) {
         setStep(2);
         setMessage(data.message || 'A 6-digit verification code has been dispatched to your email.');
-        if (data.dev_token) {
-          setDevToken(data.dev_token);
-          setCode(data.dev_token);
-        }
       } else {
         setError(data.error || 'Failed to send verification code. Please check the email.');
       }
@@ -196,7 +192,7 @@ export default function ForgotPasswordPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder="Enter your registered email"
                   className="auth-input"
                   disabled={loading}
                   autoComplete="email"
@@ -252,7 +248,7 @@ export default function ForgotPasswordPage() {
                   maxLength={6}
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="e.g. 308451"
+                  placeholder="Enter 6-digit code"
                   className="auth-input"
                   style={{ letterSpacing: '4px', fontSize: '16px', fontWeight: 700, fontFamily: 'monospace' }}
                   disabled={loading}

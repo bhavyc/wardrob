@@ -99,7 +99,7 @@ function AdminLoginForm() {
                   className="form-input"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="admin@wardrob.com or 9999999999"
+                  placeholder="Enter admin email or mobile"
                   required
                   autoFocus
                 />
@@ -123,9 +123,6 @@ function AdminLoginForm() {
                   >
                     {showPassword ? 'Hide' : 'Show'}
                   </button>
-                </div>
-                <div className="reg-hint">
-                  Seeded password is: <code>admin123</code>
                 </div>
               </div>
 

@@ -75,12 +75,6 @@ function ListerLoginForm() {
     }
   };
 
-  const handleQuickDemo = () => {
-    setEmail('ananya@couture.com');
-    setPassword('lister123');
-    setError('');
-  };
-
   return (
     <div className="lister-auth-wrapper">
       {/* Back to Home navigation */}
@@ -123,14 +117,6 @@ function ListerLoginForm() {
               <span className="lister-eyebrow">Lister Portal</span>
               <h1 className="lister-title">Lister Sign In</h1>
               <p className="lister-subtitle">Access your garment inventory, earnings, and rental requests.</p>
-            </div>
-
-            {/* Demo Auto-Fill Helper */}
-            <div className="lister-demo-pill">
-              <span>Demo Lister: <code>ananya@couture.com</code></span>
-              <button type="button" onClick={handleQuickDemo} className="lister-demo-action">
-                Auto-Fill
-              </button>
             </div>
 
             {error && (

@@ -205,7 +205,7 @@ function RegisterForm() {
                     required
                     autoFocus
                     autoComplete="name"
-                    placeholder="Sneha Verma"
+                    placeholder="Enter your full name"
                     value={formData.name}
                     onChange={handleChange}
                     style={inputStyle}
@@ -223,7 +223,7 @@ function RegisterForm() {
                     type="email"
                     required
                     autoComplete="email"
-                    placeholder="sneha@example.com"
+                    placeholder="Enter your email address"
                     value={formData.email}
                     onChange={handleChange}
                     style={inputStyle}
