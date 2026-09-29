@@ -25,35 +25,35 @@ export default function RenterFooter() {
           {
             title: 'Collections',
             links: [
-              { label: 'Heritage Sarees', href: '/catalog?category=Saree' },
-              { label: 'Bridal Lehengas', href: '/catalog?category=Lehenga' },
-              { label: 'Designer Sherwanis', href: '/catalog?category=Kurta' },
-              { label: 'Artisanal Stoles', href: '/catalog?category=Shawl' },
+              { label: 'All Collections', href: '/catalog' },
+              { label: 'Bridal & Couture', href: '/catalog?q=bridal' },
+              { label: 'Festive & Occasions', href: '/catalog?q=wedding' },
+              { label: 'View All Categories', href: '/catalog' },
             ]
           },
           {
             title: 'Trust & Safety',
             links: [
-              { label: 'Sanitization Protocol', href: '#' },
-              { label: 'Hub Inspections', href: '#' },
-              { label: 'Deposit Guarantee', href: '#' },
-              { label: 'Eco Packaging', href: '#' },
+              { label: 'Sanitization Protocol', href: '/catalog' },
+              { label: 'Hub Quality Check', href: '/catalog' },
+              { label: 'Deposit Guarantee', href: '/catalog' },
+              { label: 'Eco Packaging', href: '/catalog' },
             ]
           },
           {
             title: 'For Partners',
             links: [
               { label: 'Lend Garments', href: '/lister/login' },
-              { label: 'Hub Operator', href: '#' },
-              { label: 'Corporate', href: '#' },
+              { label: 'Hub Partner Portal', href: '/hub/login' },
+              { label: 'Concierge Helpdesk', href: 'https://wa.me/917011409941' },
             ]
           },
           {
             title: 'Company',
             links: [
-              { label: 'About Us', href: '#' },
-              { label: 'Careers', href: '#' },
-              { label: 'Contact', href: '#' },
+              { label: 'About Wardrob', href: '/' },
+              { label: 'How It Works', href: '/#how-it-works' },
+              { label: 'WhatsApp Concierge', href: 'https://wa.me/917011409941' },
             ]
           }
         ].map((col, i) => (
