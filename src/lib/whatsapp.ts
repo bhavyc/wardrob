@@ -52,7 +52,7 @@ export async function sendMetaWhatsAppMessage(
   // --- LIVE META CLOUD API CALL ---
   if (phoneNumberId && accessToken) {
     try {
-      const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+      const url = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -100,6 +100,61 @@ export async function sendMetaWhatsAppMessage(
   console.log(`=================================================================================\n`);
 
   return { success: true, messageId: `mock_meta_${Date.now()}` };
+}
+
+/**
+ * Send an approved Meta WhatsApp template message (e.g. 'hello_world')
+ */
+export async function sendMetaWhatsAppTemplate(
+  recipientPhone: string,
+  templateName: string = 'hello_world',
+  languageCode: string = 'en_US'
+): Promise<SendMessageResult> {
+  const normalizedTo = normalizePhoneNumber(recipientPhone);
+  if (!normalizedTo) {
+    return { success: false, error: 'Invalid phone number' };
+  }
+
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.WHATSAPP_API_TOKEN;
+
+  if (phoneNumberId && accessToken) {
+    try {
+      const url = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: normalizedTo,
+          type: 'template',
+          template: {
+            name: templateName,
+            language: {
+              code: languageCode,
+            },
+          },
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        console.error('[WHATSAPP META TEMPLATE ERROR]', data);
+        return { success: false, error: data?.error?.message || 'Template send failed' };
+      }
+
+      console.log(`[WHATSAPP META] 📱 Template '${templateName}' sent to +${normalizedTo}. Msg ID: ${data?.messages?.[0]?.id}`);
+      return { success: true, messageId: data?.messages?.[0]?.id };
+    } catch (err: any) {
+      console.error('[WHATSAPP META TEMPLATE ERROR]', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  return { success: true, messageId: `mock_template_${Date.now()}` };
 }
 
 // ============================================================================
