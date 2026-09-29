@@ -386,15 +386,15 @@ function CheckoutContent() {
               <div className="checkout-addr-grid">
                 <div>
                   <label style={labelStyle}>City *</label>
-                  <input required value={city} onChange={e => setCity(e.target.value)} className="checkout-field-input" placeholder="e.g. Delhi" />
+                  <input required value={city} onChange={e => setCity(e.target.value)} className="checkout-field-input" placeholder="Enter city" />
                 </div>
                 <div>
                   <label style={labelStyle}>State *</label>
-                  <input required value={state} onChange={e => setState(e.target.value)} className="checkout-field-input" placeholder="e.g. Delhi NCR" />
+                  <input required value={state} onChange={e => setState(e.target.value)} className="checkout-field-input" placeholder="Enter state" />
                 </div>
                 <div>
                   <label style={labelStyle}>Pincode * (6 digits)</label>
-                  <input required maxLength={6} value={pincode} onChange={e => setPincode(e.target.value)} className="checkout-field-input" placeholder="e.g. 110001" />
+                  <input required maxLength={6} value={pincode} onChange={e => setPincode(e.target.value)} className="checkout-field-input" placeholder="6-digit pincode" />
                 </div>
               </div>
             </div>
