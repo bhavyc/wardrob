@@ -9,19 +9,24 @@ import '../login/login.css';
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const tokenParam = searchParams.get('token') || '';
 
+  const [code, setCode] = useState(tokenParam);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState(token ? '' : 'Invalid or missing reset token. Please request a new link.');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    const activeToken = code.trim();
+    if (!activeToken) {
+      setError('Please enter the 6-digit verification code.');
+      return;
+    }
     
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
@@ -40,14 +45,14 @@ function ResetPasswordForm() {
       const res = await fetch('/api/auth/password/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword: password })
+        body: JSON.stringify({ token: activeToken, newPassword: password })
       });
       const data = await res.json();
       
       if (res.ok && data.success) {
         setMessage(data.message || 'Your password has been reset successfully.');
       } else {
-        setError(data.error || 'Failed to reset password. Token may have expired.');
+        setError(data.error || 'Failed to reset password. Code may have expired.');
       }
     } catch {
       setError('Connection error. Please check your internet connection.');
@@ -93,6 +98,35 @@ function ResetPasswordForm() {
 
         {!message ? (
           <form onSubmit={handleSubmit}>
+            {/* 6-Digit Code Field (shown if not in URL) */}
+            {!tokenParam && (
+              <div className="auth-field">
+                <label className="auth-label">
+                  <span>6-Digit Verification Code</span>
+                  <span style={{ fontSize: '11px', color: '#8E8E9E', fontWeight: 500 }}>From your email</span>
+                </label>
+                <div className="auth-input-wrapper">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 308451"
+                    className="auth-input"
+                    style={{ letterSpacing: '4px', fontSize: '16px', fontWeight: 700, fontFamily: 'monospace' }}
+                    disabled={loading}
+                    required
+                  />
+                  <div className="auth-input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* New Password Field */}
             <div className="auth-field">
               <label className="auth-label">
@@ -106,7 +140,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="auth-input"
-                  disabled={loading || !token}
+                  disabled={loading}
                   autoComplete="new-password"
                   required
                 />
@@ -148,7 +182,7 @@ function ResetPasswordForm() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   className="auth-input"
-                  disabled={loading || !token}
+                  disabled={loading}
                   autoComplete="new-password"
                   required
                 />
@@ -183,7 +217,7 @@ function ResetPasswordForm() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || !token}
+              disabled={loading}
               className="auth-submit-btn"
             >
               {loading ? (

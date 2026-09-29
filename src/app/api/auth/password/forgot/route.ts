@@ -62,24 +62,16 @@ export async function POST(request: Request) {
       }
     });
 
-    // Determine base URL for email link
-    const origin = request.headers.get('origin');
-    const host = request.headers.get('host');
-    const proto = request.headers.get('x-forwarded-proto') || 'http';
-    const baseUrl = origin || (host ? `${proto}://${host}` : 'http://localhost:3000');
-    const resetUrl = `${baseUrl}/reset-password?token=${resetCode}`;
-
     // Send real luxury branded email via Gmail SMTP
     await sendPasswordResetEmail({
       to: user.email,
-      resetUrl,
       resetCode,
       userName: user.name || 'Valued Member',
     });
 
     return NextResponse.json({ 
       success: true, 
-      message: 'A password reset code and direct link have been sent to your email.',
+      message: 'A 6-digit verification code has been sent to your email.',
       ...(process.env.NODE_ENV === 'development' ? { dev_token: resetCode } : {})
     });
 
