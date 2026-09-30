@@ -21,6 +21,7 @@ export default function AdminDashboardPage() {
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
   const [chronicOverdue, setChronicOverdue] = useState<any[]>([]);
+  const [stuckInspections, setStuckInspections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = async () => {
@@ -35,6 +36,7 @@ export default function AdminDashboardPage() {
           setRecentBookings(data.recentBookings || []);
           setRecentPayouts(data.recentPayouts || []);
           setChronicOverdue(data.chronicOverdueBookings || []);
+          setStuckInspections(data.stuckHubInspections || []);
         } else {
           console.error('Failed to load stats:', data.error);
         }
@@ -326,6 +328,127 @@ export default function AdminDashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Stuck at Hub — No Return Inspection Filed (>24h SLA Breach) */}
+        {stuckInspections.length > 0 && (
+          <div
+            style={{
+              background: '#FFFBEB',
+              borderRadius: 12,
+              border: '1px solid #FCD34D',
+              padding: 20,
+              boxShadow: '0 2px 6px rgba(217, 119, 6, 0.08)',
+              gridColumn: '1 / -1',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: '#92400E', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>⚠️</span> Stuck at Hub — Return Inspection Overdue ({stuckInspections.length})
+                </h2>
+                <p style={{ margin: 0, fontSize: 12, color: '#B45309' }}>
+                  Courier delivered to Hub over 24 hours ago. Post-Return QC photos not yet filed by Hub staff. Renter deposits &amp; Lister payouts are safely held.
+                </p>
+              </div>
+              <Link
+                href="/admin/shipments"
+                style={{
+                  background: '#92400E',
+                  color: '#FFF',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Inspect Shipments &rarr;
+              </Link>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {stuckInspections.map((b) => {
+                const leg3 = b.shipments?.[0];
+                const arrivedAt = leg3?.deliveredAt ? new Date(leg3.deliveredAt) : new Date(b.updatedAt);
+                const hoursWaiting = Math.max(24, Math.floor((Date.now() - arrivedAt.getTime()) / (1000 * 60 * 60)));
+                const isCritical = hoursWaiting >= 48;
+
+                return (
+                  <div
+                    key={b.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#FFFFFF',
+                      border: `1px solid ${isCritical ? '#FCA5A5' : '#FDE68A'}`,
+                      borderRadius: 8,
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>{b.listing?.title}</span>
+                        {b.listing?.sku && (
+                          <span style={{ fontSize: 11, background: '#F1F5F9', color: '#475569', padding: '2px 6px', borderRadius: 4 }}>
+                            {b.listing.sku}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                        Renter: <strong>{b.renter?.name}</strong> ({b.renter?.phone || 'No phone'}) • Lister: <strong>{b.listing?.lister?.shopName || b.listing?.lister?.user?.name}</strong>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#475569', marginTop: 2 }}>
+                        Courier: {leg3?.courierName || 'Partner Logistics'} • Tracking: {leg3?.trackingNumber || 'N/A'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            background: isCritical ? '#FEE2E2' : '#FEF3C7',
+                            color: isCritical ? '#991B1B' : '#92400E',
+                            border: `1px solid ${isCritical ? '#F87171' : '#FCD34D'}`,
+                            padding: '4px 10px',
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          ⏳ {hoursWaiting}h Overdue
+                        </span>
+                        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
+                          Deposit &amp; Payout Locked
+                        </div>
+                      </div>
+
+                      <Link
+                        href={`/admin/shipments`}
+                        style={{
+                          background: '#F8FAFC',
+                          color: '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '7px 12px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Review / Override
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Chronic Overdue (Non-Returns) */}
         {chronicOverdue.length > 0 && (
           <div

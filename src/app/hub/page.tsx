@@ -12,6 +12,7 @@ export default function HubDashboard() {
   const [error, setError] = useState('');
   const [stats, setStats] = useState({ intake: 0, dispatch: 0, return: 0 });
   const [returnsDue, setReturnsDue] = useState<any[]>([]);
+  const [overdueInspections, setOverdueInspections] = useState<any[]>([]);
   const [returnPage, setReturnPage] = useState(1);
   const RETURNS_PER_PAGE = 4;
 
@@ -31,6 +32,7 @@ export default function HubDashboard() {
             return: data.postReturnBookings?.length || 0,
           });
           setReturnsDue(data.returnsDueToday || []);
+          setOverdueInspections(data.overdueReturnInspections || []);
         } else {
           setError(data.error || 'Failed to load stats');
         }
@@ -63,6 +65,63 @@ export default function HubDashboard() {
           </Link>
         </div>
       </div>
+
+      {/* Urgent Inspection SLA Alert Banner */}
+      {overdueInspections.length > 0 && (
+        <div style={{
+          background: '#FFFBEB',
+          border: '1px solid #FCD34D',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 2px 8px rgba(217, 119, 6, 0.08)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: '#FEF3C7',
+              color: '#92400E',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+              flexShrink: 0
+            }}>
+              ⚠️
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '14px', color: '#92400E' }}>
+                {overdueInspections.length} Returned Item(s) Awaiting Inspection (&gt;24h Overdue)
+              </div>
+              <div style={{ fontSize: '12px', color: '#B45309', marginTop: '2px' }}>
+                Items have arrived at the Hub over 24 hours ago. Renter deposit refunds and lister earnings are locked until 3 quality check photos are submitted.
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/hub/inspections"
+            style={{
+              background: '#92400E',
+              color: '#FFFFFF',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 6px rgba(146, 64, 14, 0.2)'
+            }}
+          >
+            Inspect Now &rarr;
+          </Link>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ padding: 40, textAlign: 'center', color: '#64748B' }}>Loading Dashboard...</div>

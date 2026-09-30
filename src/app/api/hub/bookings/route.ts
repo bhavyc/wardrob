@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
-import { sendUpcomingReturnReminders, processOverdueReturns, sendEscalatingOverdueReminders } from '@/lib/lazy-checks';
+import { sendUpcomingReturnReminders, processOverdueReturns, sendEscalatingOverdueReminders, checkStuckHubInspections } from '@/lib/lazy-checks';
 
 export async function GET(request: Request) {
   try {
@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     sendUpcomingReturnReminders().catch(console.error);
     processOverdueReturns().catch(console.error);
     sendEscalatingOverdueReminders().catch(console.error);
+    checkStuckHubInspections().catch(console.error);
 
     const user = await getAuthUser(request);
     if (!user || (user.role !== 'HUB_PARTNER' && user.role !== 'ADMIN')) {
@@ -83,6 +84,8 @@ export async function GET(request: Request) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
     const returnsDueToday = postReturnBookings.filter(b => {
       // Find items that are IN_USE and their endDate is today or earlier
       if (b.status === 'IN_USE') {
@@ -91,6 +94,13 @@ export async function GET(request: Request) {
         return endDate <= today;
       }
       return false;
+    });
+
+    const overdueReturnInspections = postReturnBookings.filter(b => {
+      const leg3 = b.shipments?.find(s => s.leg === 'RENTER_TO_HUB');
+      const deliveredOver24h = leg3?.status === 'DELIVERED' && leg3?.deliveredAt && new Date(leg3.deliveredAt) < twentyFourHoursAgo;
+      const statusReturnedOver24h = b.status === 'RETURNED_TO_HUB' && new Date(b.updatedAt) < twentyFourHoursAgo;
+      return deliveredOver24h || statusReturnedOver24h;
     });
 
     // Fetch recent completed inspections (DamageReports) for History/Record keeping
@@ -121,6 +131,7 @@ export async function GET(request: Request) {
       preDispatchBookings,
       postReturnBookings,
       returnsDueToday,
+      overdueReturnInspections,
       recentInspections,
     });
   } catch (error: any) {

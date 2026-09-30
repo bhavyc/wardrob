@@ -166,3 +166,79 @@ export async function sendEscalatingOverdueReminders() {
     console.error('Lazy Check Error [sendEscalatingOverdueReminders]:', error);
   }
 }
+
+/**
+ * Lazy Check 4: Detect items delivered to Hub (>24 hours ago) with no Post-Return Inspection filed.
+ * Triggers in-app alerts for Hub staff while strictly keeping escrow deposits and payouts safely held.
+ */
+export async function checkStuckHubInspections() {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const stuckBookings = await prisma.booking.findMany({
+      where: {
+        status: { in: ['RETURNED_TO_HUB', 'IN_USE'] },
+        OR: [
+          {
+            shipments: {
+              some: {
+                leg: 'RENTER_TO_HUB',
+                status: 'DELIVERED',
+                deliveredAt: { lt: twentyFourHoursAgo },
+              }
+            }
+          },
+          {
+            status: 'RETURNED_TO_HUB',
+            updatedAt: { lt: twentyFourHoursAgo },
+          }
+        ],
+        damageReports: {
+          none: {
+            inspectionType: 'POST_RETURN'
+          }
+        }
+      },
+      include: {
+        listing: { select: { title: true } },
+      }
+    });
+
+    if (stuckBookings.length === 0) return;
+
+    // Query Hub Partners to notify
+    const hubPartners = await prisma.user.findMany({
+      where: { role: 'HUB_PARTNER' },
+      select: { id: true }
+    });
+
+    for (const booking of stuckBookings) {
+      const shortId = booking.id.slice(0, 8);
+      // Debounce: Avoid creating duplicate notifications for the same booking within 24 hours
+      const existingAlert = await prisma.notification.findFirst({
+        where: {
+          type: 'HUB_SLA_BREACH',
+          message: { contains: shortId },
+          createdAt: { gte: twentyFourHoursAgo }
+        }
+      });
+
+      if (!existingAlert && hubPartners.length > 0) {
+        for (const partner of hubPartners) {
+          await prisma.notification.create({
+            data: {
+              userId: partner.id,
+              type: 'HUB_SLA_BREACH',
+              title: '⚠️ Inspection Overdue (>24h at Hub)',
+              message: `Booking #${shortId} (${booking.listing.title}) arrived over 24 hours ago. Please complete Post-Return inspection with 3 photos to verify condition and process deposit refund.`,
+              linkUrl: '/hub/inspections'
+            }
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Lazy Check Error [checkStuckHubInspections]:', error);
+  }
+}
+

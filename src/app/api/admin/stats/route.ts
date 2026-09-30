@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthUser } from '@/lib/auth';
+import { checkStuckHubInspections } from '@/lib/lazy-checks';
 
 export async function GET(request: Request) {
   try {
@@ -8,6 +9,11 @@ export async function GET(request: Request) {
     if (!user || user.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Unauthorized. Admin access required.' }, { status: 403 });
     }
+
+    // Trigger non-blocking lazy check
+    checkStuckHubInspections().catch(console.error);
+
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     const [
       totalBookings,
@@ -22,6 +28,7 @@ export async function GET(request: Request) {
       recentBookings,
       recentPayouts,
       chronicOverdueBookings,
+      stuckHubInspections,
     ] = await Promise.all([
       prisma.booking.count(),
       prisma.booking.count({
@@ -81,6 +88,51 @@ export async function GET(request: Request) {
           shipments: { where: { leg: 'RENTER_TO_HUB' } },
         },
       }),
+      prisma.booking.findMany({
+        where: {
+          status: { in: ['RETURNED_TO_HUB', 'IN_USE'] },
+          OR: [
+            {
+              shipments: {
+                some: {
+                  leg: 'RENTER_TO_HUB',
+                  status: 'DELIVERED',
+                  deliveredAt: { lt: twentyFourHoursAgo },
+                },
+              },
+            },
+            {
+              status: 'RETURNED_TO_HUB',
+              updatedAt: { lt: twentyFourHoursAgo },
+            },
+          ],
+          damageReports: {
+            none: {
+              inspectionType: 'POST_RETURN',
+            },
+          },
+        },
+        orderBy: { updatedAt: 'asc' }, // Oldest first (highest overdue priority)
+        include: {
+          renter: { select: { name: true, phone: true } },
+          listing: {
+            select: {
+              title: true,
+              sku: true,
+              lister: {
+                select: {
+                  shopName: true,
+                  user: { select: { name: true, phone: true } },
+                },
+              },
+            },
+          },
+          shipments: {
+            where: { leg: 'RENTER_TO_HUB' },
+            select: { id: true, status: true, courierName: true, trackingNumber: true, deliveredAt: true },
+          },
+        },
+      }),
     ]);
 
     const totalPendingPayoutAmount = pendingPayouts.reduce((acc, p) => acc + Number(p.amount), 0);
@@ -102,6 +154,7 @@ export async function GET(request: Request) {
       recentBookings,
       recentPayouts,
       chronicOverdueBookings,
+      stuckHubInspections,
     });
   } catch (error: any) {
     console.error('Admin Stats API Error:', error);
