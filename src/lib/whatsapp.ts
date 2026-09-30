@@ -163,29 +163,19 @@ export async function sendReturnReminder(
 ): Promise<SendMessageResult> {
   const shortId = bookingId.substring(0, 8).toUpperCase();
   const formattedDate = returnDate.toLocaleDateString('en-IN', {
-    weekday: 'long',
-    month: 'long',
+    weekday: 'short',
+    month: 'short',
     day: 'numeric',
   });
 
-  const garmentName = listingTitle ? `"${listingTitle}"` : 'your designer outfit';
+  const garmentName = listingTitle ? `"${listingTitle}"` : 'your outfit';
 
   const message = 
-`👗 *Wardrob Concierge | Return Pickup Reminder*
+`👗 *Wardrob | Return Pickup Tomorrow*
 
-Dear ${renterName},
+Hi ${renterName}, return pickup for booking *#${shortId}* (${garmentName}) is tomorrow, *${formattedDate}*.
 
-Your return pickup for booking *#${shortId}* (${garmentName}) is scheduled for tomorrow, *${formattedDate}*.
-
-📦 *Preparation Guidelines:*
-1. Kindly place the garment inside the complimentary Wardrob garment bag on its original hanger.
-2. Ensure all accessories (belts, brooches, detachable pieces) are safely enclosed.
-3. Our courier partner will arrive at your address tomorrow for the scheduled collection.
-
-Need an event extension or assistance? You can manage your booking via the Wardrob app or simply reply to this message.
-
-Warm regards,
-*The Wardrob Concierge Team*`;
+Please pack the outfit in the Wardrob garment bag with its accessories. Our courier will arrive for pickup.`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }
@@ -202,52 +192,33 @@ export async function sendOverdueReminder(
   listingTitle?: string
 ): Promise<SendMessageResult> {
   const shortId = bookingId.substring(0, 8).toUpperCase();
-  const garmentName = listingTitle ? `"${listingTitle}"` : 'your rented designer outfit';
+  const garmentName = listingTitle ? `"${listingTitle}"` : 'your rented outfit';
   let message = '';
 
   if (level === 1) {
     message = 
-`⚠️ *Wardrob Notice | Rental Return Overdue*
+`⚠️ *Wardrob | Return Overdue*
 
-Dear ${renterName},
+Hi ${renterName}, booking *#${shortId}* (${garmentName}) return handover was not confirmed yesterday.
 
-Your rental booking *#${shortId}* (${garmentName}) was scheduled for return yesterday, but the courier handover has not yet been confirmed.
-
-If the courier was unable to connect with you, please arrange the handover today or contact our support team immediately to prevent automated late fees from applying.
-
-Assistance: inwardrob@gmail.com
-*Wardrob Operations*`;
+Please hand over the outfit to our courier today to avoid automated late fees.
+Help: inwardrob@gmail.com`;
   } else if (level === 3) {
     message = 
-`🚨 *Wardrob Urgent Alert | Rental Overdue (${daysOverdue} Days)*
+`🚨 *Wardrob | Urgent: ${daysOverdue} Days Overdue*
 
-Dear ${renterName},
+Hi ${renterName}, booking *#${shortId}* (${garmentName}) is ${daysOverdue} days overdue.
 
-Your rental booking *#${shortId}* (${garmentName}) is now *${daysOverdue} days overdue*.
-
-In accordance with our rental policy, late penalty charges of *₹250 per day* are currently accruing and will be deducted from your security deposit.
-
-Please hand over the garment to our courier partner today to prevent further deposit deductions and account restrictions.
-
-Direct Concierge: inwardrob@gmail.com
-*Wardrob Escrow & Asset Protection*`;
+Late fee of *₹250/day* is accruing from your deposit. Please complete courier handover today.
+Contact: inwardrob@gmail.com`;
   } else if (level === 7) {
     message = 
-`🛑 *Wardrob FINAL LEGAL NOTICE | Day 7 Non-Return*
+`🛑 *Wardrob | Final Notice*
 
-Dear ${renterName},
+Hi ${renterName}, booking *#${shortId}* is 7 days overdue.
 
-Your rental booking *#${shortId}* (${garmentName}) is now *7 days past its return date*.
-
-Please be advised that if the garment is not received within the next *48 hours*:
-1. Your entire refundable security deposit will be forfeited.
-2. Full garment replacement costs and associated recovery charges will be levied.
-3. Your Wardrob account will be permanently suspended and flagged.
-
-Please contact our escalation desk immediately to coordinate the return and avoid formal action.
-
-Escalations: inwardrob@gmail.com
-*Wardrob Legal & Compliance Desk*`;
+Please return within 24h to avoid deposit forfeiture and full replacement recovery charges.
+Urgent: inwardrob@gmail.com`;
   }
 
   return sendMetaWhatsAppMessage(phone, message);
@@ -261,7 +232,7 @@ export async function sendListerPickupScheduledNotification({
   listerName = 'Boutique Partner',
   bookingId,
   listingTitle,
-  courierName = 'Wardrob Express Logistics',
+  courierName = 'Wardrob Logistics',
   trackingNumber,
   pickupAddress,
 }: {
@@ -274,27 +245,14 @@ export async function sendListerPickupScheduledNotification({
   pickupAddress?: string;
 }): Promise<SendMessageResult> {
   const shortId = bookingId.substring(0, 8).toUpperCase();
-  const trackingInfo = trackingNumber ? `\n• *AWB / Tracking:* ${trackingNumber}` : '';
-  const addressInfo = pickupAddress ? `\n• *Pickup Location:* ${pickupAddress}` : '';
+  const courierDetails = trackingNumber ? ` (${courierName}, AWB: ${trackingNumber})` : ` (${courierName})`;
 
   const message = 
-`✨ *Wardrob Boutique Alert | Courier Pickup Scheduled*
+`🚚 *Wardrob | Courier Pickup Scheduled*
 
-Dear ${listerName},
+Hi ${listerName}, courier pickup is scheduled for *"${listingTitle}"* (Booking *#${shortId}*)${courierDetails}.
 
-A courier pickup has been scheduled for your designer piece *"${listingTitle}"*!
-
-🚚 *Pickup Logistics:*
-• *Booking Reference:* #${shortId}
-• *Courier Partner:* ${courierName}${trackingInfo}${addressInfo}
-• *Destination:* Wardrob Central Hub (QC Inspection & Steam Sanitization)
-
-Kindly ensure the garment is ready in its protective bag and hanger for a smooth handover. Our delivery partner will arrive shortly.
-
-You can monitor the live transit status anytime in your Wardrob Lister Portal.
-
-Best regards,
-*Wardrob Operations & Logistics Desk*`;
+Please keep the garment packed in its protective bag and ready for handover.`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }
@@ -319,18 +277,11 @@ export async function sendBookingConfirmedWhatsApp({
   const dateFormatted = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Upcoming Event';
 
   const message = 
-`✨ *Wardrob Archive | Reservation Confirmed*
+`✨ *Wardrob | Booking Confirmed*
 
-Dear ${renterName},
+Hi ${renterName}, your reservation *#${shortId}* for *"${listingTitle}"* is confirmed for *${dateFormatted}*!
 
-Your luxury couture reservation *#${shortId}* for *"${listingTitle}"* is secured for *${dateFormatted}*!
-
-Our luxury concierge team is now preparing the garment for UV sanitization, multi-point inspection, and insured doorstep delivery.
-
-Track your reservation & return status anytime in the Wardrob App.
-
-Best regards,
-*Wardrob Haute Ethnic Archive*`;
+We're preparing your outfit with UV sanitization & insured doorstep delivery. Track live in the Wardrob app.`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }
