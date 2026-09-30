@@ -28,7 +28,9 @@ export async function GET(request: Request) {
       recentBookings,
       recentPayouts,
       chronicOverdueBookings,
-      stuckHubInspections,
+      dispatchRiskBookings,
+      stuckIntakeBookings,
+      stuckReturnBookings,
     ] = await Promise.all([
       prisma.booking.count(),
       prisma.booking.count({
@@ -88,6 +90,81 @@ export async function GET(request: Request) {
           shipments: { where: { leg: 'RENTER_TO_HUB' } },
         },
       }),
+      // Leg 2: Dispatch Risk (Event starts in <36 hours, not yet dispatched)
+      prisma.booking.findMany({
+        where: {
+          status: { in: ['CONFIRMED', 'AT_HUB_PRE'] },
+          startDate: {
+            lte: new Date(Date.now() + 36 * 60 * 60 * 1000),
+            gte: new Date(),
+          },
+        },
+        orderBy: { startDate: 'asc' }, // Soonest event first (highest urgency)
+        include: {
+          renter: { select: { name: true, phone: true } },
+          listing: {
+            select: {
+              title: true,
+              sku: true,
+              lister: {
+                select: {
+                  shopName: true,
+                  user: { select: { name: true, phone: true } },
+                },
+              },
+            },
+          },
+          shipments: {
+            where: { leg: 'HUB_TO_RENTER' },
+            select: { id: true, status: true, courierName: true, trackingNumber: true },
+          },
+          damageReports: {
+            where: { inspectionType: 'PRE_DISPATCH' },
+            select: { id: true, grade: true },
+          },
+        },
+      }),
+
+      // Leg 1: Intake Overdue (>24h at Hub without intake QC)
+      prisma.booking.findMany({
+        where: {
+          status: { in: ['CONFIRMED', 'AT_HUB_PRE'] },
+          shipments: {
+            some: {
+              leg: 'LISTER_TO_HUB',
+              status: 'DELIVERED',
+              deliveredAt: { lt: twentyFourHoursAgo },
+            },
+          },
+          damageReports: {
+            none: {
+              inspectionType: 'LISTER_TO_HUB_INTAKE',
+            },
+          },
+        },
+        orderBy: { updatedAt: 'asc' },
+        include: {
+          renter: { select: { name: true, phone: true } },
+          listing: {
+            select: {
+              title: true,
+              sku: true,
+              lister: {
+                select: {
+                  shopName: true,
+                  user: { select: { name: true, phone: true } },
+                },
+              },
+            },
+          },
+          shipments: {
+            where: { leg: 'LISTER_TO_HUB' },
+            select: { id: true, status: true, courierName: true, trackingNumber: true, deliveredAt: true },
+          },
+        },
+      }),
+
+      // Leg 3: Return QC Overdue (>24h at Hub without post-return QC)
       prisma.booking.findMany({
         where: {
           status: { in: ['RETURNED_TO_HUB', 'IN_USE'] },
@@ -112,7 +189,7 @@ export async function GET(request: Request) {
             },
           },
         },
-        orderBy: { updatedAt: 'asc' }, // Oldest first (highest overdue priority)
+        orderBy: { updatedAt: 'asc' }, // Oldest first
         include: {
           renter: { select: { name: true, phone: true } },
           listing: {
@@ -154,7 +231,9 @@ export async function GET(request: Request) {
       recentBookings,
       recentPayouts,
       chronicOverdueBookings,
-      stuckHubInspections,
+      dispatchRiskBookings,
+      stuckIntakeBookings,
+      stuckReturnBookings,
     });
   } catch (error: any) {
     console.error('Admin Stats API Error:', error);

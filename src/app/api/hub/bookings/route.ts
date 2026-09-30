@@ -96,6 +96,17 @@ export async function GET(request: Request) {
       return false;
     });
 
+    const thirtySixHoursFromNow = new Date(Date.now() + 36 * 60 * 60 * 1000);
+    const dispatchRiskBookings = preDispatchBookingsRaw.filter(b => {
+      const startDate = new Date(b.startDate);
+      return startDate <= thirtySixHoursFromNow && startDate >= new Date();
+    });
+
+    const overdueIntakeInspections = intakeBookings.filter(b => {
+      const leg1 = b.shipments?.find(s => s.leg === 'LISTER_TO_HUB');
+      return leg1?.status === 'DELIVERED' && leg1?.deliveredAt && new Date(leg1.deliveredAt) < twentyFourHoursAgo;
+    });
+
     const overdueReturnInspections = postReturnBookings.filter(b => {
       const leg3 = b.shipments?.find(s => s.leg === 'RENTER_TO_HUB');
       const deliveredOver24h = leg3?.status === 'DELIVERED' && leg3?.deliveredAt && new Date(leg3.deliveredAt) < twentyFourHoursAgo;
@@ -131,6 +142,8 @@ export async function GET(request: Request) {
       preDispatchBookings,
       postReturnBookings,
       returnsDueToday,
+      dispatchRiskBookings,
+      overdueIntakeInspections,
       overdueReturnInspections,
       recentInspections,
     });

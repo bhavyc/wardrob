@@ -168,14 +168,111 @@ export async function sendEscalatingOverdueReminders() {
 }
 
 /**
- * Lazy Check 4: Detect items delivered to Hub (>24 hours ago) with no Post-Return Inspection filed.
- * Triggers in-app alerts for Hub staff while strictly keeping escrow deposits and payouts safely held.
+ * Lazy Check 4: Unified Hub SLA Monitor across all 3 logistics legs.
+ * - Leg 2 (HIGHEST PRIORITY): Rental starts in <36h but not dispatched (Risk of missed customer event)
+ * - Leg 1: Lister garment arrived at Hub >24h ago but Intake QC & barcode tagging pending
+ * - Leg 3: Renter returned garment >24h ago but Post-Return QC pending (Deposit/Payout safely held)
  */
 export async function checkStuckHubInspections() {
   try {
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const thirtySixHoursFromNow = new Date(now.getTime() + 36 * 60 * 60 * 1000);
 
-    const stuckBookings = await prisma.booking.findMany({
+    const hubPartners = await prisma.user.findMany({
+      where: { role: 'HUB_PARTNER' },
+      select: { id: true },
+    });
+
+    if (hubPartners.length === 0) return;
+
+    // 1. LEG 2 (CRITICAL): Rental starts in <36h but outfit is not yet OUT_FOR_DELIVERY / IN_USE
+    const dispatchRiskBookings = await prisma.booking.findMany({
+      where: {
+        status: { in: ['CONFIRMED', 'AT_HUB_PRE'] },
+        startDate: { lte: thirtySixHoursFromNow, gte: now },
+      },
+      include: {
+        listing: { select: { title: true } },
+      },
+    });
+
+    for (const b of dispatchRiskBookings) {
+      const shortId = b.id.slice(0, 8);
+      const hoursUntilEvent = Math.max(1, Math.round((new Date(b.startDate).getTime() - now.getTime()) / (1000 * 60 * 60)));
+      
+      const existingAlert = await prisma.notification.findFirst({
+        where: {
+          type: 'HUB_DISPATCH_RISK',
+          message: { contains: shortId },
+          createdAt: { gte: new Date(now.getTime() - 12 * 60 * 60 * 1000) }, // 12h debounce for urgent alerts
+        },
+      });
+
+      if (!existingAlert) {
+        for (const partner of hubPartners) {
+          await prisma.notification.create({
+            data: {
+              userId: partner.id,
+              type: 'HUB_DISPATCH_RISK',
+              title: '🚨 CRITICAL: Dispatch at Risk (Event Soon)',
+              message: `Booking #${shortId} (${b.listing.title}) rental starts in ~${hoursUntilEvent}h! Pre-dispatch QC and courier handoff required immediately to avoid missed delivery.`,
+              linkUrl: '/hub/inspections',
+            },
+          });
+        }
+      }
+    }
+
+    // 2. LEG 1: Lister -> Hub parcel delivered >24h ago but no Intake QC logged
+    const stuckIntakeBookings = await prisma.booking.findMany({
+      where: {
+        status: { in: ['CONFIRMED', 'AT_HUB_PRE'] },
+        shipments: {
+          some: {
+            leg: 'LISTER_TO_HUB',
+            status: 'DELIVERED',
+            deliveredAt: { lt: twentyFourHoursAgo },
+          },
+        },
+        damageReports: {
+          none: {
+            inspectionType: 'LISTER_TO_HUB_INTAKE',
+          },
+        },
+      },
+      include: {
+        listing: { select: { title: true } },
+      },
+    });
+
+    for (const b of stuckIntakeBookings) {
+      const shortId = b.id.slice(0, 8);
+      const existingAlert = await prisma.notification.findFirst({
+        where: {
+          type: 'HUB_INTAKE_OVERDUE',
+          message: { contains: shortId },
+          createdAt: { gte: twentyFourHoursAgo },
+        },
+      });
+
+      if (!existingAlert) {
+        for (const partner of hubPartners) {
+          await prisma.notification.create({
+            data: {
+              userId: partner.id,
+              type: 'HUB_INTAKE_OVERDUE',
+              title: '📦 Leg 1: Intake QC Overdue (>24h at Hub)',
+              message: `Booking #${shortId} (${b.listing.title}) was received from Lister over 24h ago. Please log intake baseline photos & attach barcode tag.`,
+              linkUrl: '/hub/inspections',
+            },
+          });
+        }
+      }
+    }
+
+    // 3. LEG 3: Renter -> Hub parcel delivered >24h ago but no Post-Return QC logged
+    const stuckReturnBookings = await prisma.booking.findMany({
       where: {
         status: { in: ['RETURNED_TO_HUB', 'IN_USE'] },
         OR: [
@@ -185,54 +282,45 @@ export async function checkStuckHubInspections() {
                 leg: 'RENTER_TO_HUB',
                 status: 'DELIVERED',
                 deliveredAt: { lt: twentyFourHoursAgo },
-              }
-            }
+              },
+            },
           },
           {
             status: 'RETURNED_TO_HUB',
             updatedAt: { lt: twentyFourHoursAgo },
-          }
+          },
         ],
         damageReports: {
           none: {
-            inspectionType: 'POST_RETURN'
-          }
-        }
+            inspectionType: 'POST_RETURN',
+          },
+        },
       },
       include: {
         listing: { select: { title: true } },
-      }
+      },
     });
 
-    if (stuckBookings.length === 0) return;
-
-    // Query Hub Partners to notify
-    const hubPartners = await prisma.user.findMany({
-      where: { role: 'HUB_PARTNER' },
-      select: { id: true }
-    });
-
-    for (const booking of stuckBookings) {
-      const shortId = booking.id.slice(0, 8);
-      // Debounce: Avoid creating duplicate notifications for the same booking within 24 hours
+    for (const b of stuckReturnBookings) {
+      const shortId = b.id.slice(0, 8);
       const existingAlert = await prisma.notification.findFirst({
         where: {
-          type: 'HUB_SLA_BREACH',
+          type: 'HUB_RETURN_OVERDUE',
           message: { contains: shortId },
-          createdAt: { gte: twentyFourHoursAgo }
-        }
+          createdAt: { gte: twentyFourHoursAgo },
+        },
       });
 
-      if (!existingAlert && hubPartners.length > 0) {
+      if (!existingAlert) {
         for (const partner of hubPartners) {
           await prisma.notification.create({
             data: {
               userId: partner.id,
-              type: 'HUB_SLA_BREACH',
-              title: '⚠️ Inspection Overdue (>24h at Hub)',
-              message: `Booking #${shortId} (${booking.listing.title}) arrived over 24 hours ago. Please complete Post-Return inspection with 3 photos to verify condition and process deposit refund.`,
-              linkUrl: '/hub/inspections'
-            }
+              type: 'HUB_RETURN_OVERDUE',
+              title: '💸 Leg 3: Return QC Overdue (>24h at Hub)',
+              message: `Booking #${shortId} (${b.listing.title}) returned over 24h ago. Complete post-return inspection with 3 photos to release security deposit & payout.`,
+              linkUrl: '/hub/inspections',
+            },
           });
         }
       }
@@ -241,4 +329,5 @@ export async function checkStuckHubInspections() {
     console.error('Lazy Check Error [checkStuckHubInspections]:', error);
   }
 }
+
 

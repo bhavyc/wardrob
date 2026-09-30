@@ -12,7 +12,9 @@ export default function HubDashboard() {
   const [error, setError] = useState('');
   const [stats, setStats] = useState({ intake: 0, dispatch: 0, return: 0 });
   const [returnsDue, setReturnsDue] = useState<any[]>([]);
-  const [overdueInspections, setOverdueInspections] = useState<any[]>([]);
+  const [dispatchRisks, setDispatchRisks] = useState<any[]>([]);
+  const [overdueIntakes, setOverdueIntakes] = useState<any[]>([]);
+  const [overdueReturns, setOverdueReturns] = useState<any[]>([]);
   const [returnPage, setReturnPage] = useState(1);
   const RETURNS_PER_PAGE = 4;
 
@@ -32,7 +34,9 @@ export default function HubDashboard() {
             return: data.postReturnBookings?.length || 0,
           });
           setReturnsDue(data.returnsDueToday || []);
-          setOverdueInspections(data.overdueReturnInspections || []);
+          setDispatchRisks(data.dispatchRiskBookings || []);
+          setOverdueIntakes(data.overdueIntakeInspections || []);
+          setOverdueReturns(data.overdueReturnInspections || []);
         } else {
           setError(data.error || 'Failed to load stats');
         }
@@ -66,8 +70,65 @@ export default function HubDashboard() {
         </div>
       </div>
 
-      {/* Urgent Inspection SLA Alert Banner */}
-      {overdueInspections.length > 0 && (
+      {/* 🚨 LEG 2 CRITICAL: Dispatch at Risk (Customer Event within 36h) */}
+      {dispatchRisks.length > 0 && (
+        <div style={{
+          background: '#FEF2F2',
+          border: '2px solid #EF4444',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '16px',
+          boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              background: '#FEE2E2',
+              color: '#DC2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '22px',
+              flexShrink: 0
+            }}>
+              🚨
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '15px', color: '#991B1B' }}>
+                CRITICAL: {dispatchRisks.length} Order(s) at Risk — Rental Starts in &lt;36 Hours!
+              </div>
+              <div style={{ fontSize: '12.5px', color: '#B91C1C', marginTop: '2px' }}>
+                Customer weddings and events are approaching! Complete Pre-Dispatch quality check photos and handover to courier immediately to avoid missed deliveries.
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/hub/inspections"
+            style={{
+              background: '#DC2626',
+              color: '#FFFFFF',
+              padding: '9px 18px',
+              borderRadius: '8px',
+              fontSize: '12.5px',
+              fontWeight: 800,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)'
+            }}
+          >
+            Dispatch Now &rarr;
+          </Link>
+        </div>
+      )}
+
+      {/* 📦 LEG 1 & LEG 3 SLA Overdue Warnings */}
+      {(overdueIntakes.length > 0 || overdueReturns.length > 0) && (
         <div style={{
           background: '#FFFBEB',
           border: '1px solid #FCD34D',
@@ -97,10 +158,10 @@ export default function HubDashboard() {
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: '14px', color: '#92400E' }}>
-                {overdueInspections.length} Returned Item(s) Awaiting Inspection (&gt;24h Overdue)
+                SLA Alert: {overdueIntakes.length > 0 && `${overdueIntakes.length} Intake(s)`} {overdueIntakes.length > 0 && overdueReturns.length > 0 && '& '} {overdueReturns.length > 0 && `${overdueReturns.length} Return(s)`} Overdue (&gt;24h at Hub)
               </div>
               <div style={{ fontSize: '12px', color: '#B45309', marginTop: '2px' }}>
-                Items have arrived at the Hub over 24 hours ago. Renter deposit refunds and lister earnings are locked until 3 quality check photos are submitted.
+                Parcels arrived at Hub over 24 hours ago without inspection. Complete quality checks to unlock barcode tagging and release deposit refunds.
               </div>
             </div>
           </div>
@@ -118,7 +179,7 @@ export default function HubDashboard() {
               boxShadow: '0 2px 6px rgba(146, 64, 14, 0.2)'
             }}
           >
-            Inspect Now &rarr;
+            Inspect Queue &rarr;
           </Link>
         </div>
       )}

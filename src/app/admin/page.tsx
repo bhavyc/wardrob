@@ -21,7 +21,9 @@ export default function AdminDashboardPage() {
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [recentPayouts, setRecentPayouts] = useState<any[]>([]);
   const [chronicOverdue, setChronicOverdue] = useState<any[]>([]);
-  const [stuckInspections, setStuckInspections] = useState<any[]>([]);
+  const [dispatchRiskBookings, setDispatchRiskBookings] = useState<any[]>([]);
+  const [stuckIntakeBookings, setStuckIntakeBookings] = useState<any[]>([]);
+  const [stuckReturnBookings, setStuckReturnBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = async () => {
@@ -36,7 +38,9 @@ export default function AdminDashboardPage() {
           setRecentBookings(data.recentBookings || []);
           setRecentPayouts(data.recentPayouts || []);
           setChronicOverdue(data.chronicOverdueBookings || []);
-          setStuckInspections(data.stuckHubInspections || []);
+          setDispatchRiskBookings(data.dispatchRiskBookings || []);
+          setStuckIntakeBookings(data.stuckIntakeBookings || []);
+          setStuckReturnBookings(data.stuckReturnBookings || []);
         } else {
           console.error('Failed to load stats:', data.error);
         }
@@ -130,6 +134,125 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* 🚨 LEG 2 CRITICAL: Dispatch at Risk (Customer Event Within 36 Hours) */}
+      {dispatchRiskBookings.length > 0 && (
+        <div
+          style={{
+            background: '#FEF2F2',
+            borderRadius: 14,
+            border: '2px solid #EF4444',
+            padding: '20px 24px',
+            marginBottom: 28,
+            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.15)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <h2 style={{ fontSize: 17, fontWeight: 800, margin: '0 0 4px', color: '#991B1B', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>🚨</span> CRITICAL: Dispatch at Risk — Event Within 36 Hours ({dispatchRiskBookings.length})
+              </h2>
+              <p style={{ margin: 0, fontSize: 12.5, color: '#B91C1C' }}>
+                Customer event/rental starts imminently! Garment is not yet out for delivery. Pre-dispatch QC and courier handoff required immediately to avoid missed deliveries.
+              </p>
+            </div>
+            <Link
+              href="/admin/shipments"
+              style={{
+                background: '#DC2626',
+                color: '#FFF',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.3)',
+              }}
+            >
+              Expedite in Shipments &rarr;
+            </Link>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {dispatchRiskBookings.map((b) => {
+              const hoursUntilEvent = Math.max(1, Math.round((new Date(b.startDate).getTime() - Date.now()) / (1000 * 60 * 60)));
+              const hasPreDispatchQc = b.damageReports && b.damageReports.length > 0;
+              const leg2Shipment = b.shipments?.[0];
+
+              return (
+                <div
+                  key={b.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '14px 18px',
+                    background: '#FFFFFF',
+                    border: '1px solid #FCA5A5',
+                    borderRadius: 10,
+                    flexWrap: 'wrap',
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14.5, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span>{b.listing?.title}</span>
+                      {b.listing?.sku && (
+                        <span style={{ fontSize: 11, background: '#FEE2E2', color: '#991B1B', padding: '2px 8px', borderRadius: 4, fontWeight: 700 }}>
+                          SKU: {b.listing.sku}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12.5, color: '#4B5563', marginTop: 4 }}>
+                      Renter: <strong>{b.renter?.name}</strong> ({b.renter?.phone || 'No phone'}) • Event starts: <strong>{new Date(b.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                      Hub Pre-Dispatch QC: {hasPreDispatchQc ? '✅ Certified' : '⚠️ Pending QC'} • Courier: {leg2Shipment?.courierName || 'Not Assigned'}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          background: '#DC2626',
+                          color: '#FFFFFF',
+                          padding: '5px 12px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 800,
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        ⚡ Event in ~{hoursUntilEvent}h
+                      </span>
+                      <div style={{ fontSize: 11, color: '#DC2626', fontWeight: 600, marginTop: 4 }}>
+                        Customer Experience Risk
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/admin/shipments"
+                      style={{
+                        background: '#991B1B',
+                        color: '#FFF',
+                        padding: '8px 14px',
+                        borderRadius: 6,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Dispatch Now
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Metric Cards Grid */}
       <div
@@ -329,8 +452,115 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Stuck at Hub — No Return Inspection Filed (>24h SLA Breach) */}
-        {stuckInspections.length > 0 && (
+        {/* 📦 LEG 1: Lister Intake QC Overdue (>24h at Hub) */}
+        {stuckIntakeBookings.length > 0 && (
+          <div
+            style={{
+              background: '#F0F9FF',
+              borderRadius: 12,
+              border: '1px solid #BAE6FD',
+              padding: 20,
+              boxShadow: '0 2px 6px rgba(2, 132, 199, 0.08)',
+              gridColumn: '1 / -1',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: '#0369A1', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>📦</span> Leg 1: Lister Intake QC Overdue ({stuckIntakeBookings.length})
+                </h2>
+                <p style={{ margin: 0, fontSize: 12, color: '#0284C7' }}>
+                  Lister parcel arrived at Hub over 24 hours ago. Baseline intake inspection &amp; barcode tag generation pending.
+                </p>
+              </div>
+              <Link
+                href="/admin/shipments"
+                style={{
+                  background: '#0284C7',
+                  color: '#FFF',
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Track Intake &rarr;
+              </Link>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {stuckIntakeBookings.map((b) => {
+                const leg1 = b.shipments?.[0];
+                const arrivedAt = leg1?.deliveredAt ? new Date(leg1.deliveredAt) : new Date(b.updatedAt);
+                const hoursWaiting = Math.max(24, Math.floor((Date.now() - arrivedAt.getTime()) / (1000 * 60 * 60)));
+
+                return (
+                  <div
+                    key={b.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px 16px',
+                      background: '#FFFFFF',
+                      border: '1px solid #BAE6FD',
+                      borderRadius: 8,
+                      flexWrap: 'wrap',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: '#0F172A' }}>
+                        {b.listing?.title}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+                        Lister: <strong>{b.listing?.lister?.shopName || b.listing?.lister?.user?.name}</strong> ({b.listing?.lister?.user?.phone || 'No phone'})
+                      </div>
+                      <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 2 }}>
+                        Courier: {leg1?.courierName || 'Logistics Partner'} • Tracking: {leg1?.trackingNumber || 'N/A'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span
+                        style={{
+                          background: '#E0F2FE',
+                          color: '#0369A1',
+                          border: '1px solid #7DD3FC',
+                          padding: '4px 10px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 700,
+                        }}
+                      >
+                        ⏳ {hoursWaiting}h at Hub
+                      </span>
+                      <Link
+                        href="/admin/shipments"
+                        style={{
+                          background: '#F8FAFC',
+                          color: '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '7px 12px',
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Review Intake
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 💸 LEG 3: Return QC Overdue (>24h at Hub without post-return QC) */}
+        {stuckReturnBookings.length > 0 && (
           <div
             style={{
               background: '#FFFBEB',
@@ -344,10 +574,10 @@ export default function AdminDashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: '#92400E', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>⚠️</span> Stuck at Hub — Return Inspection Overdue ({stuckInspections.length})
+                  <span>💸</span> Leg 3: Return QC Overdue ({stuckReturnBookings.length})
                 </h2>
                 <p style={{ margin: 0, fontSize: 12, color: '#B45309' }}>
-                  Courier delivered to Hub over 24 hours ago. Post-Return QC photos not yet filed by Hub staff. Renter deposits &amp; Lister payouts are safely held.
+                  Courier delivered return to Hub over 24 hours ago. Post-Return QC photos not yet filed by Hub staff. Renter deposits &amp; Lister payouts are safely held.
                 </p>
               </div>
               <Link
@@ -367,7 +597,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {stuckInspections.map((b) => {
+              {stuckReturnBookings.map((b) => {
                 const leg3 = b.shipments?.[0];
                 const arrivedAt = leg3?.deliveredAt ? new Date(leg3.deliveredAt) : new Date(b.updatedAt);
                 const hoursWaiting = Math.max(24, Math.floor((Date.now() - arrivedAt.getTime()) / (1000 * 60 * 60)));
