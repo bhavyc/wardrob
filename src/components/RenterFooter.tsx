@@ -41,14 +41,6 @@ export default function RenterFooter() {
             ]
           },
           {
-            title: 'For Partners',
-            links: [
-              { label: 'Lend Garments', href: '/lister/login' },
-              { label: 'Hub Partner Portal', href: '/hub/login' },
-              { label: 'Partner Support', href: 'mailto:inwardrob@gmail.com' },
-            ]
-          },
-          {
             title: 'Company',
             links: [
               { label: 'About Wardrob', href: '/' },
