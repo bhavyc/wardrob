@@ -574,25 +574,26 @@ export default function AdminDashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div>
                 <h2 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 4px', color: '#92400E', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>💸</span> Leg 3: Return QC Overdue ({stuckReturnBookings.length})
+                  <span>💸</span> Leg 3: Return QC Overdue — Action Required ({stuckReturnBookings.length})
                 </h2>
                 <p style={{ margin: 0, fontSize: 12, color: '#B45309' }}>
-                  Courier delivered return to Hub over 24 hours ago. Post-Return QC photos not yet filed by Hub staff. Renter deposits &amp; Lister payouts are safely held.
+                  Courier delivered parcel over 24h ago with NO inspection filed. <strong>Admin Action Required:</strong> Nudge Hub staff to upload 3 photos or manually complete inspection to unblock renter deposit &amp; lister payout.
                 </p>
               </div>
               <Link
                 href="/admin/shipments"
                 style={{
-                  background: '#92400E',
+                  background: '#B45309',
                   color: '#FFF',
-                  padding: '6px 14px',
+                  padding: '7px 16px',
                   borderRadius: 6,
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   textDecoration: 'none',
+                  boxShadow: '0 2px 4px rgba(180, 83, 9, 0.2)',
                 }}
               >
-                Inspect Shipments &rarr;
+                Manage Queue &rarr;
               </Link>
             </div>
 
@@ -651,25 +652,25 @@ export default function AdminDashboardPage() {
                         >
                           ⏳ {hoursWaiting}h Overdue
                         </span>
-                        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>
-                          Deposit &amp; Payout Locked
+                        <div style={{ fontSize: 11, color: '#B45309', fontWeight: 600, marginTop: 4 }}>
+                          ⚠️ Deposit Refund Blocked
                         </div>
                       </div>
 
                       <Link
                         href={`/admin/shipments`}
                         style={{
-                          background: '#F8FAFC',
-                          color: '#334155',
-                          border: '1px solid #CBD5E1',
-                          padding: '7px 12px',
+                          background: '#92400E',
+                          color: '#FFFFFF',
+                          padding: '8px 14px',
                           borderRadius: 6,
                           fontSize: 12,
-                          fontWeight: 600,
+                          fontWeight: 700,
                           textDecoration: 'none',
+                          boxShadow: '0 2px 4px rgba(146, 64, 14, 0.15)',
                         }}
                       >
-                        Review / Override
+                        Complete Inspection &rarr;
                       </Link>
                     </div>
                   </div>
