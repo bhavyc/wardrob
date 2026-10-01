@@ -3,7 +3,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { prisma } from '@/lib/db';
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'ap-south-1',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'mock_access_key',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'mock_secret_key',
@@ -113,7 +113,7 @@ export async function processAndUploadImage(
           Body: processedBuffer,
           ContentType: 'image/jpeg',
         }));
-        url = `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${filename}`;
+        url = `https://${bucketName}.s3.${process.env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${filename}`;
       } catch (s3Err) {
         console.warn('S3 upload failed, falling back to local static storage:', s3Err);
       }

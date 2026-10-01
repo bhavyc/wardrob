@@ -320,7 +320,7 @@ export async function POST(request: Request) {
             }
           });
 
-          // Update Booking
+          // Update Booking to COMPLETED
           await tx.booking.update({
             where: { id: bookingId },
             data: { 
@@ -329,6 +329,20 @@ export async function POST(request: Request) {
               lateReturnPenalty: lateFee,
               // When manual approval is required, refundInitiatedAt remains null until Admin approves!
               refundInitiatedAt: (!requireManualApproval && refundAmount > 0 && refundSuccess) ? new Date() : null
+            }
+          });
+
+          // Self-healing: If Hub performed inspection without marking courier delivery status,
+          // the fact that photos exist proves item is at Hub. Auto-mark shipment as DELIVERED!
+          await tx.shipment.updateMany({
+            where: {
+              bookingId,
+              leg: 'RENTER_TO_HUB',
+              status: { not: 'DELIVERED' }
+            },
+            data: {
+              status: 'DELIVERED',
+              deliveredAt: actualReturnDate
             }
           });
 

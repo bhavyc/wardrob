@@ -158,7 +158,7 @@ export async function sendReturnReminder(
   phone: string,
   bookingId: string,
   returnDate: Date,
-  renterName: string = 'Valued Client',
+  renterName: string = 'Client',
   listingTitle?: string
 ): Promise<SendMessageResult> {
   const shortId = bookingId.substring(0, 8).toUpperCase();
@@ -171,11 +171,8 @@ export async function sendReturnReminder(
   const garmentName = listingTitle ? `"${listingTitle}"` : 'your outfit';
 
   const message = 
-`👗 *Wardrob | Return Pickup Tomorrow*
-
-Hi ${renterName}, return pickup for booking *#${shortId}* (${garmentName}) is tomorrow, *${formattedDate}*.
-
-Please pack the outfit in the Wardrob garment bag with its accessories. Our courier will arrive for pickup.`;
+`👗 *Return Pickup Tomorrow*
+Hi ${renterName}, courier pickup for *${garmentName}* (#${shortId}) is tomorrow, *${formattedDate}*. Keep outfit & accessories packed in the bag.`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }
@@ -188,37 +185,25 @@ export async function sendOverdueReminder(
   bookingId: string,
   daysOverdue: number,
   level: 1 | 3 | 7,
-  renterName: string = 'Valued Client',
+  renterName: string = 'Client',
   listingTitle?: string
 ): Promise<SendMessageResult> {
   const shortId = bookingId.substring(0, 8).toUpperCase();
-  const garmentName = listingTitle ? `"${listingTitle}"` : 'your rented outfit';
+  const garmentName = listingTitle ? `"${listingTitle}"` : 'your outfit';
   let message = '';
 
   if (level === 1) {
     message = 
-`⚠️ *Wardrob | Return Overdue*
-
-Hi ${renterName}, booking *#${shortId}* (${garmentName}) return handover was not confirmed yesterday.
-
-Please hand over the outfit to our courier today to avoid automated late fees.
-Help: inwardrob@gmail.com`;
+`⚠️ *Return Overdue*
+Hi ${renterName}, return for *${garmentName}* (#${shortId}) was due yesterday. Hand it to courier today to avoid late fees.`;
   } else if (level === 3) {
     message = 
-`🚨 *Wardrob | Urgent: ${daysOverdue} Days Overdue*
-
-Hi ${renterName}, booking *#${shortId}* (${garmentName}) is ${daysOverdue} days overdue.
-
-Late fee of *₹250/day* is accruing from your deposit. Please complete courier handover today.
-Contact: inwardrob@gmail.com`;
+`🚨 *${daysOverdue} Days Overdue*
+Hi ${renterName}, booking *#${shortId}* is ${daysOverdue} days overdue. Late fee of *₹250/day* is being deducted. Hand over garment today to stop charges.`;
   } else if (level === 7) {
     message = 
-`🛑 *Wardrob | Final Notice*
-
-Hi ${renterName}, booking *#${shortId}* is 7 days overdue.
-
-Please return within 24h to avoid deposit forfeiture and full replacement recovery charges.
-Urgent: inwardrob@gmail.com`;
+`🛑 *Final Notice: 7 Days Overdue*
+Hi ${renterName}, booking *#${shortId}* is 7 days overdue. Hand over within 24h to avoid deposit forfeiture & recovery action.`;
   }
 
   return sendMetaWhatsAppMessage(phone, message);
@@ -229,7 +214,7 @@ Urgent: inwardrob@gmail.com`;
 // ============================================================================
 export async function sendListerPickupScheduledNotification({
   phone,
-  listerName = 'Boutique Partner',
+  listerName = 'Partner',
   bookingId,
   listingTitle,
   courierName = 'Wardrob Logistics',
@@ -245,14 +230,11 @@ export async function sendListerPickupScheduledNotification({
   pickupAddress?: string;
 }): Promise<SendMessageResult> {
   const shortId = bookingId.substring(0, 8).toUpperCase();
-  const courierDetails = trackingNumber ? ` (${courierName}, AWB: ${trackingNumber})` : ` (${courierName})`;
+  const courierDetails = trackingNumber ? ` via ${courierName} (AWB: ${trackingNumber})` : ` via ${courierName}`;
 
   const message = 
-`🚚 *Wardrob | Courier Pickup Scheduled*
-
-Hi ${listerName}, courier pickup is scheduled for *"${listingTitle}"* (Booking *#${shortId}*)${courierDetails}.
-
-Please keep the garment packed in its protective bag and ready for handover.`;
+`🚚 *Courier Pickup Scheduled*
+Hi ${listerName}, pickup scheduled for *"${listingTitle}"* (#${shortId})${courierDetails}. Keep garment packed and ready.`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }
@@ -264,7 +246,7 @@ export async function sendBookingConfirmedWhatsApp({
   phone,
   bookingId,
   listingTitle,
-  renterName = 'Valued Client',
+  renterName = 'Client',
   eventDate,
 }: {
   phone: string;
@@ -277,11 +259,8 @@ export async function sendBookingConfirmedWhatsApp({
   const dateFormatted = eventDate ? new Date(eventDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Upcoming Event';
 
   const message = 
-`✨ *Wardrob | Booking Confirmed*
-
-Hi ${renterName}, your reservation *#${shortId}* for *"${listingTitle}"* is confirmed for *${dateFormatted}*!
-
-We're preparing your outfit with UV sanitization & insured doorstep delivery. Track live in the Wardrob app.`;
+`✨ *Booking Confirmed*
+Hi ${renterName}, booking *#${shortId}* for *"${listingTitle}"* is confirmed for *${dateFormatted}*. Track live in Wardrob app.`;
 
   return sendMetaWhatsAppMessage(phone, message);
 }

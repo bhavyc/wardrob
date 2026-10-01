@@ -17,6 +17,11 @@ const playfair = Playfair_Display({
 export const metadata = {
   title: 'WARDROB — Premium Fashion Rental | Designer Wear on Demand',
   description: 'India\'s premier peer-to-peer luxury fashion rental platform. Rent designer lehengas, sarees, sherwanis & more for your special occasions.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export const viewport = {

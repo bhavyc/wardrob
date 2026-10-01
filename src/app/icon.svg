@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient: Deep Midnight Ink (#1E1E2D -> #0F0F17) -->
+    <linearGradient id="bgMidnight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#252538" />
+      <stop offset="50%" stop-color="#1E1E2D" />
+      <stop offset="100%" stop-color="#0F0F17" />
+    </linearGradient>
+
+    <!-- Theme Rose-Gold & Champagne Gradient (#C5A880 & #D4567A) -->
+    <linearGradient id="roseGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCECEF" />
+      <stop offset="25%" stop-color="#E5B2C2" />
+      <stop offset="55%" stop-color="#D4567A" />
+      <stop offset="85%" stop-color="#C5A880" />
+      <stop offset="100%" stop-color="#F2DFCB" />
+    </linearGradient>
+
+    <!-- Warm Gold Gradient for Border & Accents -->
+    <linearGradient id="champagneGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7EEDD" />
+      <stop offset="40%" stop-color="#C5A880" />
+      <stop offset="70%" stop-color="#9A7B54" />
+      <stop offset="100%" stop-color="#D8BA93" />
+    </linearGradient>
+
+    <!-- Radial Subtle Rose Ambient Glow behind W -->
+    <radialGradient id="roseAmbient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#D4567A" stop-opacity="0.32" />
+      <stop offset="70%" stop-color="#D4567A" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#1E1E2D" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- 1. Base Container: Midnight Ink with Rounded Corner -->
+  <rect x="16" y="16" width="480" height="480" rx="116" fill="url(#bgMidnight)" />
+
+  <!-- 2. Ambient Rose Glow Layer -->
+  <circle cx="256" cy="256" r="210" fill="url(#roseAmbient)" />
+
+  <!-- 3. Inset Precision Borders in Rose-Gold & Champagne -->
+  <rect x="22" y="22" width="468" height="468" rx="110" fill="none" stroke="url(#roseGold)" stroke-width="5" opacity="0.9" />
+  <rect x="36" y="36" width="440" height="440" rx="96" fill="none" stroke="url(#champagneGold)" stroke-width="1.5" opacity="0.35" />
+
+  <!-- 4. Signature Diamond Crest Crown -->
+  <g transform="translate(256, 120)" filter="url(#softGlow)">
+    <!-- Center Diamond -->
+    <polygon points="0,-18 18,0 0,18 -18,0" fill="url(#roseGold)" />
+    <!-- Flanking Accent Lines -->
+    <line x1="-85" y1="0" x2="-28" y2="0" stroke="url(#champagneGold)" stroke-width="3" stroke-linecap="round" />
+    <line x1="28" y1="0" x2="85" y2="0" stroke="url(#champagneGold)" stroke-width="3" stroke-linecap="round" />
+    <!-- Flanking Mini Diamond Accents -->
+    <circle cx="-96" cy="0" r="3.5" fill="url(#roseGold)" />
+    <circle cx="96" cy="0" r="3.5" fill="url(#roseGold)" />
+  </g>
+
+  <!-- 5. Haute Couture Monogram "W" -->
+  <text 
+    x="256" 
+    y="382" 
+    font-family="'Playfair Display', 'Cormorant Garamond', 'Didot', 'Georgia', serif" 
+    font-size="275" 
+    font-weight="700" 
+    letter-spacing="2"
+    text-anchor="middle" 
+    fill="url(#roseGold)"
+    filter="url(#softGlow)"
+    style="text-shadow: 0 6px 20px rgba(0,0,0,0.7);"
+  >W</text>
+
+  <!-- 6. Bottom Tailored Rose Curve Accent -->
+  <path d="M185 412 Q 256 422 327 412" fill="none" stroke="url(#roseGold)" stroke-width="3" stroke-linecap="round" opacity="0.75" />
+</svg>
