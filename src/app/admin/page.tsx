@@ -34,7 +34,9 @@ export default function AdminDashboardPage() {
       const res = await fetch('/api/admin/seed-dummy-data', { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        alert(data.message);
+        alert(
+          `${data.message}\n\n🔑 Play Store Reviewer Account:\nEmail: reviewer@wardrob.com\nPassword: Password@123\n\n👗 Lister Account:\nEmail: atelier@wardrob.com\nPassword: Password@123`
+        );
         fetchDashboardData();
       } else {
         alert('Error: ' + data.error);
