@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
-const sourceIcon = 'C:\\Users\\Bhavya\\.gemini\\antigravity-ide\\brain\\9be0c269-89df-4d5b-9762-52fcfc885e43\\wardrob_luxury_emblem_hanger_1791189956092.jpg';
+const sourceIcon = 'C:\\Users\\Bhavya\\.gemini\\antigravity-ide\\brain\\9be0c269-89df-4d5b-9762-52fcfc885e43\\wardrob_simple_emblem_crisp.png';
 
 const androidResDir = path.resolve('E:\\projects\\wardrob_mobile\\android\\app\\src\\main\\res');
 const iosAppIconDir = path.resolve('E:\\projects\\wardrob_mobile\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset');
