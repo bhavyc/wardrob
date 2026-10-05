@@ -49,6 +49,10 @@ export default function BrandLogo({
         alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
         justifyContent: 'center',
         textDecoration: 'none',
+        border: 'none',
+        borderBottom: 'none',
+        padding: 0,
+        margin: 0,
         lineHeight: 1,
         ...style,
       }}

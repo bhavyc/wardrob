@@ -53,46 +53,7 @@
   z-index: 10;
 }
 
-.brand-logo-wrap {
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  margin-bottom: 36px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-}
-.brand-logo-ornament {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-.brand-logo-rule {
-  width: 24px;
-  height: 1px;
-  background: var(--ink);
-}
-.brand-logo-diamond {
-  width: 4px;
-  height: 4px;
-  background: var(--ink);
-  transform: rotate(45deg);
-  flex-shrink: 0;
-}
-.brand-name {
-  font-family: var(--font-serif);
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: 0.5em;
-  text-indent: 0.5em;
-  color: var(--ink);
-  text-decoration: none;
-  text-transform: uppercase;
-  display: block;
-  line-height: 1;
-}
+
 .brand-sub-row {
   display: flex;
   align-items: center;
