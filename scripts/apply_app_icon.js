@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 
-const sourceIcon = 'C:\\Users\\Bhavya\\.gemini\\antigravity-ide\\brain\\9be0c269-89df-4d5b-9762-52fcfc885e43\\vector_icon_warm_silk.png';
+const sourceIcon = 'C:\\Users\\Bhavya\\.gemini\\antigravity-ide\\brain\\9be0c269-89df-4d5b-9762-52fcfc885e43\\wardrob_luxury_emblem_hanger_1791189956092.jpg';
 
 const androidResDir = path.resolve('E:\\projects\\wardrob_mobile\\android\\app\\src\\main\\res');
 const iosAppIconDir = path.resolve('E:\\projects\\wardrob_mobile\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset');
@@ -41,7 +41,7 @@ const targets = [
 ];
 
 async function applyIcons() {
-  console.log('Generating Warm Silk Ivory vector app icons from:', sourceIcon);
+  console.log('Generating 3D Hanger Handover launcher icons from:', sourceIcon);
   if (!fs.existsSync(sourceIcon)) {
     console.error('Source icon file not found!');
     process.exit(1);
@@ -59,7 +59,7 @@ async function applyIcons() {
     console.log(`Saved: ${dest} (${t.size}x${t.size})`);
   }
 
-  console.log('Warm Silk Ivory vector icons applied successfully across Android and iOS!');
+  console.log('All 3D Hanger Handover launcher icons applied successfully across Android and iOS!');
 }
 
 applyIcons().catch(err => {
