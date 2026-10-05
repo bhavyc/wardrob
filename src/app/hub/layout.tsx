@@ -15,6 +15,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [hubUser, setHubUser] = useState<HubInfo | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -37,6 +38,7 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
           router.replace('/hub/login');
           return;
         }
+        setIsAdmin(data.user.role === 'ADMIN');
         const name = data.user.name || 'Hub Partner';
         const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
         setHubUser({
@@ -214,11 +216,31 @@ export default function HubLayout({ children }: { children: React.ReactNode }) {
                 </span>
               </div>
             </div>
-            <div className="hub-topbar-actions">
+            <div className="hub-topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: '#0F172A',
+                    color: '#FFF',
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
+                  }}
+                >
+                  <span>🛡️</span> Back to Admin Panel
+                </Link>
+              )}
               {hubUser && (
                 <div className="hub-topbar-badge">
                   <div className="hub-topbar-dot" />
-                  Hub Center
+                  {isAdmin ? 'Admin Super-Hub Access' : 'Hub Center'}
                 </div>
               )}
             </div>
