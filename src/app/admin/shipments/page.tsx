@@ -47,6 +47,17 @@ export default function AdminShipmentsPage() {
 
   useEffect(() => {
     fetchShipments();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      const filterParam = params.get('filter');
+      if (tabParam === 'renter' || tabParam === 'lister') {
+        setActiveTab(tabParam);
+      }
+      if (filterParam === 'ACTIVE' || filterParam === 'DELIVERED') {
+        setFilterMode(filterParam);
+      }
+    }
   }, []);
 
   const fetchShipments = async () => {
@@ -165,13 +176,39 @@ export default function AdminShipmentsPage() {
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, animation: 'pageFadeIn 0.4s ease 0.05s both' }}>
-        <button onClick={() => { setFilterMode('ACTIVE'); setCurrentPage(1); }} style={{ padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: filterMode === 'ACTIVE' ? '#0F172A' : '#F1F5F9', color: filterMode === 'ACTIVE' ? '#FFFFFF' : '#64748B' }}>Active Shipments</button>
-        <button onClick={() => { setFilterMode('DELIVERED'); setCurrentPage(1); }} style={{ padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: filterMode === 'DELIVERED' ? '#0F172A' : '#F1F5F9', color: filterMode === 'DELIVERED' ? '#FFFFFF' : '#64748B' }}>Completed / Delivered</button>
+        <button onClick={() => { setFilterMode('ACTIVE'); setCurrentPage(1); }} style={{ padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: filterMode === 'ACTIVE' ? '#0F172A' : '#F1F5F9', color: filterMode === 'ACTIVE' ? '#FFFFFF' : '#64748B' }}>
+          Active Shipments ({activeTab === 'renter' ? renterShipments.filter(s => s.status !== 'DELIVERED').length : listerShipments.filter(s => s.status !== 'DELIVERED').length})
+        </button>
+        <button onClick={() => { setFilterMode('DELIVERED'); setCurrentPage(1); }} style={{ padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: filterMode === 'DELIVERED' ? '#0F172A' : '#F1F5F9', color: filterMode === 'DELIVERED' ? '#FFFFFF' : '#64748B' }}>
+          Completed / Delivered ({activeTab === 'renter' ? renterShipments.filter(s => s.status === 'DELIVERED').length : listerShipments.filter(s => s.status === 'DELIVERED').length})
+        </button>
       </div>
 
       {displayedShipments.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px', background: '#FFF', borderRadius: '16px', border: '1px dashed #CBD5E1', color: '#64748B' }}>
-          No deliveries found for this category.
+        <div style={{ textAlign: 'center', padding: '50px 20px', background: '#FFF', borderRadius: '16px', border: '1px dashed #CBD5E1', color: '#64748B' }}>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+            No deliveries found for this category.
+          </div>
+          <p style={{ fontSize: '13px', margin: '0 0 16px' }}>
+            {filterMode === 'ACTIVE'
+              ? 'There are currently no parcels in transit for this tab. Delivered parcels awaiting QC can be viewed under Completed / Delivered or in Hub Inspections.'
+              : 'No delivered shipments recorded yet in this tab.'}
+          </p>
+          <a
+            href="/hub/inspections"
+            style={{
+              display: 'inline-block',
+              background: '#0F172A',
+              color: '#FFF',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '12.5px',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            Open Hub Inspections &rarr;
+          </a>
         </div>
       )}
 

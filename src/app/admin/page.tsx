@@ -515,7 +515,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
               <Link
-                href="/admin/shipments"
+                href="/hub/inspections?stage=INTAKE"
                 style={{
                   background: '#0284C7',
                   color: '#FFF',
@@ -578,7 +578,7 @@ export default function AdminDashboardPage() {
                         ⏳ {hoursWaiting}h at Hub
                       </span>
                       <Link
-                        href="/admin/shipments"
+                        href={`/hub/inspections?stage=INTAKE&bookingId=${b.id}`}
                         style={{
                           background: '#F8FAFC',
                           color: '#334155',
@@ -622,7 +622,7 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
               <Link
-                href="/admin/shipments"
+                href="/hub/inspections?stage=POST_RETURN"
                 style={{
                   background: '#B45309',
                   color: '#FFF',
@@ -699,7 +699,7 @@ export default function AdminDashboardPage() {
                       </div>
 
                       <Link
-                        href={`/admin/shipments`}
+                        href={`/hub/inspections?stage=POST_RETURN&bookingId=${b.id}`}
                         style={{
                           background: '#92400E',
                           color: '#FFFFFF',
