@@ -46,7 +46,8 @@ export default function BrandLogo({
       style={{
         display: 'inline-flex',
         flexDirection: 'column',
-        alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
+        alignItems: 'center',
+        alignSelf: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center',
         justifyContent: 'center',
         textDecoration: 'none',
         border: 'none',
@@ -83,6 +84,7 @@ export default function BrandLogo({
           fontWeight: 700,
           color,
           letterSpacing: '0.18em',
+          marginRight: '-0.18em',
           textTransform: 'uppercase',
           display: 'block',
           whiteSpace: 'nowrap',
