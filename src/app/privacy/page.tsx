@@ -53,7 +53,7 @@ export default function PrivacyPolicyPage() {
               <span>Introduction &amp; Scope</span>
             </h2>
             <p className="privacy-paragraph">
-              Wardrob Technologies Pvt. Ltd. (&quot;Wardrob&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) operates a luxury peer-to-peer fashion rental marketplace connecting discerning renters, verified garment curators/listers, and centralized sanitization inspection hubs.
+              Wardrob (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) operates a luxury peer-to-peer fashion rental marketplace connecting discerning renters, verified garment curators/listers, and centralized sanitization inspection hubs.
             </p>
             <p className="privacy-paragraph">
               This Privacy Policy applies to our website (<Link href="/" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>wardrob.com</Link>), mobile applications (iOS &amp; Android), mobile capture inspection modules, and automated transactional notifications.
@@ -211,7 +211,7 @@ export default function PrivacyPolicyPage() {
                 Wardrob Privacy &amp; Data Grievance Cell
               </div>
               <div style={{ fontSize: '13.5px', color: 'var(--ink-secondary, #6E6877)', lineHeight: 1.8 }}>
-                <div><strong>Entity:</strong> Wardrob Technologies Private Limited</div>
+                <div><strong>Entity:</strong> Wardrob</div>
                 <div><strong>Email:</strong> <a href="mailto:inwardrob@gmail.com" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>inwardrob@gmail.com</a></div>
                 <div><strong>Support &amp; Concierge:</strong> <a href="mailto:inwardrob@gmail.com" style={{ color: 'var(--accent, #D4567A)', textDecoration: 'none' }}>inwardrob@gmail.com</a></div>
                 <div><strong>Response Window:</strong> All privacy and data erasure inquiries are addressed within 48 business hours.</div>
