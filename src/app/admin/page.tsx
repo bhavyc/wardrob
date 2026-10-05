@@ -25,6 +25,26 @@ export default function AdminDashboardPage() {
   const [stuckIntakeBookings, setStuckIntakeBookings] = useState<any[]>([]);
   const [stuckReturnBookings, setStuckReturnBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
+
+  const handleSeedDummyData = async () => {
+    if (!confirm('This will inject dummy designer products into the database. Proceed?')) return;
+    setSeeding(true);
+    try {
+      const res = await fetch('/api/admin/seed-dummy-data', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        fetchDashboardData();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (err) {
+      alert('Seeding failed.');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -99,7 +119,26 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={handleSeedDummyData}
+            disabled={seeding}
+            style={{
+              background: '#4F46E5',
+              color: '#FFF',
+              border: 'none',
+              padding: '10px 18px',
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: seeding ? 'wait' : 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            {seeding ? 'Seeding...' : '🌱 Seed Dummy Data'}
+          </button>
           <Link
             href="/admin/payouts"
             style={{
