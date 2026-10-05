@@ -1,0 +1,47 @@
+const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
+
+const sourceIcon = 'C:\\Users\\Bhavya\\.gemini\\antigravity-ide\\brain\\9be0c269-89df-4d5b-9762-52fcfc885e43\\wardrob_hanger_handover_icon_1791182993316.jpg';
+
+const androidResDir = path.resolve('E:\\projects\\wardrob_mobile\\android\\app\\src\\main\\res');
+const mobileAssetsDir = path.resolve('E:\\projects\\wardrob_mobile\\assets\\icons');
+const webPublicDir = path.resolve('E:\\projects\\wardrob\\public');
+
+const targets = [
+  { dir: path.join(androidResDir, 'mipmap-mdpi'), name: 'ic_launcher.png', size: 48 },
+  { dir: path.join(androidResDir, 'mipmap-hdpi'), name: 'ic_launcher.png', size: 72 },
+  { dir: path.join(androidResDir, 'mipmap-xhdpi'), name: 'ic_launcher.png', size: 96 },
+  { dir: path.join(androidResDir, 'mipmap-xxhdpi'), name: 'ic_launcher.png', size: 144 },
+  { dir: path.join(androidResDir, 'mipmap-xxxhdpi'), name: 'ic_launcher.png', size: 192 },
+  { dir: mobileAssetsDir, name: 'app_icon.png', size: 512 },
+  { dir: webPublicDir, name: 'app_icon.png', size: 512 },
+  { dir: webPublicDir, name: 'favicon.png', size: 192 },
+];
+
+async function applyIcons() {
+  console.log('Generating app icons from:', sourceIcon);
+  if (!fs.existsSync(sourceIcon)) {
+    console.error('Source icon file not found!');
+    process.exit(1);
+  }
+
+  for (const t of targets) {
+    if (!fs.existsSync(t.dir)) {
+      fs.mkdirSync(t.dir, { recursive: true });
+    }
+    const dest = path.join(t.dir, t.name);
+    await sharp(sourceIcon)
+      .resize(t.size, t.size)
+      .png()
+      .toFile(dest);
+    console.log(`Saved: ${dest} (${t.size}x${t.size})`);
+  }
+
+  console.log('All launcher icons applied successfully!');
+}
+
+applyIcons().catch(err => {
+  console.error('Error applying icons:', err);
+  process.exit(1);
+});
