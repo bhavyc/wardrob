@@ -45,6 +45,8 @@ next-env.d.ts
 # local uploads & scratch
 /public/uploads/*
 !/public/uploads/.gitkeep
+# scratch & repomix
 /scratch/
 scratch_test.js
 check.ts
+repomix-output.*

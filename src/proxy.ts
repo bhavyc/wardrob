@@ -5,6 +5,11 @@ import { jwtVerify } from 'jose';
 const JWT_SECRET_RAW = process.env.JWT_SECRET;
 
 export async function proxy(request: NextRequest) {
+  // Filter out invalid bot probes or outdated client Next-Action headers
+  if (request.headers.get('next-action')) {
+    return new NextResponse('Action Not Found', { status: 404 });
+  }
+
   const { pathname } = request.nextUrl;
 
   // 1. Identify protected route areas
