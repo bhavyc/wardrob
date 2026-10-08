@@ -126,20 +126,9 @@ export async function proxy(request: NextRequest) {
   }
 }
 
-// Config to specify the matched routes
+// Config to specify the matched routes (all routes except static assets)
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/lister/:path*',
-    '/hub/:path*',
-    '/profile/:path*',
-    '/profile',
-    '/id-verification/:path*',
-    '/id-verification',
-    '/api/admin/:path*',
-    '/api/lister/:path*',
-    '/api/hub/:path*',
-    '/api/user/:path*',
-    '/api/orders/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
